@@ -1,5 +1,5 @@
 # dependencies-cli
-Sample command line utilities around the Salesforce Dependencies API
+Sample command line utilities around the [Salesforce Dependencies API](https://releasenotes.docs.salesforce.com/en-us/summer18/release-notes/rn_metadata_metadatacomponentdependency.htm). This API is currently in Pilot.
 
 ## Setup and Use
 
