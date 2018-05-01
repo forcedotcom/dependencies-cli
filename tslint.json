@@ -1,0 +1,3 @@
+{
+  "extends": "sfdx-dev-config/tslint"
+}
