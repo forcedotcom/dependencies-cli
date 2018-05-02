@@ -1,7 +1,9 @@
 # dependencies-cli
 Sample command line utilities around the [Salesforce Dependencies API](https://releasenotes.docs.salesforce.com/en-us/summer18/release-notes/rn_metadata_metadatacomponentdependency.htm). This API is currently in Pilot.
 
-## Introduction ##
+## Introduction : Dependency Grapher ##
+
+![Graph](https://raw.githubusercontent.com/afawcett/dependencies-cli/master/img/example.png)
 
 This command produces [DOT formatted](https://www.graphviz.org/doc/info/lang.html) output for dependencies in an org allowing you visualize the dependencies in the org. You can pass flags to it to filter down the output further, since in most orgs the output can be quite dense. You can then paste the output from this command into [this website](http://viz-js.com/) to see the results or install locally on your desktop one of the following.
 
