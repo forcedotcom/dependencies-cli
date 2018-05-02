@@ -3,7 +3,6 @@ import {join} from 'path';
 import {SfdxCommand, core} from '@salesforce/command';
 
 core.Messages.importMessagesDirectory(join(__dirname, '..', '..', '..'));
-const messages = core.Messages.loadMessages('mynewplugin', 'org');
 
 let critera: string;
 let filtername: string;
@@ -17,7 +16,7 @@ const filterSOQL = `
 SELECT MetadataComponentId, MetadataComponentName, MetadataComponentType, RefMetadataComponentId, RefMetadataComponentName, RefMetadataComponentType FROM MetadataComponentDependency WHERE RefMetadataComponentName = '${filtername}' AND RefMetadataComponentType = '${filtertype}' AND (NOT MetadataComponentName LIKE '%Test')`;
 export default class Org extends SfdxCommand {
 
-  public static description = messages.getMessage('commandDescription');
+  public static description = '';
 
   public static examples = [
   `$ sfdx hello:org --targetusername myOrg@example.com --targetdevhubusername devhub@org.com
@@ -32,7 +31,7 @@ export default class Org extends SfdxCommand {
 
   protected static flagsConfig = {
     // flag with a value (-n, --name=VALUE)
-    name:                   flags.string({char: 'n', description: messages.getMessage('nameFlagDescription')}),
+    name:                   flags.string({char: 'n', description: ''}),
     force:                  flags.boolean({char: 'f'}),
     resultformat:           flags.string({char: 'r', description: 'dot graph format'}),
     metadatacomponentnames: flags.string({char: 'm', description: 'filter by components, e.g. CustomField.Thumbnail'}),
