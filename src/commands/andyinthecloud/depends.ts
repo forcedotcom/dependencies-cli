@@ -1,6 +1,5 @@
-import {flags} from '@oclif/command';
 import {join} from 'path';
-import {SfdxCommand, core} from '@salesforce/command';
+import {core, flags, SfdxCommand} from '@salesforce/command';
 
 core.Messages.importMessagesDirectory(join(__dirname, '..', '..', '..'));
 
@@ -31,8 +30,8 @@ export default class Org extends SfdxCommand {
 
   protected static flagsConfig = {
     // flag with a value (-n, --name=VALUE)
-    name:                   flags.string({char: 'n', description: ''}),
-    force:                  flags.boolean({char: 'f'}),
+    name:                   flags.string({char: 'n', description: 'description is a string'}),
+    force:                  flags.boolean({char: 'f', description: 'description is another string'}),
     resultformat:           flags.string({char: 'r', description: 'dot graph format'}),
     metadatacomponentnames: flags.string({char: 'm', description: 'filter by components, e.g. CustomField.Thumbnail'}),
     querycriteria:          flags.string({char: 'q', description: 'query criteria'})
@@ -46,7 +45,7 @@ export default class Org extends SfdxCommand {
 
   // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
   protected static requiresProject = false;
-
+9960590757574390
   public async run(): Promise<any> {
     
     this.collectFlags();
