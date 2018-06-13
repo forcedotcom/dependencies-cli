@@ -14,10 +14,10 @@ const criteriaSOQL = `
 SELECT MetadataComponentId, MetadataComponentName, MetadataComponentType, RefMetadataComponentId, RefMetadataComponentName, RefMetadataComponentType FROM MetadataComponentDependency Where ${critera}`;
 const filterSOQL = `
 SELECT  MetadataComponentId, MetadataComponentName, MetadataComponentType, RefMetadataComponentId, RefMetadataComponentName, RefMetadataComponentType FROM MetadataComponentDependency WHERE RefMetadataComponentName = '${filtername}' AND RefMetadataComponentType = '${filtertype}' AND (NOT MetadataComponentName LIKE '%Test')`;
-const parentSOQL = `SELECT Id,TableEnumOrId FROM CustomField c WHERE c.Id In `;
+const fieldObjectSOQL = `SELECT Id,TableEnumOrId FROM CustomField c WHERE c.Id In `;
+const vruleObjectSOQL = `SELECT Id,EntityDefinitionId FROM ValidationRule c WHERE c.Id In `;
 const customObjectParentSOQL = `SELECT Id,DeveloperName FROM CustomObject c WHERE c.Id In `;
-const customFieldSOQL = `SELECT MetadataComponentId FROM MetadataComponentDependency WHERE MetadataComponentType = 'CustomField'`;
-const refCustomFieldSOQL = `SELECT RefMetadataComponentId FROM MetadataComponentDependency WHERE RefMetadataComponentType = 'CustomField'`;
+const customComponentsSOQL = `SELECT MetadataComponentId,RefMetadataComponentId FROM MetadataComponentDependency WHERE (MetadataComponentType = 'CustomField' OR RefMetadataComponentType = 'CustomField') OR (MetadataComponentType = 'ValidationRule' OR RefMetadataComponentType = 'ValidationRule')`;
 export default class Org extends SfdxCommand {
 
   public static description = '';
@@ -59,25 +59,63 @@ export default class Org extends SfdxCommand {
     conn.version = '43.0';
 
     //Get all Custom Field Ids in MetadataComponent and RefMetadata Component
-    const queryResult = await conn.tooling.query(customFieldSOQL);
-    const queryResultRef = await conn.tooling.query(refCustomFieldSOQL);
-    let ids = queryResult.records.map(r => r.MetadataComponentId);
-    let idsRef = queryResultRef.records.map(r => r.RefMetadataComponentId);
+    const customComponentIds = await conn.tooling.query(customComponentsSOQL);
+
+    let ids = customComponentIds.records.map(r => r.MetadataComponentId);
+    let idsRef = customComponentIds.records.map(r => r.RefMetadataComponentId);
 
     //Concat both lists of ids
-    const idsTotal = ids.concat(idsRef);
+    var idsTotal = ids.concat(idsRef);
+    var idSet = new Set(idsTotal); //remove duplicates
+    idsTotal = Array.from(idSet);
 
-    //Find parents by using TableEnumOrId class on list of ids
-    const parents = await conn.tooling.query(parentSOQL + `('${idsTotal.join('\',\'')}')`);
-    const parentRecords = parents.records;
-    
+    //Find object for Custom Fields by using TableEnumOrId class on list of ids
+    const fieldObjects = await conn.tooling.query(fieldObjectSOQL + `('${idsTotal.join('\',\'')}')`);
+    const fieldObjectRecords = fieldObjects.records;
+
+    //Find object for ValidationRules using same method
+    const vruleObjects = await conn.tooling.query(vruleObjectSOQL + `('${idsTotal.join('\',\'')}')`);
+    const vruleObjectRecords = vruleObjects.records;
+
+
     //Filter Ids that start with 0
-    let customObjectIdRecords = parentRecords.filter(x => x.TableEnumOrId.startsWith('0'));
-    let customObjectIds = customObjectIdRecords.map(r => r.TableEnumOrId);
+    let fieldObjectIdRecords = fieldObjectRecords.filter(x => x.TableEnumOrId.startsWith('0'));
+    let customObjectIds = fieldObjectIdRecords.map(r => r.TableEnumOrId);
+
+    //Filter Ids that start with 0 from vrule
+    let vruleObjectIdRecords = vruleObjectRecords.filter(x => x.EntityDefinitionId.startsWith('0'));
+    //Add to list
+    customObjectIds = customObjectIds.concat(vruleObjectIdRecords.map(r => r.EntityDefinitionId));
     
     //Another query to get Custom Object Names from Id
     const customObjects = await conn.tooling.query(customObjectParentSOQL + `('${customObjectIds.join('\',\'')}')`);
     const customObjectRecords = customObjects.records;
+
+    //Put all info into   a Map
+    let parentRecords = new Map();
+
+    for (const recordIdx in fieldObjectRecords) {
+      let parentRecord = fieldObjectRecords[recordIdx];
+      let val = parentRecord.TableEnumOrId;
+      if (val.startsWith('0')) {
+        //Custom Object
+        let customObject= customObjectRecords.filter(x => x.Id.startsWith(val));
+        val = customObject[0].DeveloperName;
+      }
+      parentRecords.set(parentRecord.Id, val);
+    }
+
+    for (const recordIdx in vruleObjectRecords) {
+      let parentRecord = vruleObjectRecords[recordIdx];
+      let val = parentRecord.EntityDefinitionId;
+      if (val.startsWith('0')) {
+        //Custom Object
+        let customObject= customObjectRecords.filter(x => x.Id.startsWith(val));
+        val = customObject[0].DeveloperName;
+      }
+      parentRecords.set(parentRecord.Id, val);
+    }
+
     
     var ux = this.ux;
 
@@ -94,25 +132,21 @@ export default class Org extends SfdxCommand {
       const edges = [];
       for (const recordIdx in res.records) {
         let parentName = '';
+        let refParentName = '';
         if (recordIdx) {
           const record = res.records[recordIdx];
           if(record.RefMetadataComponentName.startsWith('0')) {
             continue;
           }
-          //Get parent for Custom Field if possible
-          let parent = parentRecords.filter(x => x.Id == record.MetadataComponentId || x.Id == record.RefMetadataComponentId);
-          if (parent.length > 0) {
-            parentName = parent[0].TableEnumOrId;
-            if (parentName.startsWith('0')) {
-              //Look up in Custom Objects Table
-              parent = customObjectRecords.filter(x => x.Id == parentName);
-              parentName = parent[0].DeveloperName;
-            }
+          if (record.MetadataComponentType == "CustomField" || record.MetadataComponentType == "ValidationRule") {
+            parentName = parentRecords.get(record.MetadataComponentId) + ".";
+          }
 
-            parentName = parentName + '.';
+          if (record.RefMetadataComponentType == "CustomField" || record.RefMetadataComponentType == "ValidationRule") {
+            refParentName = parentRecords.get(record.RefMetadataComponentId) + ".";
           }
           nodesMap.set(record.MetadataComponentId, { parent: parentName, name: record.MetadataComponentName, type: record.MetadataComponentType });
-          nodesMap.set(record.RefMetadataComponentId, { parent: parentName, name: record.RefMetadataComponentName, type: record.RefMetadataComponentType });
+          nodesMap.set(record.RefMetadataComponentId, { parent: refParentName, name: record.RefMetadataComponentName, type: record.RefMetadataComponentType });
           edges.push({ from : record.MetadataComponentId, to: record.RefMetadataComponentId });
         }
       }
