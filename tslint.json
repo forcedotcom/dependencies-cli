@@ -1,3 +1,7 @@
 {
-  "extends": "sfdx-dev-config/tslint"
+  "extends": "@salesforce/dev-config/tslint",
+  "rules": {
+    "quotemark": [true, "single", "avoid-template", "avoid-escape"],
+    "no-reserved-keywords": false
+  }
 }
