@@ -1,0 +1,7 @@
+{
+  "description": "Prints a greeting and your org id(s)!",
+  "resultformatFlagDescription": "the result format of the graph output; ignore with --json",
+  "metadatacomponentnameFlagDescription": "filter by component in the format '<entityType>.<entityName>; e.g. CustomField.Thumbnail",
+  "querycriteriaFlagDescription": "the criteria to filter the dependency records; e.g. RefMetadataComponentName='Thumbnail'",
+  "example1": "$ sfdx andyinthelcloud:depends --metadatacomponentname CustomField.Thumbnail"
+}
