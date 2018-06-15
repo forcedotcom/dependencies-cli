@@ -1,0 +1,229 @@
+{  
+   "status":0,
+   "result":{  
+      "entityTypeName":"MetadataComponentDependency",
+      "records":[  
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"A",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node A",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"B",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node B",
+            "RefMetadataComponentType":"Node"
+         },
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"B",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node B",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"C",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node C",
+            "RefMetadataComponentType":"Node"
+         },
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"C",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node C",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"D",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node D",
+            "RefMetadataComponentType":"Node"
+         },
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"D",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node D",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"E",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node E",
+            "RefMetadataComponentType":"Node"
+         },
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"A",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node A",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"F",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node F",
+            "RefMetadataComponentType":"Node"
+         },
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"F",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node F",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"G",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node G",
+            "RefMetadataComponentType":"Node"
+         },
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"G",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node G",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"H",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node H",
+            "RefMetadataComponentType":"Node"
+         },
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"H",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node H",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"E",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node E",
+            "RefMetadataComponentType":"Node"
+         },
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"A",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node A",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"I",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node I",
+            "RefMetadataComponentType":"Node"
+         },
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"I",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node I",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"J",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node J",
+            "RefMetadataComponentType":"Node"
+         },
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"B",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node B",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"B",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node B",
+            "RefMetadataComponentType":"Node"
+         },
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"D",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node D",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"C",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node C",
+            "RefMetadataComponentType":"Node"
+         },
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"H",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node H",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"F",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node F",
+            "RefMetadataComponentType":"Node"
+         },
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"J",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node J",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"I",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node I",
+            "RefMetadataComponentType":"Node"
+         },
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"A",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node A",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"C",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node C",
+            "RefMetadataComponentType":"Node"
+         },
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"A",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node A",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"D",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node D",
+            "RefMetadataComponentType":"Node"
+         },
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"A",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node A",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"G",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node G",
+            "RefMetadataComponentType":"Node"
+         }
+			]
+	 }
+}

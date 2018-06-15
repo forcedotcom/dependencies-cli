@@ -1,5 +1,5 @@
 import { core, flags, SfdxCommand } from '@salesforce/command';
-import { DependencyGraph, MetadataComponentDependency } from '../../lib/dependencyGraph';
+import { DependencyGraph, MetadataComponentDependency } from '../../../lib/dependencyGraph';
 
 core.Messages.importMessagesDirectory(__dirname);
 

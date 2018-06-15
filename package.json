@@ -57,5 +57,8 @@
     "preversion": "yarn run clean",
     "test": "mocha --forbid-only \"test/**/*.test.ts\"",
     "version": "oclif-dev readme && git add README.md"
+  },
+  "bin": {
+    "componentizer": "./bin/run"
   }
 }
