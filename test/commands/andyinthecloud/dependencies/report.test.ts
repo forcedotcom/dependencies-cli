@@ -1,5 +1,5 @@
 import { expect, test } from '@salesforce/command/dist/test';
-import { dotOutput1, dotOutput2, oneObjectRecords, TwoFields1VRRecords, customFieldRecords, validationRuleRecords, customObjects} from '../../lib/dependencyGraphy.test';
+import { dotOutput1, dotOutput2, oneObjectRecords, TwoFields1VRRecords, customFieldRecords, validationRuleRecords, customObjects} from '../../../lib/dependencyGraphy.test';
 import { DEFAULT_ECDH_CURVE } from 'tls';
 
 const urlGetRecords = 'http://na30.salesforce.com/services/data/v43.0/tooling/query?q=SELECT%20MetadataComponentId%2C%20MetadataComponentName%2C%20MetadataComponentType%2C%20RefMetadataComponentId%2C%20RefMetadataComponentName%2C%20RefMetadataComponentType%20FROM%20MetadataComponentDependency';
@@ -96,7 +96,7 @@ describe('org', () => {
         return { records: [] };
     })
     .stdout({ print: true })
-    .command(['andyinthecloud:depends', '--targetusername', 'test@org.com'])
+    .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com'])
     .it('runs org --targetusername test@org.com', ctx => {
       const expectedEmptyOuput =
 `digraph graphname {
@@ -131,7 +131,7 @@ describe('org test one object', () => {
         return {records: []};
     })
     .stdout({ print: true })
-    .command(['andyinthecloud:depends', '--targetusername', 'test@org.com'])
+    .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com'])
     .it('runs org --targetusername test@org.com', ctx => {
     
       expect(ctx.stdout).to.contains(dotOutput1);
@@ -160,7 +160,7 @@ describe('org test two objects' , () => {
         return {records: []};
     })
     .stdout({ print: true })
-    .command(['andyinthecloud:depends', '--targetusername', 'test@org.com'])
+    .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com'])
     .it('runs org --targetusername test@org.com', ctx => {
     
       expect(ctx.stdout).to.contains(dotOutput2Objects);
@@ -197,7 +197,7 @@ describe('org test one custom field' , () => {
         return {records: []};
     })
     .stdout({ print: true })
-    .command(['andyinthecloud:depends', '--targetusername', 'test@org.com'])
+    .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com'])
     .it('runs org --targetusername test@org.com', ctx => {
     
       expect(ctx.stdout).to.contains(dotOutput1CustomField);
@@ -234,7 +234,7 @@ describe('org test one validation rule' , () => {
         return {records: []};
     })
     .stdout({ print: true })
-    .command(['andyinthecloud:depends', '--targetusername', 'test@org.com'])
+    .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com'])
     .it('runs org --targetusername test@org.com', ctx => {
     
       expect(ctx.stdout).to.contains(dotOutput1ValidationRule);
@@ -271,7 +271,7 @@ describe('org test two custom fields, 1 validation rule' , () => {
         return {records: []};
     })
     .stdout({ print: true })
-    .command(['andyinthecloud:depends', '--targetusername', 'test@org.com'])
+    .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com'])
     .it('runs org --targetusername test@org.com', ctx => {
     
       expect(ctx.stdout).to.contains(dotOutput2);

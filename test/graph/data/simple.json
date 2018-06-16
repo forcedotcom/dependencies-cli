@@ -1,0 +1,47 @@
+{  
+   "status":0,
+   "result":{  
+      "entityTypeName":"MetadataComponentDependency",
+      "records":[  
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"A",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node A",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"B",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node B",
+            "RefMetadataComponentType":"Node"
+         },
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"B",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node B",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"C",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node C",
+            "RefMetadataComponentType":"Node"
+         },
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"A",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node A",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"C",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node C",
+            "RefMetadataComponentType":"Node"
+         }
+			]
+	 }
+}
