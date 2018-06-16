@@ -37,7 +37,7 @@ sfdx plugins:link .
 4) Run the command:
 
 ```
-sfdx andyinthecloud:depends -u [alias|username]
+sfdx andyinthecloud:dependencies:report -u [alias|username]
 ```
 
 ## Example Output
