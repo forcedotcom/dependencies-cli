@@ -26,7 +26,7 @@ export default class Analyze extends SfdxCommand {
     public static args = [{name: 'file'}];
 
     // tslint:disable-next-line:no-any
-    public static buildGraph(results: any): Graph {
+    public static buildGraph(results: any, connectAuras: boolean = false): Graph {
         const graph: Graph = new Graph();
         for (const edge of results) {
             if (edge.RefMetadataComponentName.startsWith('0')) {
@@ -56,7 +56,12 @@ export default class Analyze extends SfdxCommand {
             dstDetails.set('name', (dstName as String));
             dstDetails.set('type', (dstType as String));
             const dstNode: Node = graph.getOrAddNode(dstId, dstDetails);
+            
             graph.addEdge(srcNode, dstNode);
+
+            if (connectAuras && srcType == 'AuraDefinition' && dstType == 'AuraDefinitionBundle') {
+                graph.addEdge(dstNode,srcNode); // Also add reverse reference
+            }
         }
 
         return graph;
@@ -125,7 +130,7 @@ export default class Analyze extends SfdxCommand {
                                     'RefMetadataComponentId, RefMetadataComponentNamespace, ' +
                                     'RefMetadataComponentName, RefMetadataComponentType ' +
                                     'FROM MetadataComponentDependency');
-        const g = Analyze.buildGraph(queryResults.records);
+        const g = Analyze.buildGraph(queryResults.records, false);
         Analyze.removeCycles(g);
 
         const leafNodes: Map<string, Node[]> = new Map<string, Node[]>();

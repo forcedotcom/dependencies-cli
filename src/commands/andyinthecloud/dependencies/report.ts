@@ -33,13 +33,13 @@ export default class Org extends SfdxCommand {
 
     const deps = new DependencyGraph(conn.tooling);
     const records = await this.getDependencyRecords();
-    const initialGraph = Analyze.default.buildGraph(records);
+    const initialGraph = Analyze.default.buildGraph(records, true);
 
     let nodes = Array.from(initialGraph.nodes);
 
     if (this.flags.getincludedependencies) {
        const allRecords = await this.getAllRecords();
-       const completeGraph = Analyze.default.buildGraph(allRecords);
+       const completeGraph = Analyze.default.buildGraph(allRecords, true); //Connect Aura Components to Bundles
        const dfs = new FindAllDependencies(completeGraph);
        const initialNodes = Array.from(initialGraph.nodes);
        initialNodes.forEach(element => {

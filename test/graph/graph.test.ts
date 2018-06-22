@@ -1,6 +1,8 @@
 import { expect, test } from '@salesforce/command/dist/test';
 import * as Analyze from '../../src/commands/andyinthecloud/dependencies/componentizer';
 import * as Assert from 'assert';
+import {Node, Graph} from '../../src/lib/componentGraph';
+import {DepthFirstSearch} from '../../src/lib/DFSLib';
 
 //import { expect } from 'chai';
 const fs = require('fs');
@@ -10,12 +12,12 @@ describe ('Load happy soup', function() {
     let obj : any = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/happysoup.json'), 'utf8'));
 
     //console.log(obj.result.records);
-    let graph : Analyze.Graph = Analyze.default.buildGraph(obj.result.records);
+    let graph : Graph = Analyze.default.buildGraph(obj.result.records);
     console.log(graph);
 });*/
 
-function getAdjacency(graph: Analyze.Graph, node: Analyze.Node) : Map<string, Analyze.Node> {
-    const edges: Map<string, Analyze.Node> = new Map<string, Analyze.Node>();
+function getAdjacency(graph: Graph, node: Node) : Map<string, Node> {
+    const edges: Map<string, Node> = new Map<string, Node>();
     Array.from(graph.getEdges(node)).forEach((edge) => {
         edges.set(edge.name, edge);
     });
@@ -26,7 +28,7 @@ describe ('Simple', function() {
         let obj : any = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/simple.json'), 'utf8'));
 
         console.log(obj.result.records);
-        let graph : Analyze.Graph = Analyze.default.buildGraph(obj.result.records);
+        let graph : Graph = Analyze.default.buildGraph(obj.result.records);
         console.log(JSON.stringify(graph));
         let a = graph.getNode("A");
         let b = graph.getNode("B");
@@ -46,7 +48,7 @@ describe ('Simple', function() {
     it('Test combine on simple graph', function() {
         let obj : any = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/simple.json'), 'utf8'));
 
-        let graph : Analyze.Graph = Analyze.default.buildGraph(obj.result.records);
+        let graph : Graph = Analyze.default.buildGraph(obj.result.records);
         let a = graph.getNode("A");
         let b = graph.getNode("B");
         let c = graph.getNode("C");
@@ -75,24 +77,24 @@ describe ('Simple', function() {
         let obj : any = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/simple.json'), 'utf8'));
 
         //console.log(obj.result.records);
-        let graph : Analyze.Graph = Analyze.default.buildGraph(obj.result.records);
+        let graph : Graph = Analyze.default.buildGraph(obj.result.records, false);
 
         let visited : Array<string> = new Array<string>();
         let finished : Array<string> = new Array<string>();
         let explored : Array<[string, string]> = new Array<[string, string]>();
 
-        class TestDFS extends Analyze.DepthFirstSearch {
-            visit(node: Analyze.Node) {
+        class TestDFS extends DepthFirstSearch {
+            visit(node: Node) {
                 visited.push(node.name);
             }
-            explore(src: Analyze.Node, dst: Analyze.Node) {
+            explore(src: Node, dst: Node) {
                 explored.push([src.name, dst.name]);
             }
-            finish(node: Analyze.Node) {
+            finish(node: Node) {
                 finished.push(node.name);
             }
         }
-        let dfs : Analyze.DepthFirstSearch = new TestDFS(graph);
+        let dfs : DepthFirstSearch = new TestDFS(graph);
         dfs.run();
 
         expect(visited).to.have.members(['A', 'B', 'C']);
@@ -102,7 +104,7 @@ describe ('Simple', function() {
         let obj : any = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/cycles.json'), 'utf8'));
 
         //console.log(obj.result.records);
-        let graph : Analyze.Graph = Analyze.default.buildGraph(obj.result.records);
+        let graph : Graph = Analyze.default.buildGraph(obj.result.records);
         Analyze.default.removeCycles(graph);
         for (const node of graph.nodes) {
             console.log(JSON.stringify(node.name));
