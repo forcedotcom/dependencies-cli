@@ -3,5 +3,9 @@
   "resultformatFlagDescription": "the result format of the graph output; ignore with --json",
   "metadatacomponentnameFlagDescription": "filter by component in the format '<entityType>.<entityName>; e.g. CustomField.Thumbnail",
   "querycriteriaFlagDescription": "the criteria to filter the dependency records; e.g. RefMetadataComponentName='Thumbnail'",
+  "includeListDescription": "the list of fields to include when querying. Separate fields by commas. Adding a colon allows you to specify the name of specific custom object to include e.g 'CustomField:Thumbnail, CustomObject'",
+  "excludeListDescription": "list of fields to exclude when querying. Adding a colon allows you to specify the name of specific custom object to exclude e.g 'CustomField:Thumbnail, CustomObject'",
+  "generatePackageDescription": "Whether or not you want to generate a package, the input is the output folder",
+  "getIncludeDependencies": "For all objects in the include list, get all dependencies, including dependencies for dependencies",
   "example1": "$ sfdx andyinthelcloud:depends --metadatacomponentname CustomField.Thumbnail"
 }

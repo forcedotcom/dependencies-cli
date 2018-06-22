@@ -1,12 +1,13 @@
+// TODO: Merge dependencyGraph and componentGraph
 import { Tooling } from 'jsforce';
 
-export type Node = {
+export type DGNode = {
   parent: string;
   name: string;
   type: string;
 };
 
-export type Edge = {
+export type DGEdge = {
   from: string;
   to: string;
 };
@@ -37,8 +38,8 @@ export interface CustomObject extends Record {
 }
 
 export class DependencyGraph {
-  public nodes: Array<{ id: string, node: Node }> = [];
-  public edges: Edge[] = [];
+  public nodes: Array<{ id: string, node: DGNode }> = [];
+  public edges: DGEdge[] = [];
 
   private allComponentIds: string[];
   private customFields: CustomField[];
@@ -81,6 +82,44 @@ export class DependencyGraph {
     }
   }
 
+  public async initWithFilter(records: MetadataComponentDependency[], idSet: Set<String>) {
+    this.allComponentIds = await this.retrieveAllComponentIds();
+    this.customFields = await this.retrieveCustomFields(this.allComponentIds);
+    this.validationRules = await this.retrieveValidationRules(this.allComponentIds);
+    this.customObjects = await this.retrieveCustomObjects(this.getObjectIds());
+
+    const parentRecords = this.getParentRecords();
+    const nodesMap = new Map();
+
+    for (const record of records) {
+      let parentName = '';
+      let refParentName = '';
+
+      if (!idSet.has(record.MetadataComponentId)) {
+        continue;
+      }
+
+      if (record.RefMetadataComponentName.startsWith('0')) {
+        continue;
+      }
+      if (record.MetadataComponentType === 'CustomField' || record.MetadataComponentType === 'ValidationRule') {
+        parentName = parentRecords.get(record.MetadataComponentId) + '.';
+      }
+
+      if (record.RefMetadataComponentType === 'CustomField' || record.RefMetadataComponentType === 'ValidationRule') {
+        refParentName = parentRecords.get(record.RefMetadataComponentId) + '.';
+      }
+
+      nodesMap.set(record.MetadataComponentId, { parent: parentName, name: record.MetadataComponentName, type: record.MetadataComponentType });
+      nodesMap.set(record.RefMetadataComponentId, { parent: refParentName, name: record.RefMetadataComponentName, type: record.RefMetadataComponentType });
+      this.edges.push({ from: record.MetadataComponentId, to: record.RefMetadataComponentId });
+
+    }
+    for (const [key, value] of nodesMap) {
+      this.nodes.push({ id: key, node: value });
+    }
+  }
+
   /**
    * Render as DOT format
    */
@@ -96,7 +135,7 @@ export class DependencyGraph {
     let dot = 'digraph graphname {\n';
     dot += '  rankdir=RL;\n';
     dot += '  node[shape=Mrecord, bgcolor=black, fillcolor=lightblue, style=filled];\n';
-    dot += '  // Nodes\n';
+    dot += '  // DGNodes\n';
 
     for (const node of this.nodes) {
       dot += `  X${node.id} [label=<${node.node.parent}${node.node.name}<BR/><FONT POINT-SIZE="8">${node.node.type}</FONT>>]\n`;

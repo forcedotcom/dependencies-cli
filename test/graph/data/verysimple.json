@@ -1,0 +1,21 @@
+{  
+   "status":0,
+   "result":{  
+      "entityTypeName":"MetadataComponentDependency",
+      "records":[  
+         {  
+            "attributes":{  
+               "type":"MetadataComponentDependency"
+            },
+            "MetadataComponentId":"A",
+            "MetadataComponentNamespace":null,
+            "MetadataComponentName":"Node A",
+            "MetadataComponentType":"Node",
+            "RefMetadataComponentId":"B",
+            "RefMetadataComponentNamespace":null,
+            "RefMetadataComponentName":"Node B",
+            "RefMetadataComponentType":"Node"
+         }
+			]
+	 }
+}
