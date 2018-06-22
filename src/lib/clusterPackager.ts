@@ -22,12 +22,13 @@ export class ClusterPackager {
 
         text = text.concat(this.writeFooter());
 
-        fs.writeFile(dest, text, err => {
-            // throws an error, you could also catch it here
-            if (err) {
-                throw err;
-            }
-        });
+        fs.writeFileSync(dest, text); // May need to switch to writeFile if xml creation does not work
+        // fs.writeFile(dest, text, (err) => {
+        //     // throws an error, you could also catch it here
+        //     if (err) {
+        //         throw err;
+        //     }
+        // });
 
     }
 
@@ -47,12 +48,13 @@ export class ClusterPackager {
 
         text = text.concat(this.writeFooter());
 
-        fs.writeFile(dest, text, err => {
-            // throws an error, you could also catch it here
-            if (err) {
-                throw err;
-            }
-        });
+        fs.writeFileSync(dest, text); // May need to switch to writeFile if xml creation does not work
+        // fs.writeFile(dest, text, (err) => {
+        //     // throws an error, you could also catch it here
+        //     if (err) {
+        //         throw err;
+        //     }
+        // });
 
     }
 

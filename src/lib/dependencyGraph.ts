@@ -135,7 +135,7 @@ export class DependencyGraph {
     let dot = 'digraph graphname {\n';
     dot += '  rankdir=RL;\n';
     dot += '  node[shape=Mrecord, bgcolor=black, fillcolor=lightblue, style=filled];\n';
-    dot += '  // DGNodes\n';
+    dot += '  // Nodes\n';
 
     for (const node of this.nodes) {
       dot += `  X${node.id} [label=<${node.node.parent}${node.node.name}<BR/><FONT POINT-SIZE="8">${node.node.type}</FONT>>]\n`;

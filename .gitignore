@@ -9,6 +9,9 @@ yarn-error.log*
 graph.dot
 completegraph.dot
 
+#package-lock
+package-lock.json
+
 # Runtime data
 pids
 *.pid
