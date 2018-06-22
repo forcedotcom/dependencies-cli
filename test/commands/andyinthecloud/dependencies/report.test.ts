@@ -84,14 +84,6 @@ describe('org', () => {
     // Mock an org that the command can use
     .withOrg({ username: 'test@org.com' }, true)
     .withConnectionRequest(async (...args) => {
-      // You can set a debugger here, and inspect request
-      // There are things on here you can use to determine
-      // what data to return, like the url path. So in another
-      // test, you may have several different ifs returning
-      // data for custom fields, custom objects, validation
-      // rules, etc.
-      // const request = args[0];
-
       // Just return empty everything for this 
         return { records: [] };
     })
@@ -116,14 +108,6 @@ describe('org test one object', () => {
     // Mock an org that the command can use
     .withOrg({ username: 'test@org.com' }, true)
     .withConnectionRequest(async (...args) => {
-      // You can set a debugger here, and inspect request
-      // There are things on here you can use to determine
-      // what data to return, like the url path. So in another
-      // test, you may have several different ifs returning
-      // data for custom fields, custom objects, validation
-      // rules, etc.
-      // const request = args[0];
-
         if (args[0].url.startsWith(urlGetRecords)) {
           //very first request, looking for records
           return {records: oneObjectRecords}
@@ -145,14 +129,6 @@ describe('org test two objects' , () => {
     // Mock an org that the command can use
     .withOrg({ username: 'test@org.com' }, true)
     .withConnectionRequest(async (...args) => {
-      // You can set a debugger here, and inspect request
-      // There are things on here you can use to determine
-      // what data to return, like the url path. So in another
-      // test, you may have several different ifs returning
-      // data for custom fields, custom objects, validation
-      // rules, etc.
-      // const request = args[0];
-
         if (args[0].url.startsWith(urlGetRecords)) {
           //very first request, looking for records
           return {records: twoObjectRecords}
@@ -174,14 +150,6 @@ describe('org test one custom field' , () => {
     // Mock an org that the command can use
     .withOrg({ username: 'test@org.com' }, true)
     .withConnectionRequest(async (...args) => {
-      // You can set a debugger here, and inspect request
-      // There are things on here you can use to determine
-      // what data to return, like the url path. So in another
-      // test, you may have several different ifs returning
-      // data for custom fields, custom objects, validation
-      // rules, etc.
-      // const request = args[0];
-
         if (args[0].url.startsWith(urlGetRecords)) {
           //very first request, looking for records
           return {records: oneCustomFieldRecords}
@@ -211,14 +179,6 @@ describe('org test one validation rule' , () => {
     // Mock an org that the command can use
     .withOrg({ username: 'test@org.com' }, true)
     .withConnectionRequest(async (...args) => {
-      // You can set a debugger here, and inspect request
-      // There are things on here you can use to determine
-      // what data to return, like the url path. So in another
-      // test, you may have several different ifs returning
-      // data for custom fields, custom objects, validation
-      // rules, etc.
-      // const request = args[0];
-
         if (args[0].url.startsWith(urlGetRecords)) {
           //very first request, looking for records
           return {records: oneValidationRuleRecords}
@@ -248,14 +208,6 @@ describe('org test two custom fields, 1 validation rule' , () => {
     // Mock an org that the command can use
     .withOrg({ username: 'test@org.com' }, true)
     .withConnectionRequest(async (...args) => {
-      // You can set a debugger here, and inspect request
-      // There are things on here you can use to determine
-      // what data to return, like the url path. So in another
-      // test, you may have several different ifs returning
-      // data for custom fields, custom objects, validation
-      // rules, etc.
-      // const request = args[0];
-
         if (args[0].url.startsWith(urlGetRecords)) {
           //very first request, looking for records
           return {records: TwoFields1VRRecords}

@@ -1,7 +1,8 @@
+import { expect, test } from '@salesforce/command/dist/test';
 import * as Analyze from '../../src/commands/andyinthecloud/dependencies/componentizer';
 import * as Assert from 'assert';
 
-import { expect } from 'chai';
+//import { expect } from 'chai';
 const fs = require('fs');
 const path = require('path')
 /*
@@ -106,6 +107,7 @@ describe ('Simple', function() {
         for (const node of graph.nodes) {
             console.log(JSON.stringify(node.name));
         };
+
         //console.log(JSON.stringify(graph.nodes));
         const a = graph.getNode('A');
         const b = graph.getNode('B');
@@ -127,4 +129,19 @@ describe ('Simple', function() {
         Assert.equal(getAdjacency(graph, ij).size, 0);
     });
 
+    describe('run async method cycles', () => {
+        test
+            // Mock an org that the command can use
+            .withOrg({ username: 'test@org.com' }, true)
+            .withConnectionRequest(async (...args) => {
+
+                let obj1 : any = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/cycles.json'), 'utf8'));
+                return obj1.result;
+            })
+            .stdout({ print: true })
+            .command(['andyinthecloud:dependencies:componentizer', '-u', 'test@org.com'])
+            .it('runs org --targetusername test@org.com', ctx => {
+            
+            })
+    });
 });
