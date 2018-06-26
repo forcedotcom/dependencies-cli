@@ -1,5 +1,6 @@
 // TODO: Merge dependencyGraph and componentGraph
 import { Tooling } from 'jsforce';
+import { Member } from '../commands/andyinthecloud/packages/merge';
 
 export type DGNode = {
   parent: string;
@@ -37,6 +38,17 @@ export interface CustomObject extends Record {
   DeveloperName: string;
 }
 
+export interface FieldDefinition {
+  DurableId: string;
+  DataType: string;
+  EntityDefinitionId: string;
+}
+
+export interface ComponentNode extends Record {
+  Name: string;
+  Type: string;
+}
+
 export class DependencyGraph {
   public nodes: Array<{ id: string, node: DGNode }> = [];
   public edges: DGEdge[] = [];
@@ -45,14 +57,27 @@ export class DependencyGraph {
   private customFields: CustomField[];
   private validationRules: ValidationRule[];
   private customObjects: CustomObject[];
+  private customFieldDefinitions: FieldDefinition[];
+  private lookupObjects: string[];
+  private records ;
 
   constructor(private tooling: Tooling) { }
 
-  public async init(records: MetadataComponentDependency[]) {
+  public async init() {
     this.allComponentIds = await this.retrieveAllComponentIds();
     this.customFields = await this.retrieveCustomFields(this.allComponentIds);
     this.validationRules = await this.retrieveValidationRules(this.allComponentIds);
     this.customObjects = await this.retrieveCustomObjects(this.getObjectIds());
+    let customFieldEntities = this.customFields.map(r => r.TableEnumOrId);
+    this.customFieldDefinitions = await this.retrieveLookupRelationships(customFieldEntities);
+    let lookupRelationships = this.customFieldDefinitions.filter(x => x.DataType.startsWith("Lookup"));
+    lookupRelationships.forEach(element => {
+      element.DataType = element.DataType.slice(element.DataType.indexOf("(") + 1, element.DataType.lastIndexOf(")"));
+    });
+    this.lookupObjects = lookupRelationships.map(r => r.DataType);
+  }
+
+  public buildGraph(records: MetadataComponentDependency[]) {
 
     const parentRecords = this.getParentRecords();
     const nodesMap = new Map();
@@ -60,6 +85,7 @@ export class DependencyGraph {
     for (const record of records) {
       let parentName = '';
       let refParentName = '';
+
 
       if (record.RefMetadataComponentName.startsWith('0')) {
         continue;
@@ -82,15 +108,9 @@ export class DependencyGraph {
     }
   }
 
-  public async initWithFilter(records: MetadataComponentDependency[], idSet: Set<String>) {
-    this.allComponentIds = await this.retrieveAllComponentIds();
-    this.customFields = await this.retrieveCustomFields(this.allComponentIds);
-    this.validationRules = await this.retrieveValidationRules(this.allComponentIds);
-    this.customObjects = await this.retrieveCustomObjects(this.getObjectIds());
-
+  public buildGraphWithFilter(records: MetadataComponentDependency[],  idSet: Set<String>) {
     const parentRecords = this.getParentRecords();
     const nodesMap = new Map();
-
     for (const record of records) {
       let parentName = '';
       let refParentName = '';
@@ -173,6 +193,11 @@ export class DependencyGraph {
     return await this.retrieveRecords<CustomField>(query);
   }
 
+  public async retrieveLookupRelationships(ids: string[]): Promise<FieldDefinition[]> {
+    const query = `SELECT EntityDefinitionId,DataType,DurableId FROM FieldDefinition c WHERE c.EntityDefinitionId In ${this.arrayToInIdString(ids)}`;
+    return await this.retrieveRecords<FieldDefinition>(query);
+  }
+
   public async retrieveValidationRules(ids: string[]): Promise<ValidationRule[]> {
     const query = `SELECT Id, EntityDefinitionId FROM ValidationRule c WHERE c.Id In ${this.arrayToInIdString(ids)}`;
     return await this.retrieveRecords<ValidationRule>(query);
@@ -198,6 +223,10 @@ export class DependencyGraph {
     ids = Array.from(new Set(ids));
 
     return ids;
+  }
+
+  public getLookupRelationships(): FieldDefinition[] {
+    return this.customFieldDefinitions;
   }
 
   private getObjectIds() {
