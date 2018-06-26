@@ -8,7 +8,9 @@
     "@oclif/errors": "^1.0.9",
     "@salesforce/command": "0.1.5",
     "debug": "^3.1.0",
-    "file-system": "^2.2.2"
+    "file-exists": "^5.0.1",
+    "file-system": "^2.2.2",
+    "xml2js": "^0.4.19"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1.2.20",

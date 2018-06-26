@@ -66,12 +66,14 @@ describe('no relationship single node dependency graph', () => {
   // Can define here if you want to use them in multiple tests
   // TODO you probably want to make this more meaningful
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Don't use a connection, just mock methods
     graph = new DependencyGraph(null);
 
     // Don't try to call out to tooling
     stub(graph, 'retrieveRecords').returns(Promise.resolve([]));
+
+    await graph.init();
   });
 
   // TODO you could have one of these for each public method in dependency graph.
@@ -79,7 +81,7 @@ describe('no relationship single node dependency graph', () => {
   // they should be covered from the public method tests.
   describe('init', () => {
     it('populates nodes and edges for one record', async () => {
-      await graph.init(oneObjectRecords);
+      await graph.buildGraph(oneObjectRecords);
 
       expect(graph.nodes.length).to.equal(1);
       expect(graph.edges.length).to.equal(1);
@@ -88,7 +90,7 @@ describe('no relationship single node dependency graph', () => {
 
   describe('to dot format', () => {
     it('Check dot format', async () => {
-      await graph.init(oneObjectRecords);
+      await graph.buildGraph(oneObjectRecords);
 
       expect(graph.toDotFormat()).to.contain(dotOutput1);
     });
@@ -97,7 +99,8 @@ describe('no relationship single node dependency graph', () => {
 
   describe('getParentRecords', () => {
     it('gets parent records of no parents', async () => {
-      await graph.init(oneObjectRecords);
+      await graph.init();
+      graph.buildGraph(oneObjectRecords);
       
       expect(graph.getParentRecords()).to.deep.equal(new Map());
       expect(graph.nodes.length).to.equal(1);
@@ -107,7 +110,7 @@ describe('no relationship single node dependency graph', () => {
 
   describe('toJson', () => {
     it('check Json of 1 node 1 edge tree', async () => {
-      await graph.init(oneObjectRecords);
+      graph.buildGraph(oneObjectRecords);
       let key = '1';
       let value = {parent: '', name: 'Object1', type: 'Object'};
       let edge1 = {from: '1', to: '1'};
@@ -123,7 +126,7 @@ describe('no relationship single node dependency graph', () => {
 
 });
 
-describe('one relationship, two custom fields, one vrule dependency graph', () => {
+describe('one relationship, two custom fields, one vrule dependency graph', async () => {
   let graph: DependencyGraph;
  
   beforeEach(() => {
@@ -143,7 +146,8 @@ describe('one relationship, two custom fields, one vrule dependency graph', () =
   // they should be covered from the public method tests.
   describe('init', () => {
     it('populates nodes and edges for one record', async () => {
-      await graph.init(TwoFields1VRRecords);
+      await graph.init();
+      graph.buildGraph(TwoFields1VRRecords);
 
       expect(graph.nodes.length).to.equal(3);
       expect(graph.edges.length).to.equal(2);
@@ -152,7 +156,8 @@ describe('one relationship, two custom fields, one vrule dependency graph', () =
 
   describe('getParentRecords', () => {
     it('gets parent records of no parents', async () => {
-      await graph.init(TwoFields1VRRecords);
+      await graph.init();
+      graph.buildGraph(TwoFields1VRRecords);
       let expectedMap = new Map();
       expectedMap.set('1', 'ObjectA');
       expectedMap.set('2', 'ObjectA');
@@ -163,7 +168,8 @@ describe('one relationship, two custom fields, one vrule dependency graph', () =
 
   describe('to dot format', () => {
     it('Check dot format', async () => {
-      await graph.init(TwoFields1VRRecords);
+      await graph.init();
+      graph.buildGraph(TwoFields1VRRecords);
 
       expect(graph.toDotFormat()).to.contain(dotOutput2);
     });

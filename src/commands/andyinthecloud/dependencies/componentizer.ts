@@ -5,12 +5,13 @@ import {ClusterPackager } from '../../../lib/clusterPackager';
 import {FindCycles} from '../../../lib/DFSLib';
 import {core, SfdxCommand} from '@salesforce/command';
 import {Graph, Node, NodeGroup, ScalarNode} from '../../../lib/componentGraph';
+import { FieldDefinition } from '../../../lib/dependencyGraph';
 
 core.Messages.importMessagesDirectory(join(__dirname, '..', '..', '..'));
 const messages = core.Messages.loadMessages('dependencies-cli', 'analyze');
 
 export default class Analyze extends SfdxCommand {
-    public static outputFolder = 'lib/';
+    public static outputFolder = 'lib';
 
     public static description = messages.getMessage('commandDescription');
 
@@ -56,7 +57,7 @@ export default class Analyze extends SfdxCommand {
             dstDetails.set('name', (dstName as String));
             dstDetails.set('type', (dstType as String));
             const dstNode: Node = graph.getOrAddNode(dstId, dstDetails);
-            
+
             graph.addEdge(srcNode, dstNode);
 
             if (connectAuras && srcType == 'AuraDefinition' && dstType == 'AuraDefinitionBundle') {
@@ -65,6 +66,10 @@ export default class Analyze extends SfdxCommand {
         }
 
         return graph;
+    }
+
+    public static addLookupsToGraph(graph: Graph, fields: FieldDefinition[]) {
+        graph.addFields(fields);
     }
 
     public static removeCycles(graph: Graph): void {
@@ -78,9 +83,13 @@ export default class Analyze extends SfdxCommand {
                // Since we're removing multiple cycles we might have already
                // combined one of the nodes.  "get" the node again which will
                // map it to the correct NodeGroup before combining.
-               const src: Node = graph.getNode(backEdge[0].name);
-               const dst: Node = graph.getNode(backEdge[1].name);
-               graph.combineNodes(src, dst);
+               if (backEdge[1]) {
+                const src: Node = graph.getNode(backEdge[0].name);
+                const dst: Node = graph.getNode(backEdge[1].name);
+                if (src && dst) { // May have been deleted so check if they exist
+                    graph.combineNodes(src, dst);
+                }
+               }
             }
         } while (cycles.length > 0);
     }
@@ -130,9 +139,8 @@ export default class Analyze extends SfdxCommand {
                                     'RefMetadataComponentId, RefMetadataComponentNamespace, ' +
                                     'RefMetadataComponentName, RefMetadataComponentType ' +
                                     'FROM MetadataComponentDependency');
-        const g = Analyze.buildGraph(queryResults.records, false);
+        const g = Analyze.buildGraph(queryResults.records);
         Analyze.removeCycles(g);
-
         const leafNodes: Map<string, Node[]> = new Map<string, Node[]>();
         // Find all the leaf nodes
         for (const node of g.nodes) {
@@ -155,7 +163,6 @@ export default class Analyze extends SfdxCommand {
                 list.push(node);
             }
         }
-
         if (leafNodes.size > 0) {
             this.ux.log('Leaf components by type');
             Array.from(leafNodes.entries()).forEach(pair => {

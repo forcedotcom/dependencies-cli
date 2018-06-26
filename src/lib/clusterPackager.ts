@@ -1,11 +1,12 @@
 import fs = require('fs');
 import {Node, NodeGroup} from '../lib/componentGraph';
+import {PackageMerger, Member} from '../commands/andyinthecloud/packages/merge';
 
 export class ClusterPackager {
 
     constructor(private outputFolder: string) { }
 
-    public writeXMLNodes(n: Node[]) {
+    public writeXMLNodes(n: Node[], excludeMap: Map<String, Array<Member>> = null) {
         // Make output folder
         const dir = this.outputFolder + '/';
         if (!fs.existsSync(dir)) {
@@ -13,14 +14,14 @@ export class ClusterPackager {
         }
 
         const dest = dir + 'package.xml';
-        let text = this.writeHeader();
+        let text = ClusterPackager.writeHeader();
 
-        const typeMap = this.separateIntoGroupsFromNodes(n);
+        const typeMap = this.separateIntoGroupsFromNodes(n, excludeMap)
         Array.from(typeMap.entries()).forEach(pair => {
             text = text.concat((this.writeType(pair[0], pair[1]) as String).valueOf());
         });
 
-        text = text.concat(this.writeFooter());
+        text = text.concat(ClusterPackager.writeFooter());
 
         fs.writeFileSync(dest, text); // May need to switch to writeFile if xml creation does not work
         // fs.writeFile(dest, text, (err) => {
@@ -34,19 +35,19 @@ export class ClusterPackager {
 
     public writeXML(n: NodeGroup) {
         // Make output folder
-        const dir = this.outputFolder + n.name + '/';
+        const dir = this.outputFolder + '/' + n.name + '/';
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir);
         }
         const dest = dir + 'package.xml';
-        let text = this.writeHeader();
+        let text = ClusterPackager.writeHeader();
 
         const typeMap = this.separateIntoGroups(n);
         Array.from(typeMap.entries()).forEach(pair => {
             text = text.concat((this.writeType(pair[0], pair[1]) as String).valueOf());
         });
 
-        text = text.concat(this.writeFooter());
+        text = text.concat(ClusterPackager.writeFooter());
 
         fs.writeFileSync(dest, text); // May need to switch to writeFile if xml creation does not work
         // fs.writeFile(dest, text, (err) => {
@@ -64,23 +65,33 @@ export class ClusterPackager {
     }
 
     // precondition: All nodes are Scalar Nodes
-    private separateIntoGroupsFromNodes(nodes: Node[]): Map<String, String[]> {
+    private separateIntoGroupsFromNodes(nodes: Node[], excludeMap: Map<String, Array<Member>> = null): Map<String, String[]> {
         const output: Map<String, String[]>  = new Map<String, String[]>();
-        nodes.forEach(node => {
+        for (let node of nodes) {
             const type = ((node.details.get('type')) as String).valueOf();
+            const name = node.details.get('name');
+            let actualName = name as String;
+            if (type.startsWith("Custom")) {
+                actualName = actualName.concat('__c');
+            }
+
+            if (PackageMerger.containsMember(actualName, type, excludeMap)) {
+                continue;
+            }
+            
             let list = output.get(type);
             if (!list) {
                 list = new Array<String>();
-                list.push(node.details.get('name') as String);
+                list.push(name as String);
                 output.set(type, list);
             } else {
-                list.push(node.details.get('name') as String);
+                list.push(name as String);
             }
-        });
+        }
         return output;
     }
 
-    private writeHeader(): string {
+    public static writeHeader(): string {
         let header = '';
         // Add XML version and encoding
         header = header.concat('<?xml version=\"1.0\" encoding=\"UTF-8\"?>');
@@ -109,7 +120,7 @@ export class ClusterPackager {
         return typeBody;
     }
 
-    private writeFooter(): string {
+    public static writeFooter(): string {
         let footer = '';
         // Set version to 34.0, may be a flag that can be added later
         footer = footer.concat('\t<version>43.0</version>');
