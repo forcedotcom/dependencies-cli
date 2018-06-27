@@ -20,6 +20,10 @@ export class PackageMerger {
     let xmlOutput = fs.readFileSync(fileName);
     let outputMap = new Map<String,Array<Member>>();
     PackageMerger.parseXML.parseString(xmlOutput, (err: any, res: any) => {
+      if (err) {
+        console.log("INVALID XML FILE");
+        console.log(err);
+      }
       for (var i = 0; i < res.Package.types.length; i++) {
         let objects = new Array<Member>();
         let arr = res.Package.types[i];
@@ -53,7 +57,8 @@ export class PackageMerger {
 
 
 export default class PackageMerging extends SfdxCommand {
-  static description = 'This tool allows you to merge several package.xmls together to create one base package.xml';
+  static description = 'This tool allows you to merge several package.xmls together to create one base package.xml.' + 
+  'You can put the file names (including paths) to the package.xmls as args (as many as you want) and the base package.xml will be outputted to the console.';
 
   protected static flagsConfig= {
     help: flags.help({char: 'h', description: 'get some help'}),

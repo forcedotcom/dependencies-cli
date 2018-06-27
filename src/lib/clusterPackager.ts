@@ -1,6 +1,7 @@
 import fs = require('fs');
 import {Node, NodeGroup} from '../lib/componentGraph';
 import {PackageMerger, Member} from '../commands/andyinthecloud/packages/merge';
+import shell = require('shelljs');
 
 export class ClusterPackager {
 
@@ -8,9 +9,12 @@ export class ClusterPackager {
 
     public writeXMLNodes(n: Node[], excludeMap: Map<String, Array<Member>> = null) {
         // Make output folder
-        const dir = this.outputFolder + '/';
+        let dir = this.outputFolder;
+        if (this.outputFolder.charAt(this.outputFolder.length - 1) != '/') {
+            dir = this.outputFolder + '/';
+        }
         if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir);
+            shell.mkdir('-p',dir);;
         }
 
         const dest = dir + 'package.xml';
@@ -35,9 +39,14 @@ export class ClusterPackager {
 
     public writeXML(n: NodeGroup) {
         // Make output folder
-        const dir = this.outputFolder + '/' + n.name + '/';
+        // Make output folder
+        let dir = this.outputFolder;
+        if (this.outputFolder.charAt(this.outputFolder.length - 1) != '/') {
+            dir = this.outputFolder + '/';
+        }
+        dir = dir + n.name + '/';
         if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir);
+            shell.mkdir('-p',dir);;
         }
         const dest = dir + 'package.xml';
         let text = ClusterPackager.writeHeader();
