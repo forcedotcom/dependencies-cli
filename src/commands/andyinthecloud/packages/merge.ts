@@ -2,122 +2,119 @@ import fs = require('fs');
 import {flags, SfdxCommand} from '@salesforce/command';
 import {ClusterPackager} from '../../../lib/clusterPackager';
 
-
 export class Member {
   constructor(public name: string, public type: string) { }
 
   public equals(other: Member): boolean {
-    return (this.name == other.name && this.type == other.type);
+    return (this.name === other.name && this.type === other.type);
   }
 }
 
 export class PackageMerger {
 
+  public static parseXML = require('xml2js');
 
-  static parseXML : any = require('xml2js');
-
-  public static parseIntoMap(fileName: string): Map<String,Array<Member>> {
-    let xmlOutput = fs.readFileSync(fileName);
-    let outputMap = new Map<String,Array<Member>>();
-    PackageMerger.parseXML.parseString(xmlOutput, (err: any, res: any) => {
+  public static parseIntoMap(fileName: string): Map<String, Member[]> {
+    const xmlOutput = fs.readFileSync(fileName);
+    const outputMap = new Map<String, Member[]>();
+    PackageMerger.parseXML.parseString(xmlOutput, (err, res) => {
       if (err) {
-        console.log("INVALID XML FILE");
+        console.log('INVALID XML FILE');
         console.log(err);
       }
-      for (var i = 0; i < res.Package.types.length; i++) {
-        let objects = new Array<Member>();
-        let arr = res.Package.types[i];
-        let type = arr.name[0];
-        for (var j = 0; j < arr.members.length; j++) {
-          let record = new Member(arr.members[j], type);
-          objects.push(record);
+      if (res.Package.types) {
+        for (const arr of res.Package.types) {
+          const objects = new Array<Member>();
+          const type = arr.name[0];
+          for (const name of arr.members) {
+            const record = new Member(name, type);
+            objects.push(record);
+          }
+          outputMap.set(type, objects);
         }
-        outputMap.set(type, objects);
       }
     });
     return outputMap;
   }
 
-  public static containsMember(name: String, type: String, map: Map<String,Array<Member>>): boolean {
+  public static containsMember(name: String, type: String, map: Map<String, Member[]>): boolean {
     if (map == null) {
       return false;
     }
-    let arr = map.get(type);
+    const arr = map.get(type);
     if (arr) {
-      for (var i = 0; i < arr.length; i++) {
-        if (arr[i].name == name && arr[i].type == type) {
+      for (const mem of arr) {
+        if (mem.name === name && mem.type === type) {
           return true;
         }
       }
     }
-   return false;
+    return false;
   }
 
 }
 
-
 export default class PackageMerging extends SfdxCommand {
-  static description = 'This tool allows you to merge several package.xmls together to create one base package.xml.' + 
+  public static description = 'This tool allows you to merge several package.xmls together to create one base package.xml.' +
   'You can put the file names (including paths) to the package.xmls as args (as many as you want) and the base package.xml will be outputted to the console.';
 
-  protected static flagsConfig= {
-    help: flags.help({char: 'h', description: 'get some help'}),
-    // flag with no value (-f, --force)
-  }
-
-  static strict = false
-  static args = [{
+  public static strict = false;
+  public static args = [{
     name: 'files',
     required: true
   }];
 
-  async run() {
-    const {args, flags} = this.parse(PackageMerging)
+  protected static flagsConfig = {
+    help: flags.help({char: 'h', description: 'get some help'})
+    // flag with no value (-f, --force)
+  };
 
-    let fileArray = new Array<Map<String,Array<Member>>>();
+  public async run() {
 
-    for (var i = 0; i <this.argv.length; i++) {
-      let objArray = PackageMerger.parseIntoMap(this.argv[i]);
+    const fileArray = new Array<Map<String, Member[]>>();
+
+    for (const file of this.argv) {
+      const objArray = PackageMerger.parseIntoMap(file);
       fileArray.push(objArray);
     }
+
     let basePackageArray = fileArray[0];
     if (fileArray.length >= 2) {
       basePackageArray = this.mergeArrays(fileArray);
     }
-
     // Write package.xml
-    let packageString = this.writePackageXml(basePackageArray);
+    const packageString = this.writePackageXml(basePackageArray);
 
     console.log(packageString);
   }
 
-  private mergeArrays(fileArray: Array<Map<String,Array<Member>>>): Map<String,Array<Member>> {
-    let base = fileArray[0];
-    for (var i = 1; i < fileArray.length; i++) {
-      base.forEach((pair: Array<Member>, type: String) => {
+  private mergeArrays(fileArray: Array<Map<String, Member[]>>): Map<String, Member[]> {
+    const base = fileArray[0];
+    for (const file of fileArray) {
+      base.forEach((pair: Member[]) => {
         if (pair) {
-          for (var j = 0; j < pair.length; j++) {
-            if (!PackageMerger.containsMember(pair[j].name, pair[j].type, fileArray[i])) {
+          for (let j = 0; j < pair.length; j++) {
+            if (!PackageMerger.containsMember(pair[j].name, pair[j].type, file)) {
               pair[j] = null;
             }
           }
         }
       });
-    }    
+    }
     return base;
   }
 
-  private writePackageXml(baseMap: Map<String, Array<Member>>): String {
+  private writePackageXml(baseMap: Map<String, Member[]>): String {
     let xmlString = ClusterPackager.writeHeader();
-    baseMap.forEach( (memberList: Array<Member>, type: String) => {
-      let typeString = this.writeType(type, memberList);
+    baseMap.forEach((memberList: Member[], type: String) => {
+      const typeString = this.writeType(type, memberList);
       xmlString = xmlString.concat(typeString.valueOf());
     });
     xmlString = xmlString.concat(ClusterPackager.writeFooter());
     return xmlString;
   }
 
-  private writeType(type: String, members: Array<Member>): String {
+  private writeType(type: String, members: Member[]): String {
     let nullCount = 0;
     let typeBody = '\t<types>\n';
     for (const member of members) {
@@ -134,10 +131,9 @@ export default class PackageMerging extends SfdxCommand {
     typeBody = typeBody.concat(type.valueOf());
     typeBody = typeBody.concat('</name>\n');
     typeBody = typeBody.concat('\t</types>\n');
-    if (nullCount == members.length) {
+    if (nullCount === members.length) {
       return '';
     }
     return typeBody;
   }
-   
 }

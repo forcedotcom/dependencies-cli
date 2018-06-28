@@ -13,8 +13,8 @@ export class Graph {
     public getNodeFromName(name: string): Node {
         let found: Node;
         this._nodes.forEach(node => {
-            if ((node.details.get('name') as String).startsWith(name) && (node.details.get('type') as String) === "CustomObject") {
-                found = node; // Returning node here does not work and I don't know why 
+            if ((node.details.get('name') as String).startsWith(name) && (node.details.get('type') as String) === 'CustomObject') {
+                found = node; // Returning node here does not work and I don't know why
             }
         });
         return found;
@@ -24,7 +24,7 @@ export class Graph {
         let found: Node;
         this._nodes.forEach(node => {
             if (node.name.startsWith(name)) {
-                found = node; // Returning node here does not work and I don't know why 
+                found = node; // Returning node here does not work and I don't know why
             }
         });
         return found;
@@ -32,13 +32,13 @@ export class Graph {
 
     public addFields(fields: FieldDefinition[]) {
         fields.forEach(fielddef => {
-            let n1 = this.getNodeShortId(fielddef.EntityDefinitionId);
-            const objName = fielddef.DataType.slice(fielddef.DataType.indexOf("(") + 1, fielddef.DataType.lastIndexOf(")"));
-            let n2: Node = this.getNodeFromName(objName);
+            const n1 = this.getNodeShortId(fielddef.EntityDefinitionId);
+            const objName = fielddef.DataType.slice(fielddef.DataType.indexOf('(') + 1, fielddef.DataType.lastIndexOf(')'));
+            const n2: Node = this.getNodeFromName(objName);
             if (n1 != null && n2 != null) {
                 this.addEdge(n1, n2);
             }
-        })
+        });
     }
 
     public getEdges(node: Node): IterableIterator<Node> {
