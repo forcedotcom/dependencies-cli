@@ -1,5 +1,9 @@
 import { expect, test } from '@salesforce/command/dist/test';
 import { dotOutput1, dotOutput2, oneObjectRecords, TwoFields1VRRecords, customFieldRecords, validationRuleRecords, customObjects} from '../../../lib/dependencyGraphy.test';
+import { PackageMerger, Member } from '../../../../src/commands/andyinthecloud/packages/merge';
+import { ClusterPackager } from '../../../../src/lib/clusterPackager';
+import {stub} from 'sinon';;
+import fs = require('fs');
 
 const urlGetRecords = 'http://na30.salesforce.com/services/data/v43.0/tooling/query?q=SELECT%20MetadataComponentId%2C%20MetadataComponentName%2C%20MetadataComponentType%2C%20RefMetadataComponentId%2C%20RefMetadataComponentName%2C%20RefMetadataComponentType%20FROM%20MetadataComponentDependency';
 const urlGetAllComponents = "http://na30.salesforce.com/services/data/v43.0/tooling/query?q=SELECT%20MetadataComponentId%2CRefMetadataComponentId%20FROM%20MetadataComponentDependency%20WHERE%20(MetadataComponentType%20%3D%20'CustomField'%20OR%20RefMetadataComponentType%20%3D%20'CustomField')%20OR%20(MetadataComponentType%20%3D%20'ValidationRule'%20OR%20RefMetadataComponentType%20%3D%20'ValidationRule')";
@@ -9,6 +13,9 @@ const urlGetCustomObjects= "http://na30.salesforce.com/services/data/v43.0/tooli
 
 const urlWithCustomFieldIncludefilter = "http://na30.salesforce.com/services/data/v43.0/tooling/query?q=SELECT%20MetadataComponentId%2C%20MetadataComponentName%2C%20MetadataComponentType%2C%20RefMetadataComponentId%2C%20RefMetadataComponentName%2C%20RefMetadataComponentType%20FROM%20MetadataComponentDependency%20WHERE%20(((RefMetadataComponentType%20%3D%20\'CustomField\'%20OR%20MetadataComponentType%20%3D%20\'CustomField\')))";
 const urlWithIncludeAndExcludefilter = "http://na30.salesforce.com/services/data/v43.0/tooling/query?q=SELECT%20MetadataComponentId%2C%20MetadataComponentName%2C%20MetadataComponentType%2C%20RefMetadataComponentId%2C%20RefMetadataComponentName%2C%20RefMetadataComponentType%20FROM%20MetadataComponentDependency%20WHERE%20(((RefMetadataComponentType%20%3D%20\'CustomField\'%20OR%20MetadataComponentType%20%3D%20\'CustomField\')))%20AND%20(NOT%20(((RefMetadataComponentType%20%3D%20\'CustomObject\'%20OR%20MetadataComponentType%20%3D%20\'CustomObject\'))))";
+
+const xml1VRExcludePackage = '<?xml version="1.0" encoding="UTF-8"?>\n<Package xmlns="http://soap.sforce.com/2006/04/metadata">\n\t<types>\n\t\t<members>ValidationRule1</members>\n\t\t<name>ValidationRule</name>\n\t</types>\n\t<types>\n\t\t<members>Object1</members>\n\t\t<name>Object</name>\n\t</types>\n\t<version>43.0</version>\n</Package>';
+const xmlWithExcludePackage = '<?xml version="1.0" encoding="UTF-8"?>\n<Package xmlns="http://soap.sforce.com/2006/04/metadata">\n\t<types>\n\t\t<members>CustomField1__c</members>\n\t\t<name>CustomField</name>\n\t</types>\n\t<types>\n\t\t<members>ValidationRule1</members>\n\t\t<name>ValidationRule</name>\n\t</types>\n\t<version>43.0</version>\n</Package>';
 //TWO OBJECT TEST QUERY RETURNS -------------------
 const twoObjectRecords = [{
   MetadataComponentId: '1',
@@ -81,7 +88,6 @@ const dotOutput1ValidationRule =
 
 
 describe('org', () => {
-  let contents = '';
   test
     // Mock an org that the command can use
     .withOrg({ username: 'test@org.com' }, true)
@@ -291,3 +297,89 @@ describe('org test two custom fields, 1 validation rule, with include and exclud
       expect(ctx.stdout).to.contains(dotOutput2);
     })
 });
+
+
+describe ('Exclude Package tests', () => {
+  let contents:String;
+
+  beforeEach(() => {
+    stub(PackageMerger, "parseIntoMap").callsFake((file) => {
+      let map = new Map<String, Array<Member>>();
+      map.set("CustomField", [new Member("CustomField2__c", "CustomField")]); // So don't include CustomField2__c in the output
+      map.set("ValidationRule", [new Member("ValidationRule3", "ValidationRule")]); // Does not match, so keep ValidationRule1
+      return map;
+    });
+    stub (fs, "existsSync").callsFake(() => {
+      return true;
+    });
+    stub(fs, "writeFileSync").callsFake((dest, txt) => {
+      contents = txt;
+    });
+
+  });
+
+  afterEach(() => {
+    PackageMerger.parseIntoMap.restore();
+    fs.existsSync.restore();
+    fs.writeFileSync.restore();
+  });
+
+
+  describe('org test one validation rule one exclude package, should make no difference' , () => {
+    const components = {
+    };
+    test
+      // Mock an org that the command can use
+      .withOrg({ username: 'test@org.com' }, true)
+      .withConnectionRequest(async (...args) => {
+          if (args[0].url.startsWith(urlGetRecords)) {
+            //very first request, looking for records
+            return {records: oneValidationRuleRecords}
+          } else if (args[0].url.startsWith(urlGetAllComponents)) {
+            return {records: oneCustomComponent};
+          } else if (args[0].url.startsWith(urlGetCustomFields)) {
+            return {records: []};
+          } else if (args[0].url.startsWith(urlGetValidationRules)) {
+            return {records: oneValidationRule};
+          } else if (args[0].url.startsWith(urlGetCustomObjects)) {
+            return {records: []};
+          }
+          return {records: []};
+      })
+      .stdout({ print: true })
+      .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com', '-o', 'folder', '-x', 'arg1'])
+      .it('runs org --targetusername test@org.com', ctx => {
+        expect(contents).to.equal(xml1VRExcludePackage);
+        expect(ctx.stdout).to.contains(dotOutput1ValidationRule);
+      })
+  });
+
+
+  describe('org test two custom fields, 1 validation rule, with include and exclude list' , () => {
+    test
+      // Mock an org that the command can use
+      .withOrg({ username: 'test@org.com' }, true)
+      .withConnectionRequest(async (...args) => {
+          if (args[0].url.startsWith(urlGetRecords)) {
+            //very first request, looking for records
+            return {records: TwoFields1VRRecords}
+          } else if (args[0].url.startsWith(urlGetAllComponents)) {
+            return {records: []};
+          } else if (args[0].url.startsWith(urlGetCustomFields)) {
+            return {records: customFieldRecords};
+          } else if (args[0].url.startsWith(urlGetValidationRules)) {
+            return {records: validationRuleRecords};
+          } else if (args[0].url.startsWith(urlGetCustomObjects)) {
+            return {records: customObjects};
+          }
+          return {records: []};
+      })
+      .stdout({ print: true })
+      .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com', '-i', 'CustomField', '-o', 'folder', '-x', 'arg1'])
+      .it('runs org --targetusername test@org.com', ctx => {
+        expect(contents).to.equal(xmlWithExcludePackage);
+        expect(ctx.stdout).to.contains(dotOutput2);
+      })
+  });
+
+})

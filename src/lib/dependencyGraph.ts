@@ -1,6 +1,5 @@
 // TODO: Merge dependencyGraph and componentGraph
 import { Tooling } from 'jsforce';
-import { Member } from '../commands/andyinthecloud/packages/merge';
 
 export type DGNode = {
   parent: string;
@@ -58,8 +57,6 @@ export class DependencyGraph {
   private validationRules: ValidationRule[];
   private customObjects: CustomObject[];
   private customFieldDefinitions: FieldDefinition[];
-  private lookupObjects: string[];
-  private records ;
 
   constructor(private tooling: Tooling) { }
 
@@ -68,16 +65,15 @@ export class DependencyGraph {
     this.customFields = await this.retrieveCustomFields(this.allComponentIds);
     this.validationRules = await this.retrieveValidationRules(this.allComponentIds);
     this.customObjects = await this.retrieveCustomObjects(this.getObjectIds());
-    let customFieldEntities = this.customFields.map(r => r.TableEnumOrId);
+    const customFieldEntities = this.customFields.map(r => r.TableEnumOrId);
     this.customFieldDefinitions = await this.retrieveLookupRelationships(customFieldEntities);
-    let lookupRelationships = this.customFieldDefinitions.filter(x => x.DataType.startsWith("Lookup"));
+    const lookupRelationships = this.customFieldDefinitions.filter(x => x.DataType.startsWith('Lookup'));
     lookupRelationships.forEach(element => {
-      element.DataType = element.DataType.slice(element.DataType.indexOf("(") + 1, element.DataType.lastIndexOf(")"));
+      element.DataType = element.DataType.slice(element.DataType.indexOf('(') + 1, element.DataType.lastIndexOf(')'));
     });
-    this.lookupObjects = lookupRelationships.map(r => r.DataType);
   }
 
-  public buildGraph(records: MetadataComponentDependency[]) {
+  public buildGraph(records: MetadataComponentDependency[], idSetFilter: Set<String> = null) {
 
     const parentRecords = this.getParentRecords();
     const nodesMap = new Map();
@@ -86,36 +82,7 @@ export class DependencyGraph {
       let parentName = '';
       let refParentName = '';
 
-
-      if (record.RefMetadataComponentName.startsWith('0')) {
-        continue;
-      }
-      if (record.MetadataComponentType === 'CustomField' || record.MetadataComponentType === 'ValidationRule') {
-        parentName = parentRecords.get(record.MetadataComponentId) + '.';
-      }
-
-      if (record.RefMetadataComponentType === 'CustomField' || record.RefMetadataComponentType === 'ValidationRule') {
-        refParentName = parentRecords.get(record.RefMetadataComponentId) + '.';
-      }
-
-      nodesMap.set(record.MetadataComponentId, { parent: parentName, name: record.MetadataComponentName, type: record.MetadataComponentType });
-      nodesMap.set(record.RefMetadataComponentId, { parent: refParentName, name: record.RefMetadataComponentName, type: record.RefMetadataComponentType });
-      this.edges.push({ from: record.MetadataComponentId, to: record.RefMetadataComponentId });
-
-    }
-    for (const [key, value] of nodesMap) {
-      this.nodes.push({ id: key, node: value });
-    }
-  }
-
-  public buildGraphWithFilter(records: MetadataComponentDependency[],  idSet: Set<String>) {
-    const parentRecords = this.getParentRecords();
-    const nodesMap = new Map();
-    for (const record of records) {
-      let parentName = '';
-      let refParentName = '';
-
-      if (!idSet.has(record.MetadataComponentId)) {
+      if (idSetFilter && !idSetFilter.has(record.MetadataComponentId)) {
         continue;
       }
 
@@ -208,6 +175,10 @@ export class DependencyGraph {
     return await this.retrieveRecords<CustomObject>(query);
   }
 
+  public getLookupRelationships(): FieldDefinition[] {
+    return this.customFieldDefinitions;
+  }
+
   private async retrieveAllComponentIds(): Promise<string[]> {
     const query = "SELECT MetadataComponentId,RefMetadataComponentId FROM MetadataComponentDependency WHERE (MetadataComponentType = 'CustomField' OR RefMetadataComponentType = 'CustomField') OR (MetadataComponentType = 'ValidationRule' OR RefMetadataComponentType = 'ValidationRule')";
 
@@ -223,10 +194,6 @@ export class DependencyGraph {
     ids = Array.from(new Set(ids));
 
     return ids;
-  }
-
-  public getLookupRelationships(): FieldDefinition[] {
-    return this.customFieldDefinitions;
   }
 
   private getObjectIds() {

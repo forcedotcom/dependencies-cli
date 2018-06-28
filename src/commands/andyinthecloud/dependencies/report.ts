@@ -1,9 +1,9 @@
-import * as Analyze from '../dependencies/componentizer';
 import {core, flags, SfdxCommand } from '@salesforce/command';
+import * as Analyze from '../dependencies/componentizer';
 import {ClusterPackager} from '../../../lib/clusterPackager';
-import { DependencyGraph, MetadataComponentDependency } from '../../../lib/dependencyGraph';
+import {DependencyGraph, MetadataComponentDependency } from '../../../lib/dependencyGraph';
 import {FindAllDependencies} from '../../../lib/DFSLib';
-import {PackageMerger, Member} from '../packages/merge';
+import {Member, PackageMerger} from '../packages/merge';
 
 core.Messages.importMessagesDirectory(__dirname);
 const messages = core.Messages.loadMessages('dependencies-cli', 'depends');
@@ -20,7 +20,7 @@ export default class Org extends SfdxCommand {
     excludelist: flags.string({char: 'e', description: messages.getMessage('excludeListDescription')}),
     generatepackage: flags.string({char: 'o', description: messages.getMessage('generatePackageDescription')}),
     excludepackage: flags.string({
-      char: 'x', 
+      char: 'x',
       description: messages.getMessage('excludePackageDescription'),
       dependsOn: ['generatepackage']
     }),
@@ -44,14 +44,14 @@ export default class Org extends SfdxCommand {
 
     let nodes = Array.from(initialGraph.nodes);
 
-    let excludeMap: Map<String, Array<Member>>;
+    let excludeMap: Map<String, Member[]>;
     if (this.flags.excludepackage) {
       excludeMap = PackageMerger.parseIntoMap(this.flags.excludepackage);
     }
 
     if (this.flags.includedependencies) {
        const allRecords = await this.getAllRecords();
-       const completeGraph = Analyze.default.buildGraph(allRecords, true); //Connect Aura Components to Bundles
+       const completeGraph = Analyze.default.buildGraph(allRecords, true); // Connect Aura Components to Bundles
        Analyze.default.addLookupsToGraph(completeGraph, deps.getLookupRelationships());
        const dfs = new FindAllDependencies(completeGraph);
        const initialNodes = Array.from(initialGraph.nodes);
@@ -61,7 +61,7 @@ export default class Org extends SfdxCommand {
        // Get all Nodes, including dependencies
        nodes = Array.from(dfs.visited);
        // Initialize the dependency graph with a filtered list of all Records
-       await deps.buildGraphWithFilter(allRecords, dfs.visitedNames);
+       await deps.buildGraph(allRecords, dfs.visitedNames);
     } else {
       // Initialize with the records from query
       deps.buildGraph(records);

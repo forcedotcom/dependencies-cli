@@ -1,11 +1,10 @@
-// import {flags} from '@oclif/command';
 import assert = require('assert');
+import {core, SfdxCommand} from '@salesforce/command';
 import {join} from 'path';
 import {ClusterPackager } from '../../../lib/clusterPackager';
 import {FindCycles} from '../../../lib/DFSLib';
-import {core, SfdxCommand} from '@salesforce/command';
+import {FieldDefinition } from '../../../lib/dependencyGraph';
 import {Graph, Node, NodeGroup, ScalarNode} from '../../../lib/componentGraph';
-import { FieldDefinition } from '../../../lib/dependencyGraph';
 
 core.Messages.importMessagesDirectory(join(__dirname, '..', '..', '..'));
 const messages = core.Messages.loadMessages('dependencies-cli', 'analyze');
@@ -60,8 +59,8 @@ export default class Analyze extends SfdxCommand {
 
             graph.addEdge(srcNode, dstNode);
 
-            if (connectAuras && srcType == 'AuraDefinition' && dstType == 'AuraDefinitionBundle') {
-                graph.addEdge(dstNode,srcNode); // Also add reverse reference
+            if (connectAuras && srcType === 'AuraDefinition' && dstType === 'AuraDefinitionBundle') {
+                graph.addEdge(dstNode, srcNode); // Also add reverse reference
             }
         }
 
