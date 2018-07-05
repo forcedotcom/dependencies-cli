@@ -18,7 +18,7 @@ function createNode (id: string, name: String, type: String ): Node {
   return n;
 }
 
-describe('All file tests', () => {
+describe('All file tests for Cluster', () => {
   let contents = '';
   let folder = '';
   let clusterPackager: ClusterPackager;
@@ -43,7 +43,7 @@ describe('All file tests', () => {
     test
     .it('Sends in no records and so should output just header and footer', () => {
       let g = new NodeGroup();
-      clusterPackager.writeXML(g); 
+      clusterPackager.writeXMLNodeGroup(g); 
       expect(folder).to.equal('../test/lib/' + g.name+ '/package.xml');
       expect(contents).to.equal(emptyXml);
     })
@@ -113,7 +113,7 @@ describe('All file tests', () => {
       let nodeGroup = (gNode as ScalarNode).combineWith(hNode as ScalarNode);
       nodeGroup.combineWith(jNode as ScalarNode);
       nodeGroup.combineWith(kNode as ScalarNode);
-      clusterPackager.writeXML(nodeGroup);
+      clusterPackager.writeXMLNodeGroup(nodeGroup);
       expect(folder).to.equal('../test/lib/g, h, j, k/package.xml');
       expect(contents).to.equal(fourNodeXml);
     })

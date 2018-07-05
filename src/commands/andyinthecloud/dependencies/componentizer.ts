@@ -26,7 +26,7 @@ export default class Analyze extends SfdxCommand {
     public static args = [{name: 'file'}];
 
     // tslint:disable-next-line:no-any
-    public static buildGraph(results: any, connectAuras: boolean = false): Graph {
+    public static buildGraph(results: any, connectAuras: boolean = false, forwards:boolean = true, backwards:boolean = false): Graph {
         const graph: Graph = new Graph();
         for (const edge of results) {
             if (edge.RefMetadataComponentName.startsWith('0')) {
@@ -56,11 +56,21 @@ export default class Analyze extends SfdxCommand {
             dstDetails.set('name', (dstName as String));
             dstDetails.set('type', (dstType as String));
             const dstNode: Node = graph.getOrAddNode(dstId, dstDetails);
+            
+            if (forwards) {
+                graph.addEdge(srcNode, dstNode);
 
-            graph.addEdge(srcNode, dstNode);
+                if (connectAuras && srcType === 'AuraDefinition' && dstType === 'AuraDefinitionBundle') {
+                    graph.addEdge(dstNode, srcNode); // Also add reverse reference
+                }
+            } 
 
-            if (connectAuras && srcType === 'AuraDefinition' && dstType === 'AuraDefinitionBundle') {
-                graph.addEdge(dstNode, srcNode); // Also add reverse reference
+            if (backwards) {
+                graph.addEdge(dstNode, srcNode);
+
+                if (connectAuras && srcType === 'AuraDefinition' && dstType === 'AuraDefinitionBundle') {
+                    graph.addEdge(srcNode, dstNode); // Also add reverse reference
+                }
             }
         }
 
@@ -149,7 +159,7 @@ export default class Analyze extends SfdxCommand {
                 let type: string;
                 if (node instanceof NodeGroup) {
                     type = 'Cluster';
-                    xmlWriter.writeXML((node as NodeGroup));
+                    xmlWriter.writeXMLNodeGroup((node as NodeGroup));
                 } else {
                     type = ((node.details.get('type')) as String).valueOf();
                 }
