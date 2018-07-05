@@ -86,8 +86,6 @@ export default class PackageMerging extends SfdxCommand {
       fileArray.push(objArray);
     }
 
-    console.log(fileArray);
-
     let basePackageArray = fileArray[0];
     if (fileArray.length >= 2) {
       basePackageArray = this.mergeArrays(fileArray);
