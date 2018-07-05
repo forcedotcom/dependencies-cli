@@ -10,6 +10,10 @@ export class Graph {
         return this._nodes.values();
     }
 
+    public get nodeNames(): IterableIterator<string> {
+        return this._nodes.keys();
+    }
+
     public getNodeFromName(name: string): Node {
         let found: Node;
         this._nodes.forEach(node => {
@@ -65,7 +69,6 @@ export class Graph {
     }
 
     public combineNodes(node1: Node, node2: Node): Node {
-        console.log(node1.name);
         assert.ok(this._nodes.has(node1.name), node1.name + ' doesn\'t exist');
         assert.ok(this._nodes.has(node2.name), node2.name + ' doesn\'t exist');
         if (node1 === node2) {

@@ -25,7 +25,6 @@ export abstract class DepthFirstSearch {
 
     protected dfs(node: Node) {
         this.visit(node);
-
         for (const dst of this.graph.getEdges(node)) {
             this.explore(node, dst);
             if (this.state.has(dst)) {

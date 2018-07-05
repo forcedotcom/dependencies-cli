@@ -1,7 +1,6 @@
 import { expect, test } from '@salesforce/command/dist/test';
 import { dotOutput1, dotOutput2, oneObjectRecords, TwoFields1VRRecords, customFieldRecords, validationRuleRecords, customObjects} from '../../../lib/dependencyGraphy.test';
-import { PackageMerger, Member } from '../../../../src/commands/andyinthecloud/packages/merge';
-import { ClusterPackager } from '../../../../src/lib/clusterPackager';
+import { PackageMerger, Member } from '../../../../src/commands/andyinthecloud/manifests/merge';
 import {stub} from 'sinon';;
 import fs = require('fs');
 

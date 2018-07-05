@@ -6,7 +6,7 @@
   "dependencies": {
     "@oclif/config": "^1.6.27",
     "@oclif/errors": "^1.0.9",
-    "@salesforce/command": "0.1.5",
+    "@salesforce/command": "0.1.6",
     "debug": "^3.1.0",
     "file-exists": "^5.0.1",
     "file-system": "^2.2.2",

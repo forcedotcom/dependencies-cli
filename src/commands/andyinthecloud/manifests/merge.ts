@@ -1,6 +1,7 @@
 import fs = require('fs');
 import {flags, SfdxCommand} from '@salesforce/command';
 import {ClusterPackager} from '../../../lib/clusterPackager';
+import shell = require('shelljs');
 
 export class Member {
   constructor(public name: string, public type: string) { }
@@ -55,28 +56,37 @@ export class PackageMerger {
 }
 
 export default class PackageMerging extends SfdxCommand {
+  private homedir = require('os').homedir();
+
   public static description = 'This tool allows you to merge several package.xmls together to create one base package.xml.' +
   'You can put the file names (including paths) to the package.xmls as args (as many as you want) and the base package.xml will be outputted to the console.';
 
   public static strict = false;
-  public static args = [{
-    name: 'files',
-    required: true
-  }];
 
-  protected static flagsConfig = {
-    help: flags.help({char: 'h', description: 'get some help'})
+  static flagsConfig = {
+    help: flags.help({char: 'h', description: 'get some help'}),
+    outputdirectory: flags.string({char: 'd', description: 'output folder location to put package.xml'})
     // flag with no value (-f, --force)
   };
 
-  public async run() {
+  public async run(): Promise<String> {
 
     const fileArray = new Array<Map<String, Member[]>>();
-
+    let cont = false;
     for (const file of this.argv) {
+      if (file === '-d' || file === '--outputdir') { // TODO: Find a better way to get args and flags
+        cont = true; // Skip next arg also 
+        continue;
+      }
+      if (cont) {
+        cont = false;
+        continue;
+      }
       const objArray = PackageMerger.parseIntoMap(file);
       fileArray.push(objArray);
     }
+
+    console.log(fileArray);
 
     let basePackageArray = fileArray[0];
     if (fileArray.length >= 2) {
@@ -85,7 +95,25 @@ export default class PackageMerging extends SfdxCommand {
     // Write package.xml
     const packageString = this.writePackageXml(basePackageArray);
 
+    if (this.flags.outputdirectory) {
+      let dir = this.flags.outputdirectory;
+      if (dir.charAt(dir.length - 1) !== '/') {
+          dir = dir + '/';
+      }
+      if (dir.match('/^~'))  {
+        dir.replace("~", this.homedir);
+      }
+
+      if (!fs.existsSync(dir)) {
+          shell.mkdir('-p', dir);
+      }
+
+      dir = dir + 'package.xml';  
+      fs.writeFileSync(dir, packageString);     
+    }
     console.log(packageString);
+
+    return packageString;
   }
 
   private mergeArrays(fileArray: Array<Map<String, Member[]>>): Map<String, Member[]> {

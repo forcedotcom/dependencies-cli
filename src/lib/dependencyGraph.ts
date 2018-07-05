@@ -73,7 +73,7 @@ export class DependencyGraph {
     });
   }
 
-  public buildGraph(records: MetadataComponentDependency[], idSetFilter: Set<String> = null) {
+  public buildGraph(records: MetadataComponentDependency[], idSetFilter: Set<String> = null, initialIds:Array<string> = null, getDependencies:boolean = true) {
 
     const parentRecords = this.getParentRecords();
     const nodesMap = new Map();
@@ -82,9 +82,23 @@ export class DependencyGraph {
       let parentName = '';
       let refParentName = '';
 
-      if (idSetFilter && !idSetFilter.has(record.MetadataComponentId)) {
+      if (idSetFilter && !(idSetFilter.has(record.MetadataComponentId) || idSetFilter.has(record.RefMetadataComponentId))) {
         continue;
       }
+
+      if (initialIds) {
+        if (getDependencies) {
+          // Make sure if part of initial set, that it must be a MetadataComponentId and not a RefMetadataComponentId. Only if getting dependencies, and not dependents
+          if (initialIds.includes(record.RefMetadataComponentId)&& !initialIds.includes(record.MetadataComponentId)) {
+            continue;
+          }
+        } else {
+          if (initialIds.includes(record.MetadataComponentId) && !initialIds.includes(record.RefMetadataComponentId)) {
+            continue;
+          }
+        }
+      }
+
 
       if (record.RefMetadataComponentName.startsWith('0')) {
         continue;
@@ -99,7 +113,12 @@ export class DependencyGraph {
 
       nodesMap.set(record.MetadataComponentId, { parent: parentName, name: record.MetadataComponentName, type: record.MetadataComponentType });
       nodesMap.set(record.RefMetadataComponentId, { parent: refParentName, name: record.RefMetadataComponentName, type: record.RefMetadataComponentType });
+      
       this.edges.push({ from: record.MetadataComponentId, to: record.RefMetadataComponentId });
+
+      if (record.MetadataComponentType === 'AuraDefinition' && record.RefMetadataComponentType === 'AuraDefinitionBundle') {
+        this.edges.push({ from: record.RefMetadataComponentId, to: record.MetadataComponentId }); // Also add reverse reference
+    }
 
     }
     for (const [key, value] of nodesMap) {
