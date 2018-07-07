@@ -21,7 +21,7 @@ export default class Org extends SfdxCommand {
     excludelist: flags.string({char: 'e', description: messages.getMessage('excludeListDescription')}),
     packageoutputdirectory: flags.string({char: 'd', description: messages.getMessage('generatePackageDescription')}),
     excludepackagefile: flags.string({
-      char: 'f',
+      char: 'x',
       description: messages.getMessage('excludePackageDescription'),
       dependsOn: ['generatepackage']
     }),
