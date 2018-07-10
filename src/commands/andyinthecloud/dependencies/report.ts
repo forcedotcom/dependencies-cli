@@ -2,9 +2,12 @@ import {core, flags, SfdxCommand } from '@salesforce/command';
 import * as Analyze from '../dependencies/componentizer';
 import {ClusterPackager} from '../../../lib/clusterPackager';
 import {DependencyGraph, MetadataComponentDependency } from '../../../lib/dependencyGraph';
+import {FileWriter} from '../../../lib/fileWriter';
 import {FindAllDependencies} from '../../../lib/DFSLib';
 import {Member, PackageMerger} from '../manifests/merge';
 import {Connection} from '@salesforce/core';
+import shell = require('shelljs');
+import process = require('child_process');
 
 core.Messages.importMessagesDirectory(__dirname);
 const messages = core.Messages.loadMessages('dependencies-cli', 'depends');
@@ -12,18 +15,18 @@ const messages = core.Messages.loadMessages('dependencies-cli', 'depends');
 export default class Org extends SfdxCommand {
   public static description = messages.getMessage('description');
   public static examples = [messages.getMessage('example1')];
+  private static isValid = true;
 
   protected static flagsConfig = {
     resultformat: flags.string({ char: 'r', description: messages.getMessage('resultformatFlagDescription'), default: 'dot', options: ['dot', 'xml'] }),
-    // metadatacomponentname: flags.string({ char: 'm', description: messages.getMessage('metadatacomponentnameFlagDescription') }),
-    // querycriteria: flags.string({ char: 'q', description: messages.getMessage('querycriteriaFlagDescription') }),
     includelist: flags.string({char: 'i', description: messages.getMessage('includeListDescription')}),
     excludelist: flags.string({char: 'e', description: messages.getMessage('excludeListDescription')}),
-    packageoutputdirectory: flags.string({char: 'd', description: messages.getMessage('generatePackageDescription')}),
+    outputdir: flags.string({char: 'd', description: messages.getMessage('outputDirDescription')}),
+    generatemanifest: flags.boolean({char: 'm', description: messages.getMessage('generateManifestDescription')}),
     excludepackagefile: flags.string({
       char: 'x',
       description: messages.getMessage('excludePackageDescription'),
-      dependsOn: ['generatepackage']
+      dependsOn: ['generatemanifest']
     }),
     includealldependencies: flags.boolean({
       char: 'a',
@@ -34,10 +37,18 @@ export default class Org extends SfdxCommand {
       char: 't',
       description: messages.getMessage('getIncludeDependents'),
       dependsOn: ['includelist']
+    }),
+    validate: flags.boolean({
+      char: 'v',
+      description: messages.getMessage('validateDescription'),
     })
+
   };
 
   protected static requiresUsername = true;
+
+  private validated = true;
+
 
   public async run(): Promise<core.AnyJson> {
     const conn = this.org.getConnection();
@@ -47,6 +58,8 @@ export default class Org extends SfdxCommand {
     await deps.init();
     const records = await this.getDependencyRecords();
     const initialGraph = Analyze.default.buildGraph(records, true);
+    let parentRecords = deps.getParentRecords();
+    initialGraph.addParents(parentRecords);
 
     let nodes = Array.from(initialGraph.nodes);
 
@@ -59,10 +72,10 @@ export default class Org extends SfdxCommand {
     if (this.flags.includealldependencies || this.flags.includealldependents) {
       allRecords = await this.getAllRecords();
       const completeGraph = Analyze.default.buildGraph(allRecords, true, this.flags.includealldependencies === true, this.flags.includealldependents === true);
+      completeGraph.addParents(parentRecords);
       Analyze.default.addLookupsToGraph(completeGraph, deps.getLookupRelationships());
       const dfs = new FindAllDependencies(completeGraph);
-      let initialNodes = Array.from(initialGraph.nodes);
-      initialNodes.forEach(element => {
+      nodes.forEach(element => {
         let foundNode = completeGraph.getNode(element.name);
         if (foundNode) {
           dfs.runNode(foundNode);
@@ -73,7 +86,7 @@ export default class Org extends SfdxCommand {
       // Initialize the dependency graph with a filtered list of all Records
       let initialNames = Array.from(initialGraph.nodeNames);
       if (this.flags.includealldependencies && this.flags.includealldependents) {
-        initialNodes = null; // Do not specify any initial nodes
+        initialNames = null; // Do not specify any initial nodes
       }
 
       await deps.buildGraph(allRecords, dfs.visitedNames, initialNames , this.flags.includealldependencies === true);
@@ -83,18 +96,57 @@ export default class Org extends SfdxCommand {
     }
 
     let xmlString = '';
-    if (this.flags.packageoutputdirectory) {
-      const cp = new ClusterPackager(this.flags.packageoutputdirectory);
+    const cp = new ClusterPackager();
+    if (this.flags.generatemanifest) {
       xmlString = cp.writeXMLNodes(nodes, excludeMap);
+      if (this.flags.outputdir) {
+        FileWriter.writeFile(this.flags.outputdir, 'package.xml', xmlString);
+      } else {
+        FileWriter.writeFile('.','package.xml', xmlString);
+      }
     }
-    // Only dot format is allowed by the flags property, but put
-    // this check in case you add more later
-    if (this.flags.resultformat === 'dot') {
-      this.ux.log(deps.toDotFormat());
-    } else if (this.flags.resultformat === 'xml' && xmlString == '') {
-      const packageWriter = new ClusterPackager('');
-      xmlString = packageWriter.writeXMLNodes(nodes, null, false);
-      this.ux.log(xmlString);
+    let output = '';
+    let fileName = 'graph.dot';
+    if (this.flags.resultformat == 'xml') {
+      output = cp.writeXMLNodes(nodes, excludeMap);
+      fileName = 'package.xml';
+    } else {
+      output = deps.toDotFormat();
+    }
+
+    if (this.flags.outputdir) {
+      FileWriter.writeFile(this.flags.outputdir, fileName, output);
+      if (this.flags.resultformat == 'dot') {
+        this.ux.log ('Created file: ' + this.flags.outputdir + '/graph.dot');
+      }
+      if (this.flags.resultformat == 'xml' || this.flags.generatemanifest) {
+        this.ux.log('Created file: ' + this.flags.outputdir + '/package.xml');
+      }
+    } else {
+      this.ux.log(output)
+    }
+
+    if (this.flags.validate) {
+      
+      let tempFolder = FileWriter.createTempFolder() + '/';
+
+      const cp = new ClusterPackager();
+      let xmlTempString = cp.writeXMLNodes(nodes, excludeMap);
+      
+      let file =  tempFolder + 'package.xml';
+      FileWriter.writeFile(tempFolder, 'package.xml', xmlTempString);
+      let username = this.flags.targetusername;
+      let cmd = 'sfdx force:mdapi:retrieve -u ' + username + ' -k ' + file + ' -r ' + tempFolder;
+      
+      await this.sh(cmd);
+          
+      cmd = 'sfdx force:mdapi:deploy -w 10 -u ' + username + ' -c -f ' + tempFolder  + 'unpackaged.zip';
+      
+      await this.sh(cmd);
+
+      let cleanupCommand = 'rm -rf ' + tempFolder;
+
+      await this.sh(cleanupCommand);
     }
 
     // All commands should support --json
@@ -169,4 +221,20 @@ export default class Org extends SfdxCommand {
     return (await query).records;
   }
 
+
+  private async sh(cmd) {
+    return new Promise(function (resolve, reject) {
+      process.exec(cmd, (err, stdout, stderr) => {
+        if (err) {
+          console.log(err);
+          Org.isValid = false;
+          reject({err});
+        } else {
+          resolve({ stdout, stderr });
+        }
+      });
+    });
+  }
+
+  
 }

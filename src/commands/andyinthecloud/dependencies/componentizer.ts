@@ -2,6 +2,7 @@ import assert = require('assert');
 import {core, SfdxCommand} from '@salesforce/command';
 import {join} from 'path';
 import {ClusterPackager } from '../../../lib/clusterPackager';
+import {FileWriter} from '../../../lib/fileWriter';
 import {FindCycles} from '../../../lib/DFSLib';
 import {FieldDefinition } from '../../../lib/dependencyGraph';
 import {Graph, Node, NodeGroup, ScalarNode} from '../../../lib/componentGraph';
@@ -10,7 +11,7 @@ core.Messages.importMessagesDirectory(join(__dirname, '..', '..', '..'));
 const messages = core.Messages.loadMessages('dependencies-cli', 'analyze');
 
 export default class Analyze extends SfdxCommand {
-    public static outputFolder = 'lib';
+    public static outputFolder = 'lib/';
 
     public static description = messages.getMessage('commandDescription');
 
@@ -138,7 +139,7 @@ export default class Analyze extends SfdxCommand {
 
     public async run(): Promise<Map<string, Node[]>> {
         // const orgId = this.org.getOrgId();
-        const xmlWriter = new ClusterPackager(Analyze.outputFolder);
+        const xmlWriter = new ClusterPackager();
         const anyConn = this.org.getConnection();
         anyConn.version = '43.0';
         const conn = anyConn.tooling;
@@ -159,7 +160,9 @@ export default class Analyze extends SfdxCommand {
                 let type: string;
                 if (node instanceof NodeGroup) {
                     type = 'Cluster';
-                    xmlWriter.writeXMLNodeGroup((node as NodeGroup));
+                    let xmlString = xmlWriter.writeXMLNodeGroup((node as NodeGroup));
+                    let folder = Analyze.outputFolder + (node as NodeGroup).name + '/';
+                    FileWriter.writeFile(folder, 'package.xml', xmlString);
                 } else {
                     type = ((node.details.get('type')) as String).valueOf();
                 }
