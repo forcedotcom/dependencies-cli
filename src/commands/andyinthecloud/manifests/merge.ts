@@ -1,7 +1,7 @@
 import fs = require('fs');
 import {flags, SfdxCommand} from '@salesforce/command';
 import {ClusterPackager} from '../../../lib/clusterPackager';
-import shell = require('shelljs');
+import { FileWriter } from '../../../lib/fileWriter';
 
 export class Member {
   constructor(public name: string, public type: string) { }
@@ -94,20 +94,7 @@ export default class PackageMerging extends SfdxCommand {
     const packageString = this.writePackageXml(basePackageArray);
 
     if (this.flags.outputdirectory) {
-      let dir = this.flags.outputdirectory;
-      if (dir.charAt(dir.length - 1) !== '/') {
-          dir = dir + '/';
-      }
-      if (dir.match('/^~'))  {
-        dir.replace("~", this.homedir);
-      }
-
-      if (!fs.existsSync(dir)) {
-          shell.mkdir('-p', dir);
-      }
-
-      dir = dir + 'package.xml';  
-      fs.writeFileSync(dir, packageString);     
+      FileWriter.writeFile(this.flags.outputdirectory, 'package.xml', packageString); 
     }
     console.log(packageString);
 

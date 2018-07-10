@@ -233,7 +233,7 @@ export class DependencyGraph {
       if (val.startsWith('0')) {
         // Grab the custom object the field points to
         const customObject = this.customObjects.filter(x => x.Id.startsWith(val));
-        val = customObject[0].DeveloperName;
+        val = customObject[0].DeveloperName + '__c';
       }
       map.set(record['Id'], val);
     }

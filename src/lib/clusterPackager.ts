@@ -1,32 +1,32 @@
-import fs = require('fs');
-import shell = require('shelljs');
 import {Member, PackageMerger} from '../commands/andyinthecloud/manifests/merge';
 import {Node, NodeGroup} from '../lib/componentGraph';
 
 export class ClusterPackager {
-    private homedir = require('os').homedir();
 
     // precondition: All nodes are Scalar Nodes
     public static separateIntoGroupsFromNodes(nodes: Node[], excludeMap: Map<String, Member[]> = null): Map<String, String[]> {
         const output: Map<String, String[]>  = new Map<String, String[]>();
         for (const node of nodes) {
-            const type = ((node.details.get('type')) as String).valueOf();
+            let type = ((node.details.get('type')) as String).valueOf();
             const name = node.details.get('name');
             let actualName = name as String;
             if (type.startsWith('Custom')) {
                 actualName = actualName.concat('__c');
+            } else if (type === 'AuraDefinition') {
+                continue;
+            } else if (type === 'StandardEntity') {
+                continue;
             }
-
             if (PackageMerger.containsMember(actualName, type, excludeMap)) {
                 continue;
             }
             let list = output.get(type);
             if (!list) {
                 list = new Array<String>();
-                list.push(name as String);
+                list.push(actualName as String);
                 output.set(type, list);
             } else {
-                list.push(name as String);
+                list.push(actualName as String);
             }
         }
         return output;
@@ -52,29 +52,18 @@ export class ClusterPackager {
 
     // Non - static members
 
-    constructor(private outputFolder: string) { }
-
     public writeXMLNodes(n: Node[], excludeMap: Map<String, Member[]> = null, toFile: boolean = true): string {
         // Make output folder
-        let dir = this.outputFolder;
-        if (this.outputFolder.charAt(this.outputFolder.length - 1) !== '/') {
-            dir = this.outputFolder + '/';
-        }
         
-        return this.writeXML(dir, n, excludeMap, toFile);
+        return this.writeXML(n, excludeMap, toFile);
     }
 
     public writeXMLNodeGroup(n: NodeGroup, toFile: boolean = true): string {
         // Make output folder
-        let dir = this.outputFolder;
-        if (this.outputFolder.charAt(this.outputFolder.length - 1) !== '/') {
-            dir = this.outputFolder + '/';
-        }
-        dir = dir + n.name + '/';
-        return this.writeXML(dir, Array.from(n.nodes), null, toFile);
+        return this.writeXML(Array.from(n.nodes), null, toFile);
     }
 
-    private writeXML(dest: string, n: Node[], excludeMap: Map<String, Member[]> = null, toFile: boolean): string {
+    private writeXML(n: Node[], excludeMap: Map<String, Member[]> = null, toFile: boolean): string {
         
         let text = ClusterPackager.writeHeader();
 
@@ -84,25 +73,13 @@ export class ClusterPackager {
         });
 
         text = text.concat(ClusterPackager.writeFooter());
-        if (toFile) {
-            if (dest.match('/^~'))  {
-                dest.replace("~", this.homedir);
-            }
-            if (!fs.existsSync(dest)) {
-                shell.mkdir('-p', dest);
-            }
-            dest = dest + 'package.xml';
-            fs.writeFileSync(dest, text); 
-        }
+
         return text;
     }
 
     private writeType(type: String, nodes: String[]): String {
         let typeBody = '\t<types>\n';
         let ending = '';
-        if (type.startsWith('Custom')) {
-            ending = '__c';
-        }
         for (const n of nodes) {
             typeBody = typeBody.concat('\t\t<members>');
             typeBody = typeBody.concat((n as String).valueOf());

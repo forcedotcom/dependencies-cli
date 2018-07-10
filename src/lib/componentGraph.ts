@@ -34,6 +34,14 @@ export class Graph {
         return found;
     }
 
+    public addParents(parentRecords: Map<string, string>) {
+        this._nodes.forEach( node => {
+            if (parentRecords.has(node.name)) {
+                node.details.set('name', (parentRecords.get(node.name) + "." + node.details.get('name')) as String);
+            }
+        })
+    }
+
     public addFields(fields: FieldDefinition[]) {
         fields.forEach(fielddef => {
             const n1 = this.getNodeShortId(fielddef.EntityDefinitionId);
