@@ -10,6 +10,7 @@
     "babel-preset-latest": "^6.24.1",
     "child-process": "^1.0.2",
     "child_process": "^1.0.2",
+    "crypto": "^1.0.1",
     "debug": "^3.1.0",
     "file-exists": "^5.0.1",
     "file-system": "^2.2.2",

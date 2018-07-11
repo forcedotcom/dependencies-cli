@@ -1,16 +1,16 @@
 import fs = require('fs');
 import shell = require('shelljs');
+import crypto = require('crypto');
+import path = require('path');
+
 export class FileWriter {
     
     private static homedir = require('os').homedir();
 
     public static createFolder(folderName: string): string {
         let actualFolder = folderName;
-        if (folderName.charAt(folderName.length - 1) !== '/') {
-            actualFolder = folderName + '/';
-        }
-        if (actualFolder.match('/^~'))  {
-            actualFolder.replace("~", FileWriter.homedir);
+        if (actualFolder.match(/^~/))  {
+            actualFolder.replace('~', FileWriter.homedir);
         }
         if (!fs.existsSync(actualFolder)) {
             shell.mkdir('-p', actualFolder);
@@ -20,14 +20,14 @@ export class FileWriter {
 
     public static writeFile(folderName, fileName, text): void {
         let actualFolder = FileWriter.createFolder(folderName);
-        let completeFile = actualFolder + fileName;
+        let completeFile = path.join(actualFolder, fileName);
         fs.writeFileSync(completeFile, text);
     }
 
     public static createTempFolder(): string {
         let tempFolder = 'tmp';
         while (fs.existsSync(tempFolder)) {
-            tempFolder = tempFolder + '1f3'; // Doesn't really matter what we add, just want to make folder unique
+            tempFolder = tempFolder + crypto.randomBytes(16).toString('hex'); 
         }
         shell.mkdir('-p', tempFolder);
         return tempFolder + '/';
