@@ -7,7 +7,7 @@ import {FindCycles} from '../../../lib/DFSLib';
 import {FieldDefinition } from '../../../lib/dependencyGraph';
 import {Graph, Node, NodeGroup, ScalarNode} from '../../../lib/componentGraph';
 
-core.Messages.importMessagesDirectory(join(__dirname, '..', '..', '..'));
+core.Messages.importMessagesDirectory(join(__dirname));
 const messages = core.Messages.loadMessages('dependencies-cli', 'analyze');
 
 export default class Analyze extends SfdxCommand {
@@ -16,11 +16,7 @@ export default class Analyze extends SfdxCommand {
     public static description = messages.getMessage('commandDescription');
 
     public static examples = [
-    `$ sfdx hello:org --targetusername myOrg@example.com --targetdevhubusername devhub@org.com
-    Hello world! Your org id is: 00Dxx000000004321 and your hub org id is: 00Dxx0000000001234
-    `,
-    `$ sfdx hello:org --name myname --targetusername myOrg@example.com
-    Hello myname! Your org id is: 00Dxx000000004321
+    `sfdx andyinthecloud:dependencies:componentizer -u DevHub 
     `
     ];
 
@@ -61,7 +57,7 @@ export default class Analyze extends SfdxCommand {
             if (forwards) {
                 graph.addEdge(srcNode, dstNode);
 
-                if (connectAuras && srcType === 'AuraDefinition' && dstType === 'AuraDefinitionBundle') {
+                if (connectAuras && srcType === 'AuraDefinition' && dstType === 'AuraDefinitionBundle' || srcType == 'FlexiPage') {
                     graph.addEdge(dstNode, srcNode); // Also add reverse reference
                 }
             } 
@@ -69,7 +65,7 @@ export default class Analyze extends SfdxCommand {
             if (backwards) {
                 graph.addEdge(dstNode, srcNode);
 
-                if (connectAuras && srcType === 'AuraDefinition' && dstType === 'AuraDefinitionBundle') {
+                if (connectAuras && srcType === 'AuraDefinition' && dstType === 'AuraDefinitionBundle' || srcType == 'FlexiPage') {
                     graph.addEdge(srcNode, dstNode); // Also add reverse reference
                 }
             }
@@ -81,43 +77,6 @@ export default class Analyze extends SfdxCommand {
     public static addLookupsToGraph(graph: Graph, fields: FieldDefinition[]) {
         graph.addFields(fields);
     }
-
-    public static removeCycles(graph: Graph): void {
-        let remover: FindCycles;
-        let cycles: Node[][];
-        do {
-           remover = new FindCycles(graph);
-           remover.run();
-           cycles = remover.cycles;
-           for (const backEdge of cycles) {
-               // Since we're removing multiple cycles we might have already
-               // combined one of the nodes.  "get" the node again which will
-               // map it to the correct NodeGroup before combining.
-               if (backEdge[1]) {
-                const src: Node = graph.getNode(backEdge[0].name);
-                const dst: Node = graph.getNode(backEdge[1].name);
-                if (src && dst) { // May have been deleted so check if they exist
-                    graph.combineNodes(src, dst);
-                }
-               }
-            }
-        } while (cycles.length > 0);
-    }
-
-    // protected static flagsConfig = {
-      // flag with a value (-n, --name=VALUE)
-      // name: flags.string({char: 'n', description: messages.getMessage('nameFlagDescription')}),
-      // force: flags.boolean({char: 'f'})
-    // };
-
-    // Comment this out if your command does not require an org username
-    protected static requiresUsername = true;
-
-    // Comment this out if your command does not support a hub org username
-    // protected static supportsDevhubUsername = true;
-
-    // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
-    protected static requiresProject = false;
 
     private static makeName(ns: string, name: string): string {
         if (ns) {
@@ -139,7 +98,6 @@ export default class Analyze extends SfdxCommand {
 
     public async run(): Promise<Map<string, Node[]>> {
         // const orgId = this.org.getOrgId();
-        const xmlWriter = new ClusterPackager();
         const anyConn = this.org.getConnection();
         anyConn.version = '43.0';
         const conn = anyConn.tooling;
@@ -150,7 +108,7 @@ export default class Analyze extends SfdxCommand {
                                     'RefMetadataComponentName, RefMetadataComponentType ' +
                                     'FROM MetadataComponentDependency');
         const g = Analyze.buildGraph(queryResults.records);
-        Analyze.removeCycles(g);
+        g.removeCycles();
         const leafNodes: Map<string, Node[]> = new Map<string, Node[]>();
         // Find all the leaf nodes
         for (const node of g.nodes) {
@@ -160,7 +118,7 @@ export default class Analyze extends SfdxCommand {
                 let type: string;
                 if (node instanceof NodeGroup) {
                     type = 'Cluster';
-                    let xmlString = xmlWriter.writeXMLNodeGroup((node as NodeGroup));
+                    let xmlString = ClusterPackager.writeXMLNodeGroup((node as NodeGroup));
                     let folder = Analyze.outputFolder + (node as NodeGroup).name + '/';
                     FileWriter.writeFile(folder, 'package.xml', xmlString);
                 } else {

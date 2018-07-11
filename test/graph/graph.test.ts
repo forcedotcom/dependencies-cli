@@ -105,7 +105,7 @@ describe ('Simple', function() {
 
         //console.log(obj.result.records);
         let graph : Graph = Analyze.default.buildGraph(obj.result.records);
-        Analyze.default.removeCycles(graph);
+        graph.removeCycles();
         for (const node of graph.nodes) {
             console.log(JSON.stringify(node.name));
         };

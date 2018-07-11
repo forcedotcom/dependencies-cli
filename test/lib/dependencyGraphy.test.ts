@@ -54,7 +54,7 @@ export const dotOutput2 =
   `// Nodes
   X1 [label=<ObjectA.CustomField1<BR/><FONT POINT-SIZE="8">CustomField</FONT>>]
   X2 [label=<ObjectA.ValidationRule1<BR/><FONT POINT-SIZE="8">ValidationRule</FONT>>]
-  X3 [label=<CustomObjectA.CustomField2<BR/><FONT POINT-SIZE="8">CustomField</FONT>>]
+  X3 [label=<CustomObjectA__c.CustomField2<BR/><FONT POINT-SIZE="8">CustomField</FONT>>]
   // Paths
   X1->X2
   X3->X1
@@ -161,7 +161,7 @@ describe('one relationship, two custom fields, one vrule dependency graph', asyn
       let expectedMap = new Map();
       expectedMap.set('1', 'ObjectA');
       expectedMap.set('2', 'ObjectA');
-      expectedMap.set('3', 'CustomObjectA');
+      expectedMap.set('3', 'CustomObjectA__c');
       expect(graph.getParentRecords()).to.deep.equal(expectedMap);
     });
   });

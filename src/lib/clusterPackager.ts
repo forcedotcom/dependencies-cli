@@ -1,5 +1,7 @@
-import {Member, PackageMerger} from '../commands/andyinthecloud/manifests/merge';
+import {Member, PackageMerger} from '../lib/packageMerger';
 import {Node, NodeGroup} from '../lib/componentGraph';
+
+const TYPE_BLACKLIST = ['AuraDefinition', 'StandardEntity'];
 
 export class ClusterPackager {
 
@@ -12,9 +14,7 @@ export class ClusterPackager {
             let actualName = name as String;
             if (type.startsWith('Custom')) {
                 actualName = actualName.concat('__c');
-            } else if (type === 'AuraDefinition') {
-                continue;
-            } else if (type === 'StandardEntity') {
+            } else if (TYPE_BLACKLIST.indexOf(type) >= 0) {
                 continue;
             }
             if (PackageMerger.containsMember(actualName, type, excludeMap)) {
@@ -23,16 +23,14 @@ export class ClusterPackager {
             let list = output.get(type);
             if (!list) {
                 list = new Array<String>();
-                list.push(actualName as String);
                 output.set(type, list);
-            } else {
-                list.push(actualName as String);
-            }
+            } 
+            list.push(actualName as String);
         }
         return output;
     }
 
-    public static writeHeader(): string {
+    private static writeHeader(): string {
         let header = '';
         // Add XML version and encoding
         header = header.concat('<?xml version=\"1.0\" encoding=\"UTF-8\"?>');
@@ -41,7 +39,7 @@ export class ClusterPackager {
         return header;
     }
 
-    public static writeFooter(): string {
+    private static writeFooter(): string {
         let footer = '';
         // Set version to 34.0, may be a flag that can be added later
         footer = footer.concat('\t<version>43.0</version>');
@@ -50,20 +48,25 @@ export class ClusterPackager {
         return footer;
     }
 
-    // Non - static members
-
-    public writeXMLNodes(n: Node[], excludeMap: Map<String, Member[]> = null, toFile: boolean = true): string {
-        // Make output folder
-        
-        return this.writeXML(n, excludeMap, toFile);
+    public static writeXMLNodes(n: Node[], excludeMap: Map<String, Member[]> = null, toFile: boolean = true): string {
+        return ClusterPackager.writeXML(n, excludeMap, toFile);
     }
 
-    public writeXMLNodeGroup(n: NodeGroup, toFile: boolean = true): string {
-        // Make output folder
-        return this.writeXML(Array.from(n.nodes), null, toFile);
+    public static writeXMLNodeGroup(n: NodeGroup, toFile: boolean = true): string {
+        return ClusterPackager.writeXML(Array.from(n.nodes), null, toFile);
     }
 
-    private writeXML(n: Node[], excludeMap: Map<String, Member[]> = null, toFile: boolean): string {
+    public static writeXMLMap(baseMap: Map<String, Member[]>): String {
+        let xmlString = ClusterPackager.writeHeader();
+        baseMap.forEach((memberList: Member[], type: String) => {
+          const typeString = this.writeTypeMember(type, memberList);
+          xmlString = xmlString.concat(typeString.valueOf());
+        });
+        xmlString = xmlString.concat(ClusterPackager.writeFooter());
+        return xmlString;
+    }
+
+    private static writeXML(n: Node[], excludeMap: Map<String, Member[]> = null, toFile: boolean): string {
         
         let text = ClusterPackager.writeHeader();
 
@@ -77,7 +80,30 @@ export class ClusterPackager {
         return text;
     }
 
-    private writeType(type: String, nodes: String[]): String {
+    private static writeTypeMember(type: String, members: Member[]): String {
+        let nullCount = 0;
+        let typeBody = '\t<types>\n';
+        for (const member of members) {
+          if (member != null) {
+            typeBody = typeBody.concat('\t\t<members>');
+            typeBody = typeBody.concat(member.name.valueOf());
+            typeBody = typeBody.concat('</members>');
+            typeBody = typeBody.concat('\n');
+          } else {
+            nullCount++;
+          }
+        }
+        typeBody = typeBody.concat('\t\t<name>');
+        typeBody = typeBody.concat(type.valueOf());
+        typeBody = typeBody.concat('</name>\n');
+        typeBody = typeBody.concat('\t</types>\n');
+        if (nullCount === members.length) {
+          return '';
+        }
+        return typeBody;
+      }
+
+    private static writeType(type: String, nodes: String[]): String {
         let typeBody = '\t<types>\n';
         let ending = '';
         for (const n of nodes) {

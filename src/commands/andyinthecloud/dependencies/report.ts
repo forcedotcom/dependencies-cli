@@ -4,15 +4,15 @@ import {ClusterPackager} from '../../../lib/clusterPackager';
 import {DependencyGraph, MetadataComponentDependency } from '../../../lib/dependencyGraph';
 import {FileWriter} from '../../../lib/fileWriter';
 import {FindAllDependencies} from '../../../lib/DFSLib';
-import {Member, PackageMerger} from '../manifests/merge';
+import {Member, PackageMerger} from '../../../lib/PackageMerger';
 import {Connection} from '@salesforce/core';
-import shell = require('shelljs');
 import process = require('child_process');
+import { Graph, Node } from '../../../lib/componentGraph';
 
 core.Messages.importMessagesDirectory(__dirname);
 const messages = core.Messages.loadMessages('dependencies-cli', 'depends');
 
-export default class Org extends SfdxCommand {
+export default class Report extends SfdxCommand {
   public static description = messages.getMessage('description');
   public static examples = [messages.getMessage('example1')];
   private static isValid = true;
@@ -47,8 +47,6 @@ export default class Org extends SfdxCommand {
 
   protected static requiresUsername = true;
 
-  private validated = true;
-
 
   public async run(): Promise<core.AnyJson> {
     const conn = this.org.getConnection();
@@ -56,7 +54,7 @@ export default class Org extends SfdxCommand {
 
     const deps = new DependencyGraph(conn.tooling);
     await deps.init();
-    const records = await this.getDependencyRecords();
+    const records = await this.getDependencyRecords(conn);
     const initialGraph = Analyze.default.buildGraph(records, true);
     let parentRecords = deps.getParentRecords();
     initialGraph.addParents(parentRecords);
@@ -70,90 +68,26 @@ export default class Org extends SfdxCommand {
 
     let allRecords: MetadataComponentDependency[];
     if (this.flags.includealldependencies || this.flags.includealldependents) {
-      allRecords = await this.getAllRecords();
-      const completeGraph = Analyze.default.buildGraph(allRecords, true, this.flags.includealldependencies === true, this.flags.includealldependents === true);
-      completeGraph.addParents(parentRecords);
-      Analyze.default.addLookupsToGraph(completeGraph, deps.getLookupRelationships());
-      const dfs = new FindAllDependencies(completeGraph);
-      nodes.forEach(element => {
-        let foundNode = completeGraph.getNode(element.name);
-        if (foundNode) {
-          dfs.runNode(foundNode);
-        }
-      });
-      // Get all Nodes, including dependencies
-      nodes = Array.from(dfs.visited);
-      // Initialize the dependency graph with a filtered list of all Records
-      let initialNames = Array.from(initialGraph.nodeNames);
-      if (this.flags.includealldependencies && this.flags.includealldependents) {
-        initialNames = null; // Do not specify any initial nodes
-      }
-
-      await deps.buildGraph(allRecords, dfs.visitedNames, initialNames , this.flags.includealldependencies === true);
+        let allRecords = await this.getAllRecords(conn);
+        nodes = await this.buildDFSGraph(allRecords, deps, initialGraph, parentRecords);
     } else {
       // Initialize with the records from query
       deps.buildGraph(records);
     }
 
-    let xmlString = '';
-    const cp = new ClusterPackager();
-    if (this.flags.generatemanifest) {
-      xmlString = cp.writeXMLNodes(nodes, excludeMap);
-      if (this.flags.outputdir) {
-        FileWriter.writeFile(this.flags.outputdir, 'package.xml', xmlString);
-      } else {
-        FileWriter.writeFile('.','package.xml', xmlString);
-      }
-    }
-    let output = '';
-    let fileName = 'graph.dot';
-    if (this.flags.resultformat == 'xml') {
-      output = cp.writeXMLNodes(nodes, excludeMap);
-      fileName = 'package.xml';
-    } else {
-      output = deps.toDotFormat();
-    }
+    this.generateOutputs(deps,nodes, excludeMap);
 
-    if (this.flags.outputdir) {
-      FileWriter.writeFile(this.flags.outputdir, fileName, output);
-      if (this.flags.resultformat == 'dot') {
-        this.ux.log ('Created file: ' + this.flags.outputdir + '/graph.dot');
-      }
-      if (this.flags.resultformat == 'xml' || this.flags.generatemanifest) {
-        this.ux.log('Created file: ' + this.flags.outputdir + '/package.xml');
-      }
-    } else {
-      this.ux.log(output)
-    }
 
     if (this.flags.validate) {
-      
-      let tempFolder = FileWriter.createTempFolder() + '/';
-
-      const cp = new ClusterPackager();
-      let xmlTempString = cp.writeXMLNodes(nodes, excludeMap);
-      
-      let file =  tempFolder + 'package.xml';
-      FileWriter.writeFile(tempFolder, 'package.xml', xmlTempString);
-      let username = this.flags.targetusername;
-      let cmd = 'sfdx force:mdapi:retrieve -u ' + username + ' -k ' + file + ' -r ' + tempFolder;
-      
-      await this.sh(cmd);
-          
-      cmd = 'sfdx force:mdapi:deploy -w 10 -u ' + username + ' -c -f ' + tempFolder  + 'unpackaged.zip';
-      
-      await this.sh(cmd);
-
-      let cleanupCommand = 'rm -rf ' + tempFolder;
-
-      await this.sh(cleanupCommand);
+        let xmlTempString = ClusterPackager.writeXMLNodes(nodes, excludeMap);
+        await this.validate(xmlTempString);
     }
 
     // All commands should support --json
     return deps.toJson();
   }
 
-  private async getDependencyRecords() {
+  private async getDependencyRecords(connection: core.Connection) {
     let queryString = 'SELECT MetadataComponentId, MetadataComponentName, MetadataComponentType, RefMetadataComponentId, RefMetadataComponentName, RefMetadataComponentType FROM MetadataComponentDependency';
     let where = ' WHERE';
 
@@ -209,25 +143,99 @@ export default class Org extends SfdxCommand {
     if (where !== ' WHERE') {
       queryString = queryString.concat(where);
     }
-    const connection: Connection = this.org.getConnection();
     const query = connection.tooling.autoFetchQuery<MetadataComponentDependency>(queryString);
     return (await query).records;
   }
 
-  private async getAllRecords() {
+  private async getAllRecords(connection: core.Connection) {
     const queryString = 'SELECT MetadataComponentId, MetadataComponentName, MetadataComponentType, RefMetadataComponentId, RefMetadataComponentName, RefMetadataComponentType FROM MetadataComponentDependency';
-    const connection: Connection = this.org.getConnection();
     const query = connection.tooling.autoFetchQuery<MetadataComponentDependency>(queryString);
     return (await query).records;
   }
 
+
+  private async buildDFSGraph(allRecords: MetadataComponentDependency[], deps: DependencyGraph, initialGraph: Graph, parentRecords: Map<string, string>): Promise<Node[]> {
+    const completeGraph = Analyze.default.buildGraph(allRecords, true, this.flags.includealldependencies === true, this.flags.includealldependents === true);
+    completeGraph.addParents(parentRecords);
+    Analyze.default.addLookupsToGraph(completeGraph, deps.getLookupRelationships());
+    const dfs = new FindAllDependencies(completeGraph);
+    let nodes = Array.from(initialGraph.nodes);
+    nodes.forEach(element => {
+      let foundNode = completeGraph.getNode(element.name);
+      if (foundNode) {
+        dfs.runNode(foundNode);
+      }
+    });
+    // Get all Nodes, including dependencies
+    nodes = Array.from(dfs.visited);
+    // Initialize the dependency graph with a filtered list of all Records
+    let initialNames = Array.from(initialGraph.nodeNames);
+    if (this.flags.includealldependencies && this.flags.includealldependents) {
+      initialNames = null; // Do not specify any initial nodes
+    }
+
+    await deps.buildGraph(allRecords, dfs.visitedNames, initialNames , this.flags.includealldependencies === true);
+    return nodes;
+  }
+
+  private async validate(xmlTempString: string): Promise<any> {
+    let tempFolder = FileWriter.createTempFolder() + '/';
+
+    
+    let file =  tempFolder + 'package.xml';
+    FileWriter.writeFile(tempFolder, 'package.xml', xmlTempString);
+    let username = this.flags.targetusername;
+    let cmd = 'sfdx force:mdapi:retrieve -u ' + username + ' -k ' + file + ' -r ' + tempFolder;
+    
+    await this.sh(cmd);
+        
+    cmd = 'sfdx force:mdapi:deploy -w 10 -u ' + username + ' -c -f ' + tempFolder  + 'unpackaged.zip';
+    
+    await this.sh(cmd);
+
+    let cleanupCommand = 'rm -rf ' + tempFolder;
+
+    await this.sh(cleanupCommand);
+  }
+
+  private generateOutputs(deps: DependencyGraph, nodes: Node[], excludeMap: Map<String, Member[]>) {
+    let xmlString = '';
+    if (this.flags.generatemanifest) {
+      xmlString = ClusterPackager.writeXMLNodes(nodes, excludeMap);
+      if (this.flags.outputdir) {
+        FileWriter.writeFile(this.flags.outputdir, 'package.xml', xmlString);
+      } else {
+        FileWriter.writeFile('.','package.xml', xmlString);
+      }
+    }
+
+    let output = '';
+    let fileName = 'graph.dot';
+    if (this.flags.resultformat == 'xml') {
+      output = ClusterPackager.writeXMLNodes(nodes, excludeMap);
+      fileName = 'package.xml';
+    } else {
+      output = deps.toDotFormat();
+    }
+
+    if (this.flags.outputdir) {
+      FileWriter.writeFile(this.flags.outputdir, fileName, output);
+      if (this.flags.resultformat == 'dot') {
+        this.ux.log ('Created file: ' + this.flags.outputdir + '/graph.dot');
+      }
+      if (this.flags.resultformat == 'xml' || this.flags.generatemanifest) {
+        this.ux.log('Created file: ' + this.flags.outputdir + '/package.xml');
+      }
+    } else {
+      this.ux.log(output)
+    }
+  }
 
   private async sh(cmd) {
     return new Promise(function (resolve, reject) {
       process.exec(cmd, (err, stdout, stderr) => {
         if (err) {
           console.log(err);
-          Org.isValid = false;
           reject({err});
         } else {
           resolve({ stdout, stderr });

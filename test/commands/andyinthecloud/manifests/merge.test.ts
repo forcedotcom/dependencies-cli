@@ -1,6 +1,6 @@
 import {expect, test} from '@oclif/test'
 import {stub} from 'sinon';
-import { PackageMerger, Member } from '../../../../src/commands/andyinthecloud/manifests/merge';
+import { PackageMerger, Member } from '../../../../src/lib/packageMerger';
 
 let emptyXml = '<?xml version="1.0" encoding="UTF-8"?>\n<Package xmlns="http://soap.sforce.com/2006/04/metadata">\n\t<version>43.0</version>\n</Package>';
 

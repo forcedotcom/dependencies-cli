@@ -2,7 +2,9 @@ import { expect, test } from '@salesforce/command/dist/test';
 import { ClusterPackager } from '../../src/lib/clusterPackager';
 import {stub} from 'sinon';
 import fs = require('fs');
+import shell = require('shelljs');
 import { NodeGroup, Node, ScalarNode } from '../../src/lib/componentGraph';
+import {FileWriter} from '../../src/lib/fileWriter';
 
 
 let emptyXml = '<?xml version="1.0" encoding="UTF-8"?>\n<Package xmlns="http://soap.sforce.com/2006/04/metadata">\n\t<version>43.0</version>\n</Package>';
@@ -21,11 +23,11 @@ function createNode (id: string, name: String, type: String ): Node {
 describe('All file tests for Cluster', () => {
   let contents = '';
   let folder = '';
-  let clusterPackager: ClusterPackager;
+  let fileWriter: FileWriter;
 
   beforeEach(() => {
-    clusterPackager = new ClusterPackager('../test/lib')
     stub (fs, "mkdirSync");
+    stub (shell, "mkdir");
     stub(fs, "writeFileSync").callsFake((dest, text) => {
       contents = text;
       folder = dest;
@@ -35,6 +37,7 @@ describe('All file tests for Cluster', () => {
   afterEach(() => {
     fs.writeFileSync.restore();
     fs.mkdirSync.restore();
+    shell.mkdir.restore();
   });
 
 
@@ -43,8 +46,9 @@ describe('All file tests for Cluster', () => {
     test
     .it('Sends in no records and so should output just header and footer', () => {
       let g = new NodeGroup();
-      clusterPackager.writeXMLNodeGroup(g); 
-      expect(folder).to.equal('../test/lib/' + g.name+ '/package.xml');
+      let xmlString = ClusterPackager.writeXMLNodeGroup(g); 
+      FileWriter.writeFile('../test/lib/' + g.name, 'package.xml', xmlString);
+      expect(folder).to.equal('../test/lib/package.xml');
       expect(contents).to.equal(emptyXml);
     })
 
@@ -56,7 +60,8 @@ describe('All file tests for Cluster', () => {
       let nodeList = new Array<Node>();
       let gNode = createNode('G', "G", 'BasicNode');
       nodeList.push(gNode);
-      clusterPackager.writeXMLNodes(nodeList);
+      let xmlString = ClusterPackager.writeXMLNodes(nodeList);
+      FileWriter.writeFile('../test/lib', 'package.xml', xmlString)
       expect(folder).to.equal('../test/lib/package.xml');
       expect(contents).to.equal(oneNodeXml);
     })
@@ -77,7 +82,8 @@ describe('All file tests for Cluster', () => {
       nodeList.push(iNode);
       nodeList.push(jNode);
       nodeList.push(kNode);
-      clusterPackager.writeXMLNodes(nodeList);
+      let xmlString = ClusterPackager.writeXMLNodes(nodeList);
+      FileWriter.writeFile('../test/lib', 'package.xml', xmlString)
       expect(folder).to.equal('../test/lib/package.xml');
       expect(contents).to.equal(fiveNodeXml);
     })
@@ -96,7 +102,8 @@ describe('All file tests for Cluster', () => {
       nodeList.push(hNode);
       nodeList.push(jNode);
       nodeList.push(kNode);
-      clusterPackager.writeXMLNodes(nodeList);
+      let xmlString = ClusterPackager.writeXMLNodes(nodeList);
+      FileWriter.writeFile('../test/lib', 'package.xml', xmlString)
       expect(folder).to.equal('../test/lib/package.xml');
       expect(contents).to.equal(fourNodeXml);
     })
@@ -113,7 +120,8 @@ describe('All file tests for Cluster', () => {
       let nodeGroup = (gNode as ScalarNode).combineWith(hNode as ScalarNode);
       nodeGroup.combineWith(jNode as ScalarNode);
       nodeGroup.combineWith(kNode as ScalarNode);
-      clusterPackager.writeXMLNodeGroup(nodeGroup);
+      let xmlString = ClusterPackager.writeXMLNodeGroup(nodeGroup);
+      FileWriter.writeFile('../test/lib/' + nodeGroup.name, 'package.xml', xmlString)
       expect(folder).to.equal('../test/lib/g, h, j, k/package.xml');
       expect(contents).to.equal(fourNodeXml);
     })

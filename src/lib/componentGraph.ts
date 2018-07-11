@@ -1,6 +1,7 @@
 // TODO: Merge dependencyGraph and componentGraph
 import assert = require('assert');
 import { FieldDefinition } from './dependencyGraph';
+import {FindCycles} from './DFSLib';
 
 export class Graph {
     private _nodes: Map<string, Node> = new Map<string, Node>();
@@ -40,6 +41,28 @@ export class Graph {
                 node.details.set('name', (parentRecords.get(node.name) + "." + node.details.get('name')) as String);
             }
         })
+    }
+
+    public removeCycles(): void {
+        let remover: FindCycles;
+        let cycles: Node[][];
+        do {
+           remover = new FindCycles(this);
+           remover.run();
+           cycles = remover.cycles;
+           for (const backEdge of cycles) {
+               // Since we're removing multiple cycles we might have already
+               // combined one of the nodes.  "get" the node again which will
+               // map it to the correct NodeGroup before combining.
+               if (backEdge[1]) {
+                const src: Node = this.getNode(backEdge[0].name);
+                const dst: Node = this.getNode(backEdge[1].name);
+                if (src && dst) { // May have been deleted so check if they exist
+                    this.combineNodes(src, dst);
+                }
+               }
+            }
+        } while (cycles.length > 0);
     }
 
     public addFields(fields: FieldDefinition[]) {

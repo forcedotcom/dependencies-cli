@@ -98,8 +98,7 @@ export class DependencyGraph {
           }
         }
       }
-
-
+      
       if (record.RefMetadataComponentName.startsWith('0')) {
         continue;
       }
