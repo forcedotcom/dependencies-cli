@@ -1,4 +1,5 @@
-import {Graph, Node} from '../lib/componentGraph';
+import {Graph} from './componentGraph';
+import {Node} from '../lib/NodeDefs';
 
 export abstract class DepthFirstSearch {
     protected readonly graph: Graph;

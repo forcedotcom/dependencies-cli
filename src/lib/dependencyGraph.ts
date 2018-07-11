@@ -1,56 +1,10 @@
 // TODO: Merge dependencyGraph and componentGraph
 import { Tooling } from 'jsforce';
-
-export type DGNode = {
-  parent: string;
-  name: string;
-  type: string;
-};
-
-export type DGEdge = {
-  from: string;
-  to: string;
-};
-
-export interface Record {
-  Id?: string;
-}
-
-export interface MetadataComponentDependency extends Record {
-  MetadataComponentId: string;
-  MetadataComponentName: string;
-  MetadataComponentType: string;
-  RefMetadataComponentId: string;
-  RefMetadataComponentName: string;
-  RefMetadataComponentType: string;
-}
-
-export interface CustomField extends Record {
-  TableEnumOrId: string;
-}
-
-export interface ValidationRule extends Record {
-  EntityDefinitionId: string;
-}
-
-export interface CustomObject extends Record {
-  DeveloperName: string;
-}
-
-export interface FieldDefinition {
-  DurableId: string;
-  DataType: string;
-  EntityDefinitionId: string;
-}
-
-export interface ComponentNode extends Record {
-  Name: string;
-  Type: string;
-}
+import {Node, NodeImpl, Edge, ScalarNode, CustomField, ValidationRule, CustomObject, FieldDefinition, MetadataComponentDependency} from './NodeDefs';
 
 export class DependencyGraph {
-  public nodes: Array<{ id: string, node: DGNode }> = [];
-  public edges: DGEdge[] = [];
+  public nodesMap: Map<string, Node> = new Map<string, Node>();
+  public edges: Edge[] = [];
 
   private allComponentIds: string[];
   private customFields: CustomField[];
@@ -59,6 +13,10 @@ export class DependencyGraph {
   private customFieldDefinitions: FieldDefinition[];
 
   constructor(private tooling: Tooling) { }
+
+  public get nodes() {
+      return this.nodesMap.values();
+  }
 
   public async init() {
     this.allComponentIds = await this.retrieveAllComponentIds();
@@ -76,7 +34,6 @@ export class DependencyGraph {
   public buildGraph(records: MetadataComponentDependency[], idSetFilter: Set<String> = null) {
 
     const parentRecords = this.getParentRecords();
-    const nodesMap = new Map();
 
     for (const record of records) {
       let parentName = '';
@@ -97,15 +54,46 @@ export class DependencyGraph {
         refParentName = parentRecords.get(record.RefMetadataComponentId) + '.';
       }
 
-      nodesMap.set(record.MetadataComponentId, { parent: parentName, name: record.MetadataComponentName, type: record.MetadataComponentType });
-      nodesMap.set(record.RefMetadataComponentId, { parent: refParentName, name: record.RefMetadataComponentName, type: record.RefMetadataComponentType });
+      const srcId: string = record.MetadataComponentId;
+      const srcName = record.MetadataComponentName;
+      const srcType = record.MetadataComponentType;
+
+      const dstId: string = record.RefMetadataComponentId;
+      const dstName = record.RefMetadataComponentName
+      const dstType = record.RefMetadataComponentType;
+
+      const srcDetails = new Map<string, object>();
+      srcDetails.set('name', (srcName as String));
+      srcDetails.set('type', (srcType as String));
+      srcDetails.set('parent', (parentName as String))
+      const srcNode: Node = this.getOrAddNode(srcId, srcDetails);
+
+      const dstDetails = new Map<string, object>();
+      dstDetails.set('name', (dstName as String));
+      dstDetails.set('type', (dstType as String));
+      srcDetails.set('parent', (refParentName as String))
+      const dstNode: Node = this.getOrAddNode(dstId, dstDetails);
+
       this.edges.push({ from: record.MetadataComponentId, to: record.RefMetadataComponentId });
+      this.addEdge(srcNode, dstNode);
 
     }
-    for (const [key, value] of nodesMap) {
-      this.nodes.push({ id: key, node: value });
-    }
   }
+
+  public getOrAddNode(name: string, details: Map<string, object>): Node {
+    let n: Node = this.nodesMap.get(name);
+    if (n) {
+        return n;   
+    }
+
+    n = new ScalarNode(name, details);
+    this.nodesMap.set(name, n);
+    return n;
+}
+
+public addEdge(src: Node, dst: Node): void {
+    (src as NodeImpl).addEdge(dst);
+ }
 
   /**
    * Render as DOT format
@@ -125,7 +113,7 @@ export class DependencyGraph {
     dot += '  // Nodes\n';
 
     for (const node of this.nodes) {
-      dot += `  X${node.id} [label=<${node.node.parent}${node.node.name}<BR/><FONT POINT-SIZE="8">${node.node.type}</FONT>>]\n`;
+      dot += `  X${node.name} [label=<${node.details.get('parent')}${node.details.get('name')}<BR/><FONT POINT-SIZE="8">${node.details.get('type')}</FONT>>]\n`;
     }
 
     dot += '  // Paths\n';

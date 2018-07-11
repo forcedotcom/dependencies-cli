@@ -3,8 +3,8 @@ import {core, SfdxCommand} from '@salesforce/command';
 import {join} from 'path';
 import {ClusterPackager } from '../../../lib/clusterPackager';
 import {FindCycles} from '../../../lib/DFSLib';
-import {FieldDefinition } from '../../../lib/dependencyGraph';
-import {Graph, Node, NodeGroup, ScalarNode} from '../../../lib/componentGraph';
+import {FieldDefinition,  Node, NodeGroup, ScalarNode } from '../../../lib/NodeDefs';
+import {Graph} from '../../../lib/componentGraph';
 
 core.Messages.importMessagesDirectory(join(__dirname, '..', '..', '..'));
 const messages = core.Messages.loadMessages('dependencies-cli', 'analyze');
