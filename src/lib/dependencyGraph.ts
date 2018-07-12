@@ -203,7 +203,7 @@ public addFieldRelationships() {
   }
 
   private async retrieveAllComponentIds(): Promise<string[]> {
-    const query = "SELECT MetadataComponentId,RefMetadataComponentId FROM MetadataComponentDependency WHERE (MetadataComponentType = 'CustomField' OR RefMetadataComponentType = 'CustomField') OR (MetadataComponentType = 'ValidationRule' OR RefMetadataComponentType = 'ValidationRule')";
+    const query = "SELECT MetadataComponentId,RefMetadataComponentId FROM MetadataComponentDependency WHERE (MetadataComponentType = 'CustomField' OR RefMetadataComponentType = 'CustomField') OR (MetadataComponentType = 'ValidationRule' OR RefMetadataComponentType = 'ValidationRule') OR (MetadataComponentType = 'QuickAction' OR RefMetadataComponentType = 'QuickAction')";
 
     // Get all Custom Field Ids in MetadataComponent and RefMetadata Component
     const customComponentIds = await this.retrieveRecords<MetadataComponentDependency>(query);
