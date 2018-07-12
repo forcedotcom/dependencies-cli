@@ -7,7 +7,6 @@ import {FindAllDependencies} from './DFSLib';
 export const componentsWithParents = ['CustomField', 'ValidationRule', 'QuickAction'];
 
 export class DependencyGraph extends AbstractGraph{
-  public nodesMap: Map<string, Node> = new Map<string, Node>();
   public edges: Set<Edge> = new Set<Edge>();
 
   private tooling: Tooling;
@@ -22,10 +21,6 @@ export class DependencyGraph extends AbstractGraph{
       super();
       this.tooling = tool;
    }
-
-  public get nodes() {
-      return this.nodesMap.values();
-  }
 
   public async init() {
     this.allComponentIds = await this.retrieveAllComponentIds();
@@ -108,42 +103,8 @@ export class DependencyGraph extends AbstractGraph{
 
   } 
 
-  public getOrAddNode(name: string, details: Map<string, object>): Node {
-    let n: Node = this.nodesMap.get(name);
-    if (n) {
-        return n;   
-    }
-
-    n = new ScalarNode(name, details);
-    this.nodesMap.set(name, n);
-    return n;
-}
-
-public addEdge(src: Node, dst: Node): void {
-    (src as ScalarNode).addEdge(dst);
-}
-
 public getEdges(src: Node): IterableIterator<Node> {
     return (src as ScalarNode).getEdges();
-}
-public getNodeFromName(name: string): Node {
-    let found: Node;
-    Array.from(this.nodes).forEach(node => {
-        if ((node.details.get('name') as String).startsWith(name) && (node.details.get('type') as String) === 'CustomObject') {
-            found = node; // Returning node here does not work and I don't know why
-        }
-    });
-    return found;
-}
-
-public getNodeShortId(name: string): Node {
-    let found: Node;
-    Array.from(this.nodes).forEach(node => {
-        if (node.name.startsWith(name)) {
-            found = node; // Returning node here does not work and I don't know why
-        }
-    });
-    return found;
 }
 
 public addFieldRelationships() {

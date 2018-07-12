@@ -1,5 +1,52 @@
-import {Node} from './NodeDefs'
+import {Node, NodeImpl, ScalarNode} from './NodeDefs'
 export abstract class AbstractGraph {
+    protected nodesMap: Map<string, Node> = new Map<string, Node>();
     public abstract getEdges(Node): IterableIterator<Node>;
-    public abstract get nodes(): IterableIterator<Node>;
+    
+    public get nodes() {
+        return this.nodesMap.values();
+    }
+
+    public get nodeNames(): IterableIterator<string> {
+        return this.nodesMap.keys();
+    }
+
+    protected addEdge(src: Node, dst: Node): void {
+        (src as NodeImpl).addEdge(dst);
+     }
+
+    protected getNode(name: string): Node {
+        return this.nodesMap.get(name);
+    }
+
+    protected getOrAddNode(name: string, details: Map<string, object>): Node {
+        let n: Node = this.nodesMap.get(name);
+        if (n) {
+            return n;   
+        }
+    
+        n = new ScalarNode(name, details);
+        this.nodesMap.set(name, n);
+        return n;
+    }
+
+    protected getNodeFromName(name: string): Node {
+        let found: Node;
+        Array.from(this.nodes).forEach(node => {
+            if ((node.details.get('name') as String).startsWith(name) && (node.details.get('type') as String) === 'CustomObject') {
+                found = node; // Returning node here does not work and I don't know why
+            }
+        });
+        return found;
+    }
+    
+    protected getNodeShortId(name: string): Node {
+        let found: Node;
+        Array.from(this.nodes).forEach(node => {
+            if (node.name.startsWith(name)) {
+                found = node; // Returning node here does not work and I don't know why
+            }
+        });
+        return found;
+    }
 }
