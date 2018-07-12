@@ -1,41 +1,40 @@
-import fs = require('fs');
-import shell = require('shelljs');
-import {Member, PackageMerger} from '../commands/andyinthecloud/packages/merge';
-import {Node, NodeGroup} from '../lib/componentGraph';
+import {Member, PackageMerger} from './packageMerger';
+import {Node, NodeGroup} from './NodeDefs';
+import {componentsWithParents} from './dependencyGraph';
+
+const TYPE_BLACKLIST = ['AuraDefinition', 'StandardEntity'];
 
 export class ClusterPackager {
-    public static separateIntoGroups(n: NodeGroup): Map<String, String[]> {
-        const nodes = n.nodes;
-        return ClusterPackager.separateIntoGroupsFromNodes(Array.from(nodes));
-    }
 
     // precondition: All nodes are Scalar Nodes
     public static separateIntoGroupsFromNodes(nodes: Node[], excludeMap: Map<String, Member[]> = null): Map<String, String[]> {
         const output: Map<String, String[]>  = new Map<String, String[]>();
         for (const node of nodes) {
-            const type = ((node.details.get('type')) as String).valueOf();
+            let type = ((node.details.get('type')) as String).valueOf();
             const name = node.details.get('name');
-            let actualName = name as String;
+            let actualName = (name as String).valueOf();
             if (type.startsWith('Custom')) {
-                actualName = actualName.concat('__c');
+                actualName = actualName + '__c';
+            } else if (TYPE_BLACKLIST.indexOf(type) >= 0) {
+                continue;
             }
-
+            if (componentsWithParents.indexOf(type) >= 0) {
+                actualName = (node.details.get('parent') as String).valueOf() + actualName;
+            }
             if (PackageMerger.containsMember(actualName, type, excludeMap)) {
                 continue;
             }
             let list = output.get(type);
             if (!list) {
                 list = new Array<String>();
-                list.push(name as String);
                 output.set(type, list);
-            } else {
-                list.push(name as String);
-            }
+            } 
+            list.push(actualName as String);
         }
         return output;
     }
 
-    public static writeHeader(): string {
+    private static writeHeader(): string {
         let header = '';
         // Add XML version and encoding
         header = header.concat('<?xml version=\"1.0\" encoding=\"UTF-8\"?>');
@@ -44,7 +43,7 @@ export class ClusterPackager {
         return header;
     }
 
-    public static writeFooter(): string {
+    private static writeFooter(): string {
         let footer = '';
         // Set version to 34.0, may be a flag that can be added later
         footer = footer.concat('\t<version>43.0</version>');
@@ -53,21 +52,26 @@ export class ClusterPackager {
         return footer;
     }
 
-    // Non - static members
+    public static writeXMLNodes(n: Node[], excludeMap: Map<String, Member[]> = null, toFile: boolean = true): string {
+        return ClusterPackager.writeXML(n, excludeMap, toFile);
+    }
 
-    constructor(private outputFolder: string) { }
+    public static writeXMLNodeGroup(n: NodeGroup, toFile: boolean = true): string {
+        return ClusterPackager.writeXML(Array.from(n.nodes), null, toFile);
+    }
 
-    public writeXMLNodes(n: Node[], excludeMap: Map<String, Member[]> = null) {
-        // Make output folder
-        let dir = this.outputFolder;
-        if (this.outputFolder.charAt(this.outputFolder.length - 1) !== '/') {
-            dir = this.outputFolder + '/';
-        }
-        if (!fs.existsSync(dir)) {
-            shell.mkdir('-p', dir);
-        }
+    public static writeXMLMap(baseMap: Map<String, Member[]>): String {
+        let xmlString = ClusterPackager.writeHeader();
+        baseMap.forEach((memberList: Member[], type: String) => {
+          const typeString = this.writeTypeMember(type, memberList);
+          xmlString = xmlString.concat(typeString.valueOf());
+        });
+        xmlString = xmlString.concat(ClusterPackager.writeFooter());
+        return xmlString;
+    }
 
-        const dest = dir + 'package.xml';
+    private static writeXML(n: Node[], excludeMap: Map<String, Member[]> = null, toFile: boolean): string {
+        
         let text = ClusterPackager.writeHeader();
 
         const typeMap = ClusterPackager.separateIntoGroupsFromNodes(n, excludeMap);
@@ -77,53 +81,35 @@ export class ClusterPackager {
 
         text = text.concat(ClusterPackager.writeFooter());
 
-        fs.writeFileSync(dest, text); // May need to switch to writeFile if xml creation does not work
-        // fs.writeFile(dest, text, (err) => {
-        //     // throws an error, you could also catch it here
-        //     if (err) {
-        //         throw err;
-        //     }
-        // });
-
+        return text;
     }
 
-    public writeXML(n: NodeGroup) {
-        // Make output folder
-        // Make output folder
-        let dir = this.outputFolder;
-        if (this.outputFolder.charAt(this.outputFolder.length - 1) !== '/') {
-            dir = this.outputFolder + '/';
+    private static writeTypeMember(type: String, members: Member[]): String {
+        let nullCount = 0;
+        let typeBody = '\t<types>\n';
+        for (const member of members) {
+          if (member != null) {
+            typeBody = typeBody.concat('\t\t<members>');
+            typeBody = typeBody.concat(member.name.valueOf());
+            typeBody = typeBody.concat('</members>');
+            typeBody = typeBody.concat('\n');
+          } else {
+            nullCount++;
+          }
         }
-        dir = dir + n.name + '/';
-        if (!fs.existsSync(dir)) {
-            shell.mkdir('-p', dir);
+        typeBody = typeBody.concat('\t\t<name>');
+        typeBody = typeBody.concat(type.valueOf());
+        typeBody = typeBody.concat('</name>\n');
+        typeBody = typeBody.concat('\t</types>\n');
+        if (nullCount === members.length) {
+          return '';
         }
-        const dest = dir + 'package.xml';
-        let text = ClusterPackager.writeHeader();
+        return typeBody;
+      }
 
-        const typeMap = ClusterPackager.separateIntoGroups(n);
-        Array.from(typeMap.entries()).forEach(pair => {
-            text = text.concat((this.writeType(pair[0], pair[1]) as String).valueOf());
-        });
-
-        text = text.concat(ClusterPackager.writeFooter());
-
-        fs.writeFileSync(dest, text); // May need to switch to writeFile if xml creation does not work
-        // fs.writeFile(dest, text, (err) => {
-        //     // throws an error, you could also catch it here
-        //     if (err) {
-        //         throw err;
-        //     }
-        // });
-
-    }
-
-    private writeType(type: String, nodes: String[]): String {
+    private static writeType(type: String, nodes: String[]): String {
         let typeBody = '\t<types>\n';
         let ending = '';
-        if (type.startsWith('Custom')) {
-            ending = '__c';
-        }
         for (const n of nodes) {
             typeBody = typeBody.concat('\t\t<members>');
             typeBody = typeBody.concat((n as String).valueOf());

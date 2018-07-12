@@ -38,6 +38,10 @@ export class ScalarNode extends NodeImpl {
         }
     }
 
+    public getEdges() {
+        return this.edges.values();
+    }
+
     public getAdjacency(): Map<string, Node> {
         return this.edges;
     }
@@ -153,6 +157,10 @@ export class NodeGroup extends NodeImpl {
   export interface CustomObject extends Record {
     DeveloperName: string;
   }
+
+  export interface QuickAction extends Record  {
+      SobjectType: string;
+  }
   
   export interface FieldDefinition {
     DurableId: string;
@@ -160,8 +168,10 @@ export class NodeGroup extends NodeImpl {
     EntityDefinitionId: string;
   }
   
-  export interface ComponentNode extends Record {
-    Name: string;
-    Type: string;
+  export type ComponentNode = {
+    id: string;
+    name: string;
+    type: string;
+    parent: string;
   }
   

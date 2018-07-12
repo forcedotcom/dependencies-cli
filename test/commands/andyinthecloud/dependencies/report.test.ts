@@ -1,7 +1,6 @@
 import { expect, test } from '@salesforce/command/dist/test';
 import { dotOutput1, dotOutput2, oneObjectRecords, TwoFields1VRRecords, customFieldRecords, validationRuleRecords, customObjects} from '../../../lib/dependencyGraphy.test';
-import { PackageMerger, Member } from '../../../../src/commands/andyinthecloud/packages/merge';
-import { ClusterPackager } from '../../../../src/lib/clusterPackager';
+import { PackageMerger, Member } from '../../../../src/lib/packageMerger';
 import {stub} from 'sinon';;
 import fs = require('fs');
 
@@ -93,7 +92,7 @@ describe('org', () => {
     .withOrg({ username: 'test@org.com' }, true)
     .withConnectionRequest(async (...args) => {
       // Just return empty everything for this 
-        return { records: [] };
+        return {done: true, nextRecordsUrl: null, records: [] };
     })
     .stdout({ print: true })
     .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com'])
@@ -118,9 +117,9 @@ describe('org test one object', () => {
     .withConnectionRequest(async (...args) => {
         if (args[0].url.startsWith(urlGetRecords)) {
           //very first request, looking for records
-          return {records: oneObjectRecords}
+          return {done: true, nextRecordsUrl: null, records: oneObjectRecords}
         }
-        return {records: []};
+        return {done: true, nextRecordsUrl: null, records: []};
     })
     .stdout({ print: true })
     .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com'])
@@ -139,9 +138,9 @@ describe('org test two objects' , () => {
     .withConnectionRequest(async (...args) => {
         if (args[0].url.startsWith(urlGetRecords)) {
           //very first request, looking for records
-          return {records: twoObjectRecords}
+          return {done: true, nextRecordsUrl: null, records: twoObjectRecords}
         }
-        return {records: []};
+        return {done: true, nextRecordsUrl: null, records: []};
     })
     .stdout({ print: true })
     .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com'])
@@ -160,17 +159,17 @@ describe('org test one custom field' , () => {
     .withConnectionRequest(async (...args) => {
         if (args[0].url.startsWith(urlGetRecords)) {
           //very first request, looking for records
-          return {records: oneCustomFieldRecords}
+          return {done: true, nextRecordsUrl: null, records: oneCustomFieldRecords}
         } else if (args[0].url.startsWith(urlGetAllComponents)) {
-          return {records: oneCustomComponent};
+          return {done: true, nextRecordsUrl: null, records: oneCustomComponent};
         } else if (args[0].url.startsWith(urlGetCustomFields)) {
-          return {records: oneCustomField};
+          return {done: true, nextRecordsUrl: null, records: oneCustomField};
         } else if (args[0].url.startsWith(urlGetValidationRules)) {
-          return {records: []};
+          return {done: true, nextRecordsUrl: null, records: []};
         } else if (args[0].url.startsWith(urlGetCustomObjects)) {
-          return {records: []};
+          return {done: true, nextRecordsUrl: null, records: []};
         }
-        return {records: []};
+        return {done: true, nextRecordsUrl: null, records: []};
     })
     .stdout({ print: true })
     .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com'])
@@ -189,17 +188,17 @@ describe('org test one validation rule' , () => {
     .withConnectionRequest(async (...args) => {
         if (args[0].url.startsWith(urlGetRecords)) {
           //very first request, looking for records
-          return {records: oneValidationRuleRecords}
+          return {done: true, nextRecordsUrl: null, records: oneValidationRuleRecords}
         } else if (args[0].url.startsWith(urlGetAllComponents)) {
-          return {records: oneCustomComponent};
+          return {done: true, nextRecordsUrl: null, records: oneCustomComponent};
         } else if (args[0].url.startsWith(urlGetCustomFields)) {
-          return {records: []};
+          return {done: true, nextRecordsUrl: null, records: []};
         } else if (args[0].url.startsWith(urlGetValidationRules)) {
-          return {records: oneValidationRule};
+          return {done: true, nextRecordsUrl: null, records: oneValidationRule};
         } else if (args[0].url.startsWith(urlGetCustomObjects)) {
-          return {records: []};
+          return {done: true, nextRecordsUrl: null, records: []};
         }
-        return {records: []};
+        return {done: true, nextRecordsUrl: null, records: []};
     })
     .stdout({ print: true })
     .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com'])
@@ -218,17 +217,17 @@ describe('org test two custom fields, 1 validation rule' , () => {
     .withConnectionRequest(async (...args) => {
         if (args[0].url.startsWith(urlGetRecords)) {
           //very first request, looking for records
-          return {records: TwoFields1VRRecords}
+          return {done: true, nextRecordsUrl: null, records: TwoFields1VRRecords}
         } else if (args[0].url.startsWith(urlGetAllComponents)) {
-          return {records: []};
+          return {done: true, nextRecordsUrl: null, records: []};
         } else if (args[0].url.startsWith(urlGetCustomFields)) {
-          return {records: customFieldRecords};
+          return {done: true, nextRecordsUrl: null, records: customFieldRecords};
         } else if (args[0].url.startsWith(urlGetValidationRules)) {
-          return {records: validationRuleRecords};
+          return {done: true, nextRecordsUrl: null, records: validationRuleRecords};
         } else if (args[0].url.startsWith(urlGetCustomObjects)) {
-          return {records: customObjects};
+          return {done: true, nextRecordsUrl: null, records: customObjects};
         }
-        return {records: []};
+        return {done: true, nextRecordsUrl: null, records: []};
     })
     .stdout({ print: true })
     .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com'])
@@ -247,17 +246,17 @@ describe('org test two custom fields, 1 validation rule, with include list' , ()
         if (args[0].url.startsWith(urlGetRecords)) {
           //very first request, looking for records
           requestUrl = args[0].url;
-          return {records: TwoFields1VRRecords}
+          return {done: true, nextRecordsUrl: null, records: TwoFields1VRRecords}
         } else if (args[0].url.startsWith(urlGetAllComponents)) {
-          return {records: []};
+          return {done: true, nextRecordsUrl: null, records: []};
         } else if (args[0].url.startsWith(urlGetCustomFields)) {
-          return {records: customFieldRecords};
+          return {done: true, nextRecordsUrl: null, records: customFieldRecords};
         } else if (args[0].url.startsWith(urlGetValidationRules)) {
-          return {records: validationRuleRecords};
+          return {done: true, nextRecordsUrl: null, records: validationRuleRecords};
         } else if (args[0].url.startsWith(urlGetCustomObjects)) {
-          return {records: customObjects};
+          return {done: true, nextRecordsUrl: null, records: customObjects};
         }
-        return {records: []};
+        return {done: true, nextRecordsUrl: null, records: []};
     })
     .stdout({ print: true })
     .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com', '-i', 'CustomField'])
@@ -277,15 +276,15 @@ describe('org test two custom fields, 1 validation rule, with include and exclud
         if (args[0].url.startsWith(urlGetRecords)) {
           //very first request, looking for records
           requestUrl = args[0].url;
-          return {records: TwoFields1VRRecords}
+          return {done: true, nextRecordsUrl: null, records: TwoFields1VRRecords}
         } else if (args[0].url.startsWith(urlGetAllComponents)) {
-          return {records: []};
+          return {done: true, nextRecordsUrl: null, records: []};
         } else if (args[0].url.startsWith(urlGetCustomFields)) {
-          return {records: customFieldRecords};
+          return {done: true, nextRecordsUrl: null, records: customFieldRecords};
         } else if (args[0].url.startsWith(urlGetValidationRules)) {
-          return {records: validationRuleRecords};
+          return {done: true, nextRecordsUrl: null, records: validationRuleRecords};
         } else if (args[0].url.startsWith(urlGetCustomObjects)) {
-          return {records: customObjects};
+          return {done: true, nextRecordsUrl: null, records: customObjects};
         }
         return {records: []};
     })
@@ -304,6 +303,7 @@ describe ('Exclude Package tests', () => {
 
   beforeEach(() => {
     stub(PackageMerger, "parseIntoMap").callsFake((file) => {
+      console.log(2);
       let map = new Map<String, Array<Member>>();
       map.set("CustomField", [new Member("CustomField2__c", "CustomField")]); // So don't include CustomField2__c in the output
       map.set("ValidationRule", [new Member("ValidationRule3", "ValidationRule")]); // Does not match, so keep ValidationRule1
@@ -334,20 +334,20 @@ describe ('Exclude Package tests', () => {
       .withConnectionRequest(async (...args) => {
           if (args[0].url.startsWith(urlGetRecords)) {
             //very first request, looking for records
-            return {records: oneValidationRuleRecords}
+            return {done: true, nextRecordsUrl: null, records: oneValidationRuleRecords}
           } else if (args[0].url.startsWith(urlGetAllComponents)) {
-            return {records: oneCustomComponent};
+            return {done: true, nextRecordsUrl: null, records: oneCustomComponent};
           } else if (args[0].url.startsWith(urlGetCustomFields)) {
-            return {records: []};
+            return {done: true, nextRecordsUrl: null, records: []};
           } else if (args[0].url.startsWith(urlGetValidationRules)) {
-            return {records: oneValidationRule};
+            return {done: true, nextRecordsUrl: null, records: oneValidationRule};
           } else if (args[0].url.startsWith(urlGetCustomObjects)) {
-            return {records: []};
+            return {done: true, nextRecordsUrl: null, records: []};
           }
-          return {records: []};
+          return {done: true, nextRecordsUrl: null, records: []};
       })
       .stdout({ print: true })
-      .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com', '-o', 'folder', '-x', 'arg1'])
+      .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com', '-m', '-d', 'folder', '-x', 'arg1'])
       .it('runs org --targetusername test@org.com', ctx => {
         expect(contents).to.equal(xml1VRExcludePackage);
         expect(ctx.stdout).to.contains(dotOutput1ValidationRule);
@@ -362,20 +362,20 @@ describe ('Exclude Package tests', () => {
       .withConnectionRequest(async (...args) => {
           if (args[0].url.startsWith(urlGetRecords)) {
             //very first request, looking for records
-            return {records: TwoFields1VRRecords}
+            return {done: true, nextRecordsUrl: null, records: TwoFields1VRRecords}
           } else if (args[0].url.startsWith(urlGetAllComponents)) {
-            return {records: []};
+            return {done: true, nextRecordsUrl: null, records: []};
           } else if (args[0].url.startsWith(urlGetCustomFields)) {
-            return {records: customFieldRecords};
+            return {done: true, nextRecordsUrl: null, records: customFieldRecords};
           } else if (args[0].url.startsWith(urlGetValidationRules)) {
-            return {records: validationRuleRecords};
+            return {done: true, nextRecordsUrl: null, records: validationRuleRecords};
           } else if (args[0].url.startsWith(urlGetCustomObjects)) {
-            return {records: customObjects};
+            return {done: true, nextRecordsUrl: null, records: customObjects};
           }
-          return {records: []};
+          return {done: true, nextRecordsUrl: null, records: []};
       })
       .stdout({ print: true })
-      .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com', '-i', 'CustomField', '-o', 'folder', '-x', 'arg1'])
+      .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com', '-m', '-i', 'CustomField', '-d', 'folder', '-x', 'arg1'])
       .it('runs org --targetusername test@org.com', ctx => {
         expect(contents).to.equal(xmlWithExcludePackage);
         expect(ctx.stdout).to.contains(dotOutput2);

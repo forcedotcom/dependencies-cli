@@ -1,8 +1,10 @@
 // TODO: Merge dependencyGraph and componentGraph
 import assert = require('assert');
 import { FieldDefinition, Node, NodeImpl, ScalarNode, NodeGroup } from './Nodedefs';
+import {FindCycles} from './DFSLib';
+import {AbstractGraph} from './abstractGraph';
 
-export class Graph {
+export class ComponentGraph extends AbstractGraph {
     private _nodes: Map<string, Node> = new Map<string, Node>();
     private _groupMap: Map<ScalarNode, NodeGroup> = new Map<ScalarNode, NodeGroup>();
 
@@ -10,35 +12,30 @@ export class Graph {
         return this._nodes.values();
     }
 
-    public getNodeFromName(name: string): Node {
-        let found: Node;
-        this._nodes.forEach(node => {
-            if ((node.details.get('name') as String).startsWith(name) && (node.details.get('type') as String) === 'CustomObject') {
-                found = node; // Returning node here does not work and I don't know why
-            }
-        });
-        return found;
+    public get nodeNames(): IterableIterator<string> {
+        return this._nodes.keys();
     }
 
-    public getNodeShortId(name: string): Node {
-        let found: Node;
-        this._nodes.forEach(node => {
-            if (node.name.startsWith(name)) {
-                found = node; // Returning node here does not work and I don't know why
+    public removeCycles(): void {
+        let remover: FindCycles;
+        let cycles: Node[][];
+        do {
+           remover = new FindCycles(this);
+           remover.run();
+           cycles = remover.cycles;
+           for (const backEdge of cycles) {
+               // Since we're removing multiple cycles we might have already
+               // combined one of the nodes.  "get" the node again which will
+               // map it to the correct NodeGroup before combining.
+               if (backEdge[1]) {
+                const src: Node = this.getNode(backEdge[0].name);
+                const dst: Node = this.getNode(backEdge[1].name);
+                if (src && dst) { // May have been deleted so check if they exist
+                    this.combineNodes(src, dst);
+                }
+               }
             }
-        });
-        return found;
-    }
-
-    public addFields(fields: FieldDefinition[]) {
-        fields.forEach(fielddef => {
-            const n1 = this.getNodeShortId(fielddef.EntityDefinitionId);
-            const objName = fielddef.DataType.slice(fielddef.DataType.indexOf('(') + 1, fielddef.DataType.lastIndexOf(')'));
-            const n2: Node = this.getNodeFromName(objName);
-            if (n1 != null && n2 != null) {
-                this.addEdge(n1, n2);
-            }
-        });
+        } while (cycles.length > 0);
     }
 
     public getEdges(node: Node): IterableIterator<Node> {
@@ -65,7 +62,6 @@ export class Graph {
     }
 
     public combineNodes(node1: Node, node2: Node): Node {
-        console.log(node1.name);
         assert.ok(this._nodes.has(node1.name), node1.name + ' doesn\'t exist');
         assert.ok(this._nodes.has(node2.name), node2.name + ' doesn\'t exist');
         if (node1 === node2) {

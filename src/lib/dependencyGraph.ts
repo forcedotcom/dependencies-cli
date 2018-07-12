@@ -1,18 +1,27 @@
 // TODO: Merge dependencyGraph and componentGraph
 import { Tooling } from 'jsforce';
-import {Node, NodeImpl, Edge, ScalarNode, CustomField, ValidationRule, CustomObject, FieldDefinition, MetadataComponentDependency} from './NodeDefs';
+import {Node, QuickAction , Edge, ScalarNode, CustomField, ValidationRule, CustomObject, FieldDefinition, MetadataComponentDependency, ComponentNode} from './NodeDefs';
+import {AbstractGraph} from './abstractGraph';
+import {FindAllDependencies} from './DFSLib';
 
-export class DependencyGraph {
+export const componentsWithParents = ['CustomField', 'ValidationRule', 'QuickAction'];
+
+export class DependencyGraph extends AbstractGraph{
   public nodesMap: Map<string, Node> = new Map<string, Node>();
-  public edges: Edge[] = [];
+  public edges: Set<Edge> = new Set<Edge>();
 
+  private tooling: Tooling;
   private allComponentIds: string[];
   private customFields: CustomField[];
   private validationRules: ValidationRule[];
   private customObjects: CustomObject[];
   private customFieldDefinitions: FieldDefinition[];
+  private quickActions: QuickAction[];
 
-  constructor(private tooling: Tooling) { }
+  constructor(tool: Tooling) {
+      super();
+      this.tooling = tool;
+   }
 
   public get nodes() {
       return this.nodesMap.values();
@@ -22,6 +31,7 @@ export class DependencyGraph {
     this.allComponentIds = await this.retrieveAllComponentIds();
     this.customFields = await this.retrieveCustomFields(this.allComponentIds);
     this.validationRules = await this.retrieveValidationRules(this.allComponentIds);
+    this.quickActions = await this.retrieveQuickActions(this.allComponentIds);
     this.customObjects = await this.retrieveCustomObjects(this.getObjectIds());
     const customFieldEntities = this.customFields.map(r => r.TableEnumOrId);
     this.customFieldDefinitions = await this.retrieveLookupRelationships(customFieldEntities);
@@ -31,26 +41,25 @@ export class DependencyGraph {
     });
   }
 
-  public buildGraph(records: MetadataComponentDependency[], idSetFilter: Set<String> = null) {
-
+  public buildGraph(records: MetadataComponentDependency[]) {
+    // Reset edges and nodes
+    this.nodesMap = new Map<string, Node>();
+    this.edges = new Set<Edge>();
     const parentRecords = this.getParentRecords();
 
     for (const record of records) {
       let parentName = '';
       let refParentName = '';
-
-      if (idSetFilter && !idSetFilter.has(record.MetadataComponentId)) {
-        continue;
-      }
-
+      
       if (record.RefMetadataComponentName.startsWith('0')) {
         continue;
       }
-      if (record.MetadataComponentType === 'CustomField' || record.MetadataComponentType === 'ValidationRule') {
+
+      if (componentsWithParents.indexOf(record.MetadataComponentType) >= 0) {
         parentName = parentRecords.get(record.MetadataComponentId) + '.';
       }
 
-      if (record.RefMetadataComponentType === 'CustomField' || record.RefMetadataComponentType === 'ValidationRule') {
+      if (componentsWithParents.indexOf(record.RefMetadataComponentType) >= 0) {
         refParentName = parentRecords.get(record.RefMetadataComponentId) + '.';
       }
 
@@ -71,14 +80,33 @@ export class DependencyGraph {
       const dstDetails = new Map<string, object>();
       dstDetails.set('name', (dstName as String));
       dstDetails.set('type', (dstType as String));
-      srcDetails.set('parent', (refParentName as String))
+      dstDetails.set('parent', (refParentName as String))
       const dstNode: Node = this.getOrAddNode(dstId, dstDetails);
 
-      this.edges.push({ from: record.MetadataComponentId, to: record.RefMetadataComponentId });
+      this.edges.add({ from: record.MetadataComponentId, to: record.RefMetadataComponentId });
       this.addEdge(srcNode, dstNode);
 
+      if (record.MetadataComponentType === 'AuraDefinition' && record.RefMetadataComponentType === 'AuraDefinitionBundle') {
+        this.edges.add({ from: record.RefMetadataComponentId, to: record.MetadataComponentId }); // Also add reverse reference
+        this.addEdge(dstNode, srcNode);
+        }
+
     }
+    this.addFieldRelationships();
   }
+
+  public runDFS(initialNodes: Node[]) {
+      const dfs = new FindAllDependencies(this);
+      initialNodes.forEach(node => {
+          let graphNode = this.getOrAddNode(node.name,node.details); //Grab node from this graph
+          dfs.runNode(graphNode);
+      });
+
+
+      this.nodesMap = dfs.visited;
+      this.edges = dfs.visitedEdges;
+
+  } 
 
   public getOrAddNode(name: string, details: Map<string, object>): Node {
     let n: Node = this.nodesMap.get(name);
@@ -92,8 +120,42 @@ export class DependencyGraph {
 }
 
 public addEdge(src: Node, dst: Node): void {
-    (src as NodeImpl).addEdge(dst);
- }
+    (src as ScalarNode).addEdge(dst);
+}
+
+public getEdges(src: Node): IterableIterator<Node> {
+    return (src as ScalarNode).getEdges();
+}
+public getNodeFromName(name: string): Node {
+    let found: Node;
+    Array.from(this.nodes).forEach(node => {
+        if ((node.details.get('name') as String).startsWith(name) && (node.details.get('type') as String) === 'CustomObject') {
+            found = node; // Returning node here does not work and I don't know why
+        }
+    });
+    return found;
+}
+
+public getNodeShortId(name: string): Node {
+    let found: Node;
+    Array.from(this.nodes).forEach(node => {
+        if (node.name.startsWith(name)) {
+            found = node; // Returning node here does not work and I don't know why
+        }
+    });
+    return found;
+}
+
+public addFieldRelationships() {
+    this.customFieldDefinitions.forEach(fielddef => {
+        const n1 = this.getNodeShortId(fielddef.EntityDefinitionId);
+        const objName = fielddef.DataType.slice(fielddef.DataType.indexOf('(') + 1, fielddef.DataType.lastIndexOf(')'));
+        const n2: Node = this.getNodeFromName(objName);
+        if (n1 != null && n2 != null) {
+            this.addEdge(n1, n2);
+        }
+    });
+}
 
   /**
    * Render as DOT format
@@ -126,7 +188,13 @@ public addEdge(src: Node, dst: Node): void {
   }
 
   public toJson() {
-    return { nodes: this.nodes, edges: this.edges };
+    let jsonRepresentation = new Array<ComponentNode>();
+    for (const node of this.nodes) {
+        let jsonNode: ComponentNode = {id: node.name, name: (node.details.get('name') as String).valueOf(), type: (node.details.get('type') as String).valueOf(), parent: (node.details.get('parent') as String).valueOf()};
+        jsonRepresentation.push(jsonNode);
+    }
+
+    return { nodes: jsonRepresentation, edges: Array.from(this.edges) };
   }
 
   public getParentRecords(): Map<string, string> {
@@ -135,6 +203,7 @@ public addEdge(src: Node, dst: Node): void {
 
     this.populateIdToDeveloperNameMap(parentRecords, this.validationRules, 'EntityDefinitionId');
     this.populateIdToDeveloperNameMap(parentRecords, this.customFields, 'TableEnumOrId');
+    this.populateIdToDeveloperNameMap(parentRecords, this.quickActions, 'SobjectType');
 
     return parentRecords;
   }
@@ -156,6 +225,11 @@ public addEdge(src: Node, dst: Node): void {
   public async retrieveValidationRules(ids: string[]): Promise<ValidationRule[]> {
     const query = `SELECT Id, EntityDefinitionId FROM ValidationRule c WHERE c.Id In ${this.arrayToInIdString(ids)}`;
     return await this.retrieveRecords<ValidationRule>(query);
+  }
+
+  public async retrieveQuickActions(ids: string[]): Promise<QuickAction[]> {
+    const query = `SELECT Id, SobjectType FROM QuickActionDefinition c WHERE c.Id In ${this.arrayToInIdString(ids)}`;
+    return await this.retrieveRecords<QuickAction>(query);
   }
 
   public async retrieveCustomObjects(ids: string[]): Promise<CustomObject[]> {
@@ -202,7 +276,7 @@ public addEdge(src: Node, dst: Node): void {
       if (val.startsWith('0')) {
         // Grab the custom object the field points to
         const customObject = this.customObjects.filter(x => x.Id.startsWith(val));
-        val = customObject[0].DeveloperName;
+        val = customObject[0].DeveloperName + '__c';
       }
       map.set(record['Id'], val);
     }
