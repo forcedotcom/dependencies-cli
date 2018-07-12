@@ -3,9 +3,8 @@ import {core, SfdxCommand} from '@salesforce/command';
 import {join} from 'path';
 import {ClusterPackager } from '../../../lib/clusterPackager';
 import {FileWriter} from '../../../lib/fileWriter';
-import {FindCycles} from '../../../lib/DFSLib';
-import {FieldDefinition } from '../../../lib/dependencyGraph';
-import {Graph, Node, NodeGroup, ScalarNode} from '../../../lib/componentGraph';
+import {Node, NodeGroup, ScalarNode } from '../../../lib/NodeDefs';
+import {ComponentGraph} from '../../../lib/componentGraph';
 
 core.Messages.importMessagesDirectory(join(__dirname));
 const messages = core.Messages.loadMessages('dependencies-cli', 'analyze');
@@ -23,8 +22,8 @@ export default class Analyze extends SfdxCommand {
     public static args = [{name: 'file'}];
 
     // tslint:disable-next-line:no-any
-    public static buildGraph(results: any, connectAuras: boolean = false, forwards:boolean = true, backwards:boolean = false): Graph {
-        const graph: Graph = new Graph();
+    public static buildGraph(results: any, connectAuras: boolean = false, forwards:boolean = true, backwards:boolean = false): ComponentGraph {
+        const graph: ComponentGraph = new ComponentGraph();
         for (const edge of results) {
             if (edge.RefMetadataComponentName.startsWith('0')) {
                 continue;
@@ -72,10 +71,6 @@ export default class Analyze extends SfdxCommand {
         }
 
         return graph;
-    }
-
-    public static addLookupsToGraph(graph: Graph, fields: FieldDefinition[]) {
-        graph.addFields(fields);
     }
 
     private static makeName(ns: string, name: string): string {

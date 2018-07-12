@@ -3,7 +3,7 @@ import { ClusterPackager } from '../../src/lib/clusterPackager';
 import {stub} from 'sinon';
 import fs = require('fs');
 import shell = require('shelljs');
-import { NodeGroup, Node, ScalarNode } from '../../src/lib/componentGraph';
+import { NodeGroup, Node, ScalarNode } from '../../src/lib/NodeDefs';
 import {FileWriter} from '../../src/lib/fileWriter';
 
 

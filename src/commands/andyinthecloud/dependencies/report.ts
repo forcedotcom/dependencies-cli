@@ -1,13 +1,12 @@
 import {core, flags, SfdxCommand } from '@salesforce/command';
-import * as Analyze from '../dependencies/componentizer';
 import {ClusterPackager} from '../../../lib/clusterPackager';
-import {DependencyGraph, MetadataComponentDependency } from '../../../lib/dependencyGraph';
+import {DependencyGraph} from '../../../lib/dependencyGraph';
+import {MetadataComponentDependency, Node} from '../../../lib/NodeDefs';
 import {FileWriter} from '../../../lib/fileWriter';
 import {FindAllDependencies} from '../../../lib/DFSLib';
 import {Member, PackageMerger} from '../../../lib/PackageMerger';
 import {Connection} from '@salesforce/core';
 import process = require('child_process');
-import { Graph, Node } from '../../../lib/componentGraph';
 
 core.Messages.importMessagesDirectory(__dirname);
 const messages = core.Messages.loadMessages('dependencies-cli', 'depends');
@@ -55,28 +54,21 @@ export default class Report extends SfdxCommand {
     const deps = new DependencyGraph(conn.tooling);
     await deps.init();
     const records = await this.getDependencyRecords(conn);
-    const initialGraph = Analyze.default.buildGraph(records, true);
-    let parentRecords = deps.getParentRecords();
-    initialGraph.addParents(parentRecords);
-
-    let nodes = Array.from(initialGraph.nodes);
 
     let excludeMap: Map<String, Member[]>;
     if (this.flags.excludepackagefile) {
       excludeMap = PackageMerger.parseIntoMap(this.flags.excludepackagefile);
     }
 
-    let allRecords: MetadataComponentDependency[];
+    await deps.buildGraph(records);
+
+    let nodes = Array.from(deps.nodes);
     if (this.flags.includealldependencies || this.flags.includealldependents) {
         let allRecords = await this.getAllRecords(conn);
-        nodes = await this.buildDFSGraph(allRecords, deps, initialGraph, parentRecords);
-    } else {
-      // Initialize with the records from query
-      deps.buildGraph(records);
+        nodes = await this.buildDFSGraph(allRecords, deps);
     }
 
     this.generateOutputs(deps,nodes, excludeMap);
-
 
     if (this.flags.validate) {
         let xmlTempString = ClusterPackager.writeXMLNodes(nodes, excludeMap);
@@ -154,28 +146,11 @@ export default class Report extends SfdxCommand {
   }
 
 
-  private async buildDFSGraph(allRecords: MetadataComponentDependency[], deps: DependencyGraph, initialGraph: Graph, parentRecords: Map<string, string>): Promise<Node[]> {
-    const completeGraph = Analyze.default.buildGraph(allRecords, true, this.flags.includealldependencies === true, this.flags.includealldependents === true);
-    completeGraph.addParents(parentRecords);
-    Analyze.default.addLookupsToGraph(completeGraph, deps.getLookupRelationships());
-    const dfs = new FindAllDependencies(completeGraph);
-    let nodes = Array.from(initialGraph.nodes);
-    nodes.forEach(element => {
-      let foundNode = completeGraph.getNode(element.name);
-      if (foundNode) {
-        dfs.runNode(foundNode);
-      }
-    });
-    // Get all Nodes, including dependencies
-    nodes = Array.from(dfs.visited);
-    // Initialize the dependency graph with a filtered list of all Records
-    let initialNames = Array.from(initialGraph.nodeNames);
-    if (this.flags.includealldependencies && this.flags.includealldependents) {
-      initialNames = null; // Do not specify any initial nodes
-    }
-
-    await deps.buildGraph(allRecords, dfs.visitedNames, initialNames , this.flags.includealldependencies === true);
-    return nodes;
+  private async buildDFSGraph(allRecords: MetadataComponentDependency[], deps: DependencyGraph): Promise<Node[]> {
+    let initialNodes = Array.from(deps.nodes);
+    deps.buildGraph(allRecords);
+    deps.runDFS(initialNodes);
+    return Array.from(deps.nodes);
   }
 
   private async validate(xmlTempString: string): Promise<any> {

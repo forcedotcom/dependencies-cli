@@ -1,69 +1,32 @@
 // TODO: Merge dependencyGraph and componentGraph
 import { Tooling } from 'jsforce';
+import {Node, QuickAction , Edge, ScalarNode, CustomField, ValidationRule, CustomObject, FieldDefinition, MetadataComponentDependency, ComponentNode} from './NodeDefs';
+import {AbstractGraph} from './abstractGraph';
+import {FindAllDependencies} from './DFSLib';
 
-export type DGNode = {
-  parent: string;
-  name: string;
-  type: string;
-};
+export const componentsWithParents = ['CustomField', 'ValidationRule', 'QuickAction'];
 
-export type DGEdge = {
-  from: string;
-  to: string;
-};
+export class DependencyGraph extends AbstractGraph{
+  public edges: Set<Edge> = new Set<Edge>();
 
-export interface Record {
-  Id?: string;
-}
-
-export interface MetadataComponentDependency extends Record {
-  MetadataComponentId: string;
-  MetadataComponentName: string;
-  MetadataComponentType: string;
-  RefMetadataComponentId: string;
-  RefMetadataComponentName: string;
-  RefMetadataComponentType: string;
-}
-
-export interface CustomField extends Record {
-  TableEnumOrId: string;
-}
-
-export interface ValidationRule extends Record {
-  EntityDefinitionId: string;
-}
-
-export interface CustomObject extends Record {
-  DeveloperName: string;
-}
-
-export interface FieldDefinition {
-  DurableId: string;
-  DataType: string;
-  EntityDefinitionId: string;
-}
-
-export interface ComponentNode extends Record {
-  Name: string;
-  Type: string;
-}
-
-export class DependencyGraph {
-  public nodes: Array<{ id: string, node: DGNode }> = [];
-  public edges: DGEdge[] = [];
-
+  private tooling: Tooling;
   private allComponentIds: string[];
   private customFields: CustomField[];
   private validationRules: ValidationRule[];
   private customObjects: CustomObject[];
   private customFieldDefinitions: FieldDefinition[];
+  private quickActions: QuickAction[];
 
-  constructor(private tooling: Tooling) { }
+  constructor(tool: Tooling) {
+      super();
+      this.tooling = tool;
+   }
 
   public async init() {
     this.allComponentIds = await this.retrieveAllComponentIds();
     this.customFields = await this.retrieveCustomFields(this.allComponentIds);
     this.validationRules = await this.retrieveValidationRules(this.allComponentIds);
+    this.quickActions = await this.retrieveQuickActions(this.allComponentIds);
     this.customObjects = await this.retrieveCustomObjects(this.getObjectIds());
     const customFieldEntities = this.customFields.map(r => r.TableEnumOrId);
     this.customFieldDefinitions = await this.retrieveLookupRelationships(customFieldEntities);
@@ -73,57 +36,87 @@ export class DependencyGraph {
     });
   }
 
-  public buildGraph(records: MetadataComponentDependency[], idSetFilter: Set<String> = null, initialIds:Array<string> = null, getDependencies:boolean = true) {
-
+  public buildGraph(records: MetadataComponentDependency[]) {
+    // Reset edges and nodes
+    this.nodesMap = new Map<string, Node>();
+    this.edges = new Set<Edge>();
     const parentRecords = this.getParentRecords();
-    const nodesMap = new Map();
 
     for (const record of records) {
       let parentName = '';
       let refParentName = '';
-
-      if (idSetFilter && !(idSetFilter.has(record.MetadataComponentId) || idSetFilter.has(record.RefMetadataComponentId))) {
-        continue;
-      }
-
-      if (initialIds) {
-        if (getDependencies) {
-          // Make sure if part of initial set, that it must be a MetadataComponentId and not a RefMetadataComponentId. Only if getting dependencies, and not dependents
-          if (initialIds.includes(record.RefMetadataComponentId)&& !initialIds.includes(record.MetadataComponentId)) {
-            continue;
-          }
-        } else {
-          if (initialIds.includes(record.MetadataComponentId) && !initialIds.includes(record.RefMetadataComponentId)) {
-            continue;
-          }
-        }
-      }
       
       if (record.RefMetadataComponentName.startsWith('0')) {
         continue;
       }
-      if (record.MetadataComponentType === 'CustomField' || record.MetadataComponentType === 'ValidationRule') {
+
+      if (componentsWithParents.indexOf(record.MetadataComponentType) >= 0) {
         parentName = parentRecords.get(record.MetadataComponentId) + '.';
       }
 
-      if (record.RefMetadataComponentType === 'CustomField' || record.RefMetadataComponentType === 'ValidationRule') {
+      if (componentsWithParents.indexOf(record.RefMetadataComponentType) >= 0) {
         refParentName = parentRecords.get(record.RefMetadataComponentId) + '.';
       }
 
-      nodesMap.set(record.MetadataComponentId, { parent: parentName, name: record.MetadataComponentName, type: record.MetadataComponentType });
-      nodesMap.set(record.RefMetadataComponentId, { parent: refParentName, name: record.RefMetadataComponentName, type: record.RefMetadataComponentType });
-      
-      this.edges.push({ from: record.MetadataComponentId, to: record.RefMetadataComponentId });
+      const srcId: string = record.MetadataComponentId;
+      const srcName = record.MetadataComponentName;
+      const srcType = record.MetadataComponentType;
+
+      const dstId: string = record.RefMetadataComponentId;
+      const dstName = record.RefMetadataComponentName
+      const dstType = record.RefMetadataComponentType;
+
+      const srcDetails = new Map<string, object>();
+      srcDetails.set('name', (srcName as String));
+      srcDetails.set('type', (srcType as String));
+      srcDetails.set('parent', (parentName as String))
+      const srcNode: Node = this.getOrAddNode(srcId, srcDetails);
+
+      const dstDetails = new Map<string, object>();
+      dstDetails.set('name', (dstName as String));
+      dstDetails.set('type', (dstType as String));
+      dstDetails.set('parent', (refParentName as String))
+      const dstNode: Node = this.getOrAddNode(dstId, dstDetails);
+
+      this.edges.add({ from: record.MetadataComponentId, to: record.RefMetadataComponentId });
+      this.addEdge(srcNode, dstNode);
 
       if (record.MetadataComponentType === 'AuraDefinition' && record.RefMetadataComponentType === 'AuraDefinitionBundle') {
-        this.edges.push({ from: record.RefMetadataComponentId, to: record.MetadataComponentId }); // Also add reverse reference
-    }
+        this.edges.add({ from: record.RefMetadataComponentId, to: record.MetadataComponentId }); // Also add reverse reference
+        this.addEdge(dstNode, srcNode);
+        }
 
     }
-    for (const [key, value] of nodesMap) {
-      this.nodes.push({ id: key, node: value });
-    }
+    this.addFieldRelationships();
   }
+
+  public runDFS(initialNodes: Node[]) {
+      const dfs = new FindAllDependencies(this);
+      initialNodes.forEach(node => {
+          let graphNode = this.getOrAddNode(node.name,node.details); //Grab node from this graph
+          dfs.runNode(graphNode);
+      });
+
+
+      this.nodesMap = dfs.visited;
+      this.edges = dfs.visitedEdges;
+
+  } 
+
+public getEdges(src: Node): IterableIterator<Node> {
+    return (src as ScalarNode).getEdges();
+}
+
+public addFieldRelationships() {
+    this.customFieldDefinitions.forEach(fielddef => {
+        const n1 = this.getNodeShortId(fielddef.EntityDefinitionId);
+        const objName = fielddef.DataType.slice(fielddef.DataType.indexOf('(') + 1, fielddef.DataType.lastIndexOf(')'));
+        const n2: Node = this.getNodeFromName(objName);
+        if (n1 != null && n2 != null) {
+            this.addEdge(n1, n2);
+        }
+    });
+}
 
   /**
    * Render as DOT format
@@ -143,7 +136,7 @@ export class DependencyGraph {
     dot += '  // Nodes\n';
 
     for (const node of this.nodes) {
-      dot += `  X${node.id} [label=<${node.node.parent}${node.node.name}<BR/><FONT POINT-SIZE="8">${node.node.type}</FONT>>]\n`;
+      dot += `  X${node.name} [label=<${node.details.get('parent')}${node.details.get('name')}<BR/><FONT POINT-SIZE="8">${node.details.get('type')}</FONT>>]\n`;
     }
 
     dot += '  // Paths\n';
@@ -156,7 +149,13 @@ export class DependencyGraph {
   }
 
   public toJson() {
-    return { nodes: this.nodes, edges: this.edges };
+    let jsonRepresentation = new Array<ComponentNode>();
+    for (const node of this.nodes) {
+        let jsonNode: ComponentNode = {id: node.name, name: (node.details.get('name') as String).valueOf(), type: (node.details.get('type') as String).valueOf(), parent: (node.details.get('parent') as String).valueOf()};
+        jsonRepresentation.push(jsonNode);
+    }
+
+    return { nodes: jsonRepresentation, edges: Array.from(this.edges) };
   }
 
   public getParentRecords(): Map<string, string> {
@@ -165,6 +164,7 @@ export class DependencyGraph {
 
     this.populateIdToDeveloperNameMap(parentRecords, this.validationRules, 'EntityDefinitionId');
     this.populateIdToDeveloperNameMap(parentRecords, this.customFields, 'TableEnumOrId');
+    this.populateIdToDeveloperNameMap(parentRecords, this.quickActions, 'SobjectType');
 
     return parentRecords;
   }
@@ -188,6 +188,11 @@ export class DependencyGraph {
     return await this.retrieveRecords<ValidationRule>(query);
   }
 
+  public async retrieveQuickActions(ids: string[]): Promise<QuickAction[]> {
+    const query = `SELECT Id, SobjectType FROM QuickActionDefinition c WHERE c.Id In ${this.arrayToInIdString(ids)}`;
+    return await this.retrieveRecords<QuickAction>(query);
+  }
+
   public async retrieveCustomObjects(ids: string[]): Promise<CustomObject[]> {
     const query = `SELECT Id, DeveloperName FROM CustomObject c WHERE c.Id In ${this.arrayToInIdString(this.getObjectIds())}`;
     return await this.retrieveRecords<CustomObject>(query);
@@ -198,7 +203,7 @@ export class DependencyGraph {
   }
 
   private async retrieveAllComponentIds(): Promise<string[]> {
-    const query = "SELECT MetadataComponentId,RefMetadataComponentId FROM MetadataComponentDependency WHERE (MetadataComponentType = 'CustomField' OR RefMetadataComponentType = 'CustomField') OR (MetadataComponentType = 'ValidationRule' OR RefMetadataComponentType = 'ValidationRule')";
+    const query = "SELECT MetadataComponentId,RefMetadataComponentId FROM MetadataComponentDependency WHERE (MetadataComponentType = 'CustomField' OR RefMetadataComponentType = 'CustomField') OR (MetadataComponentType = 'ValidationRule' OR RefMetadataComponentType = 'ValidationRule') OR (MetadataComponentType = 'QuickAction' OR RefMetadataComponentType = 'QuickAction')";
 
     // Get all Custom Field Ids in MetadataComponent and RefMetadata Component
     const customComponentIds = await this.retrieveRecords<MetadataComponentDependency>(query);

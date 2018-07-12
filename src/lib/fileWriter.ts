@@ -30,7 +30,7 @@ export class FileWriter {
             tempFolder = tempFolder + crypto.randomBytes(16).toString('hex'); 
         }
         shell.mkdir('-p', tempFolder);
-        return tempFolder + '/';
+        return tempFolder;
     }
 
 

@@ -1,5 +1,6 @@
-import {Member, PackageMerger} from '../lib/packageMerger';
-import {Node, NodeGroup} from '../lib/componentGraph';
+import {Member, PackageMerger} from './packageMerger';
+import {Node, NodeGroup} from './NodeDefs';
+import {componentsWithParents} from './dependencyGraph';
 
 const TYPE_BLACKLIST = ['AuraDefinition', 'StandardEntity'];
 
@@ -11,11 +12,14 @@ export class ClusterPackager {
         for (const node of nodes) {
             let type = ((node.details.get('type')) as String).valueOf();
             const name = node.details.get('name');
-            let actualName = name as String;
+            let actualName = (name as String).valueOf();
             if (type.startsWith('Custom')) {
-                actualName = actualName.concat('__c');
+                actualName = actualName + '__c';
             } else if (TYPE_BLACKLIST.indexOf(type) >= 0) {
                 continue;
+            }
+            if (componentsWithParents.indexOf(type) >= 0) {
+                actualName = (node.details.get('parent') as String).valueOf() + actualName;
             }
             if (PackageMerger.containsMember(actualName, type, excludeMap)) {
                 continue;
@@ -48,12 +52,12 @@ export class ClusterPackager {
         return footer;
     }
 
-    public static writeXMLNodes(n: Node[], excludeMap: Map<String, Member[]> = null, toFile: boolean = true): string {
-        return ClusterPackager.writeXML(n, excludeMap, toFile);
+    public static writeXMLNodes(n: Node[], excludeMap: Map<String, Member[]> = null, forValidation: boolean = false): string {
+        return ClusterPackager.writeXML(n, excludeMap, forValidation);
     }
 
-    public static writeXMLNodeGroup(n: NodeGroup, toFile: boolean = true): string {
-        return ClusterPackager.writeXML(Array.from(n.nodes), null, toFile);
+    public static writeXMLNodeGroup(n: NodeGroup, forValidation: boolean = false): string {
+        return ClusterPackager.writeXML(Array.from(n.nodes), null, forValidation);
     }
 
     public static writeXMLMap(baseMap: Map<String, Member[]>): String {
@@ -66,12 +70,15 @@ export class ClusterPackager {
         return xmlString;
     }
 
-    private static writeXML(n: Node[], excludeMap: Map<String, Member[]> = null, toFile: boolean): string {
+    private static writeXML(n: Node[], excludeMap: Map<String, Member[]> = null, forValidation: boolean): string {
         
         let text = ClusterPackager.writeHeader();
 
         const typeMap = ClusterPackager.separateIntoGroupsFromNodes(n, excludeMap);
         Array.from(typeMap.entries()).forEach(pair => {
+            if (forValidation) {
+                text = text.concat((this.writeWildCardType(pair[0], pair[1]) as String).valueOf());
+            }
             text = text.concat((this.writeType(pair[0], pair[1]) as String).valueOf());
         });
 
@@ -113,6 +120,18 @@ export class ClusterPackager {
             typeBody = typeBody.concat('</members>');
             typeBody = typeBody.concat('\n');
         }
+        typeBody = typeBody.concat('\t\t<name>');
+        typeBody = typeBody.concat(((type as String).valueOf()));
+        typeBody = typeBody.concat('</name>\n');
+        typeBody = typeBody.concat('\t</types>\n');
+        return typeBody;
+    }
+
+    private static writeWildCardType(type: String, nodes: String[]): String {
+        let typeBody = '\t<types>\n';
+        let ending = '';
+        typeBody = typeBody.concat('\t\t<members>*</members>');
+        typeBody = typeBody.concat('\n');
         typeBody = typeBody.concat('\t\t<name>');
         typeBody = typeBody.concat(((type as String).valueOf()));
         typeBody = typeBody.concat('</name>\n');

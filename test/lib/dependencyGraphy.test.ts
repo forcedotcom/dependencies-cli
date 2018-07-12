@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { stub } from 'sinon';
-import { DependencyGraph, MetadataComponentDependency } from '../../src/lib/dependencyGraph';
+import { DependencyGraph} from '../../src/lib/dependencyGraph';
+import {MetadataComponentDependency} from '../../src/lib/NodeDefs';
 
 
 export const oneObjectRecords: MetadataComponentDependency[] = [{
@@ -83,8 +84,8 @@ describe('no relationship single node dependency graph', () => {
     it('populates nodes and edges for one record', async () => {
       await graph.buildGraph(oneObjectRecords);
 
-      expect(graph.nodes.length).to.equal(1);
-      expect(graph.edges.length).to.equal(1);
+      expect(Array.from(graph.nodes).length).to.equal(1);
+      expect(Array.from(graph.edges).length).to.equal(1);
     });
   });
 
@@ -103,8 +104,8 @@ describe('no relationship single node dependency graph', () => {
       graph.buildGraph(oneObjectRecords);
       
       expect(graph.getParentRecords()).to.deep.equal(new Map());
-      expect(graph.nodes.length).to.equal(1);
-      expect(graph.edges.length).to.equal(1);
+      expect(Array.from(graph.nodes).length).to.equal(1);
+      expect(Array.from(graph.edges).length).to.equal(1);
     });
   });
 
@@ -112,14 +113,13 @@ describe('no relationship single node dependency graph', () => {
     it('check Json of 1 node 1 edge tree', async () => {
       graph.buildGraph(oneObjectRecords);
       let key = '1';
-      let value = {parent: '', name: 'Object1', type: 'Object'};
       let edge1 = {from: '1', to: '1'};
 
       let expectedOutputNodes = new Array();
-      expectedOutputNodes.push({id: key, node: value});
+      expectedOutputNodes.push({id: key, name: 'Object1', type: 'Object', parent: ''});
       expect(graph.toJson()).to.deep.equal({nodes: expectedOutputNodes, edges: [edge1]});
-      expect(graph.nodes.length).to.equal(1);
-      expect(graph.edges.length).to.equal(1);
+      expect(Array.from(graph.nodes).length).to.equal(1);
+      expect(Array.from(graph.edges).length).to.equal(1);
     });
   });
 
@@ -149,8 +149,8 @@ describe('one relationship, two custom fields, one vrule dependency graph', asyn
       await graph.init();
       graph.buildGraph(TwoFields1VRRecords);
 
-      expect(graph.nodes.length).to.equal(3);
-      expect(graph.edges.length).to.equal(2);
+      expect(Array.from(graph.nodes).length).to.equal(3);
+      expect(Array.from(graph.edges).length).to.equal(2);
     });
   });
 
