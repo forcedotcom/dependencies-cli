@@ -11,15 +11,15 @@ export abstract class AbstractGraph {
         return this.nodesMap.keys();
     }
 
-    protected addEdge(src: Node, dst: Node): void {
+    public addEdge(src: Node, dst: Node): void {
         (src as NodeImpl).addEdge(dst);
      }
 
-    protected getNode(name: string): Node {
+    public getNode(name: string): Node {
         return this.nodesMap.get(name);
     }
 
-    protected getOrAddNode(name: string, details: Map<string, object>): Node {
+    public getOrAddNode(name: string, details: Map<string, object>): Node {
         let n: Node = this.nodesMap.get(name);
         if (n) {
             return n;   
