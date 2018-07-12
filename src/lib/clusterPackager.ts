@@ -52,12 +52,12 @@ export class ClusterPackager {
         return footer;
     }
 
-    public static writeXMLNodes(n: Node[], excludeMap: Map<String, Member[]> = null, toFile: boolean = true): string {
-        return ClusterPackager.writeXML(n, excludeMap, toFile);
+    public static writeXMLNodes(n: Node[], excludeMap: Map<String, Member[]> = null, forValidation: boolean = false): string {
+        return ClusterPackager.writeXML(n, excludeMap, forValidation);
     }
 
-    public static writeXMLNodeGroup(n: NodeGroup, toFile: boolean = true): string {
-        return ClusterPackager.writeXML(Array.from(n.nodes), null, toFile);
+    public static writeXMLNodeGroup(n: NodeGroup, forValidation: boolean = false): string {
+        return ClusterPackager.writeXML(Array.from(n.nodes), null, forValidation);
     }
 
     public static writeXMLMap(baseMap: Map<String, Member[]>): String {
@@ -70,12 +70,15 @@ export class ClusterPackager {
         return xmlString;
     }
 
-    private static writeXML(n: Node[], excludeMap: Map<String, Member[]> = null, toFile: boolean): string {
+    private static writeXML(n: Node[], excludeMap: Map<String, Member[]> = null, forValidation: boolean): string {
         
         let text = ClusterPackager.writeHeader();
 
         const typeMap = ClusterPackager.separateIntoGroupsFromNodes(n, excludeMap);
         Array.from(typeMap.entries()).forEach(pair => {
+            if (forValidation) {
+                text = text.concat((this.writeWildCardType(pair[0], pair[1]) as String).valueOf());
+            }
             text = text.concat((this.writeType(pair[0], pair[1]) as String).valueOf());
         });
 
@@ -117,6 +120,18 @@ export class ClusterPackager {
             typeBody = typeBody.concat('</members>');
             typeBody = typeBody.concat('\n');
         }
+        typeBody = typeBody.concat('\t\t<name>');
+        typeBody = typeBody.concat(((type as String).valueOf()));
+        typeBody = typeBody.concat('</name>\n');
+        typeBody = typeBody.concat('\t</types>\n');
+        return typeBody;
+    }
+
+    private static writeWildCardType(type: String, nodes: String[]): String {
+        let typeBody = '\t<types>\n';
+        let ending = '';
+        typeBody = typeBody.concat('\t\t<members>*</members>');
+        typeBody = typeBody.concat('\n');
         typeBody = typeBody.concat('\t\t<name>');
         typeBody = typeBody.concat(((type as String).valueOf()));
         typeBody = typeBody.concat('</name>\n');

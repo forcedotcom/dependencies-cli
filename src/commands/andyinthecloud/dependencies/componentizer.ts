@@ -3,8 +3,7 @@ import {core, SfdxCommand} from '@salesforce/command';
 import {join} from 'path';
 import {ClusterPackager } from '../../../lib/clusterPackager';
 import {FileWriter} from '../../../lib/fileWriter';
-import {FindCycles} from '../../../lib/DFSLib';
-import {FieldDefinition,  Node, NodeGroup, ScalarNode } from '../../../lib/NodeDefs';
+import {Node, NodeGroup, ScalarNode } from '../../../lib/NodeDefs';
 import {ComponentGraph} from '../../../lib/componentGraph';
 
 core.Messages.importMessagesDirectory(join(__dirname));
