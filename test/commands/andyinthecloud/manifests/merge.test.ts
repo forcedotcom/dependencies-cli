@@ -1,12 +1,12 @@
 import {expect, test} from '@oclif/test'
 import {stub} from 'sinon';
-import { PackageMerger, Member } from '../../../../src/commands/andyinthecloud/packages/merge';
+import { PackageMerger, Member } from '../../../../src/lib/packageMerger';
 
 let emptyXml = '<?xml version="1.0" encoding="UTF-8"?>\n<Package xmlns="http://soap.sforce.com/2006/04/metadata">\n\t<version>43.0</version>\n</Package>';
 
 let combinedXml = '<?xml version="1.0" encoding="UTF-8"?>\n<Package xmlns="http://soap.sforce.com/2006/04/metadata">\n\t<types>\n\t\t<members>A</members>\n\t\t<members>B</members>\n\t\t<name>1</name>\n\t</types>\n\t<types>\n\t\t<members>C</members>\n\t\t<name>2</name>\n\t</types>\n\t<version>43.0</version>\n</Package>';
 
-describe('All file tests', () => {
+describe('All file tests for Merging', () => {
   let contents = '';
   let folder = '';
 
@@ -42,7 +42,7 @@ describe('All file tests', () => {
   describe('Empty files', () => {
     test
     .stdout({ print: true })
-    .command(['andyinthecloud:packages:merge' , 'nan', 'nan'])
+    .command(['andyinthecloud:manifests:merge' , 'nan', 'nan'])
     .it('Sends in empty', ctx => { 
       expect(ctx.stdout).to.contain(emptyXml);
     })
@@ -52,7 +52,7 @@ describe('All file tests', () => {
   describe('1 real file, 1 empty file', () => {
     test
     .stdout({ print: true })
-    .command(['andyinthecloud:packages:merge' , 'arg1', 'nan'])
+    .command(['andyinthecloud:manifests:merge' , 'arg1', 'nan'])
     .it('Sends in empty', ctx => { 
       expect(ctx.stdout).to.contain(emptyXml);
     })
@@ -62,7 +62,7 @@ describe('All file tests', () => {
   describe('2 real files with nothing in common', () => {
     test
     .stdout({ print: true })
-    .command(['andyinthecloud:packages:merge' , 'arg1', 'arg2'])
+    .command(['andyinthecloud:manifests:merge' , 'arg1', 'arg2'])
     .it('Sends in empty', ctx => { 
       expect(ctx.stdout).to.contain(emptyXml);
     })
@@ -72,7 +72,7 @@ describe('All file tests', () => {
   describe('2 real files', () => {
     test
     .stdout({ print: true })
-    .command(['andyinthecloud:packages:merge' , 'arg1', 'arg3'])
+    .command(['andyinthecloud:manifests:merge' , 'arg1', 'arg3'])
     .it('Sends in empty', ctx => { 
       expect(ctx.stdout).to.contain(combinedXml);
     })

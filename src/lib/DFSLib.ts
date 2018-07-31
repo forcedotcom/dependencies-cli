@@ -1,9 +1,10 @@
-import {Graph, Node} from '../lib/componentGraph';
+import {AbstractGraph} from './abstractGraph';
+import {Node, Edge} from '../lib/NodeDefs';
 
 export abstract class DepthFirstSearch {
-    protected readonly graph: Graph;
+    protected readonly graph: AbstractGraph;
     private readonly state: Set<Node>;
-    constructor(g: Graph) {
+    constructor(g: AbstractGraph) {
         this.graph = g;
         this.state = new Set<Node>();
     }
@@ -25,7 +26,6 @@ export abstract class DepthFirstSearch {
 
     protected dfs(node: Node) {
         this.visit(node);
-
         for (const dst of this.graph.getEdges(node)) {
             this.explore(node, dst);
             if (this.state.has(dst)) {
@@ -41,12 +41,13 @@ export abstract class DepthFirstSearch {
 }
 
 export class FindAllDependencies extends DepthFirstSearch {
-    public visited: Set<Node> = new Set<Node>();
+    public visited: Map<string, Node> = new Map<string, Node>();
     public finished: Set<Node> = new Set<Node>();
     public visitedNames: Set<String> = new Set<String>();
+    public visitedEdges: Set<Edge> = new Set<Edge>();
 
     public visit(node: Node) {
-        this.visited.add(node);
+        this.visited.set(node.name, node);
         this.visitedNames.add(node.name);
     }
     public finish(node: Node) {
@@ -54,12 +55,13 @@ export class FindAllDependencies extends DepthFirstSearch {
     }
 
     public runNode(node: Node) {
-        if (!this.visited.has(node)) {
+        if (!this.visited.has(node.name)) {
             this.dfs(node);
         }
     }
 
     public explore(src: Node, dst: Node) {
+        this.visitedEdges.add({from: src.name, to: dst.name});
     }
 }
 
