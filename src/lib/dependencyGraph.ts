@@ -1,12 +1,12 @@
 // TODO: Merge dependencyGraph and componentGraph
 import { Tooling } from 'jsforce';
-import {Node, QuickAction , Edge, ScalarNode, CustomField, ValidationRule, CustomObject, FieldDefinition, MetadataComponentDependency, ComponentNode} from './NodeDefs';
 import {AbstractGraph} from './abstractGraph';
 import {FindAllDependencies} from './DFSLib';
+import {ComponentNode, CustomField, CustomObject, Edge, FieldDefinition, MetadataComponentDependency, Node, QuickAction, ScalarNode, ValidationRule} from './NodeDefs';
 
 export const componentsWithParents = ['CustomField', 'ValidationRule', 'QuickAction'];
 
-export class DependencyGraph extends AbstractGraph{
+export class DependencyGraph extends AbstractGraph {
   public edges: Set<Edge> = new Set<Edge>();
 
   private tooling: Tooling;
@@ -45,7 +45,7 @@ export class DependencyGraph extends AbstractGraph{
     for (const record of records) {
       let parentName = '';
       let refParentName = '';
-      
+
       if (record.RefMetadataComponentName.startsWith('0')) {
         continue;
       }
@@ -63,7 +63,7 @@ export class DependencyGraph extends AbstractGraph{
       const srcType = record.MetadataComponentType;
 
       const dstId: string = record.RefMetadataComponentId;
-      const dstName = record.RefMetadataComponentName
+      const dstName = record.RefMetadataComponentName;
       const dstType = record.RefMetadataComponentType;
 
       const srcDetails = new Map<string, object>();
@@ -93,15 +93,14 @@ export class DependencyGraph extends AbstractGraph{
   public runDFS(initialNodes: Node[]) {
       const dfs = new FindAllDependencies(this);
       initialNodes.forEach(node => {
-          let graphNode = this.getOrAddNode(node.name,node.details); //Grab node from this graph
+          const graphNode = this.getOrAddNode(node.name, node.details); // Grab node from this graph
           dfs.runNode(graphNode);
       });
-
 
       this.nodesMap = dfs.visited;
       this.edges = dfs.visitedEdges;
 
-  } 
+  }
 
 public getEdges(src: Node): IterableIterator<Node> {
     return (src as ScalarNode).getEdges();
@@ -149,9 +148,9 @@ public addFieldRelationships() {
   }
 
   public toJson() {
-    let jsonRepresentation = new Array<ComponentNode>();
+    const jsonRepresentation = new Array<ComponentNode>();
     for (const node of this.nodes) {
-        let jsonNode: ComponentNode = {id: node.name, name: (node.details.get('name') as String).valueOf(), type: (node.details.get('type') as String).valueOf(), parent: (node.details.get('parent') as String).valueOf()};
+        const jsonNode: ComponentNode = {id: node.name, name: (node.details.get('name') as String).valueOf(), type: (node.details.get('type') as String).valueOf(), parent: (node.details.get('parent') as String).valueOf()};
         jsonRepresentation.push(jsonNode);
     }
 

@@ -1,8 +1,8 @@
 // TODO: Merge dependencyGraph and componentGraph
 import assert = require('assert');
-import { FieldDefinition, Node, NodeImpl, ScalarNode, NodeGroup } from './Nodedefs';
-import {FindCycles} from './DFSLib';
 import {AbstractGraph} from './abstractGraph';
+import {FindCycles} from './DFSLib';
+import { Node, NodeGroup, NodeImpl, ScalarNode} from './Nodedefs';
 
 export class ComponentGraph extends AbstractGraph {
     private _groupMap: Map<ScalarNode, NodeGroup> = new Map<ScalarNode, NodeGroup>();

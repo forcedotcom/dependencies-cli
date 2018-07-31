@@ -1,12 +1,12 @@
 import {core, flags, SfdxCommand } from '@salesforce/command';
-import {ClusterPackager} from '../../../lib/clusterPackager';
-import {DependencyGraph} from '../../../lib/dependencyGraph';
-import {MetadataComponentDependency, Node} from '../../../lib/NodeDefs';
-import {FileWriter} from '../../../lib/fileWriter';
-import {FindAllDependencies} from '../../../lib/DFSLib';
-import {Member, PackageMerger} from '../../../lib/PackageMerger';
 import {Connection} from '@salesforce/core';
 import process = require('child_process');
+import {ClusterPackager} from '../../../lib/clusterPackager';
+import {DependencyGraph} from '../../../lib/dependencyGraph';
+import {FindAllDependencies} from '../../../lib/DFSLib';
+import {FileWriter} from '../../../lib/fileWriter';
+import {MetadataComponentDependency, Node} from '../../../lib/NodeDefs';
+import {Member, PackageMerger} from '../../../lib/PackageMerger';
 
 core.Messages.importMessagesDirectory(__dirname);
 const messages = core.Messages.loadMessages('dependencies-cli', 'depends');
@@ -14,7 +14,6 @@ const messages = core.Messages.loadMessages('dependencies-cli', 'depends');
 export default class Report extends SfdxCommand {
   public static description = messages.getMessage('description');
   public static examples = [messages.getMessage('example1')];
-  private static isValid = true;
 
   protected static flagsConfig = {
     resultformat: flags.string({ char: 'r', description: messages.getMessage('resultformatFlagDescription'), default: 'dot', options: ['dot', 'xml'] }),
@@ -39,13 +38,12 @@ export default class Report extends SfdxCommand {
     }),
     validate: flags.boolean({
       char: 'v',
-      description: messages.getMessage('validateDescription'),
+      description: messages.getMessage('validateDescription')
     })
 
   };
 
   protected static requiresUsername = true;
-
 
   public async run(): Promise<core.AnyJson> {
     const conn = this.org.getConnection();
@@ -55,7 +53,7 @@ export default class Report extends SfdxCommand {
     await deps.init();
     const records = await this.getDependencyRecords(conn);
 
-    let excludeMap: Map<String, Member[]>;
+    let excludeMap: Map<string, Member[]>;
     if (this.flags.excludepackagefile) {
       excludeMap = PackageMerger.parseIntoMap(this.flags.excludepackagefile);
     }
@@ -64,14 +62,14 @@ export default class Report extends SfdxCommand {
 
     let nodes = Array.from(deps.nodes);
     if (this.flags.includealldependencies || this.flags.includealldependents) {
-        let allRecords = await this.getAllRecords(conn);
+        const allRecords = await this.getAllRecords(conn);
         nodes = await this.buildDFSGraph(allRecords, deps);
     }
 
-    this.generateOutputs(deps,nodes, excludeMap);
+    this.generateOutputs(deps, nodes, excludeMap);
 
     if (this.flags.validate) {
-        let xmlTempString = ClusterPackager.writeXMLNodes(nodes, excludeMap);
+        const xmlTempString = ClusterPackager.writeXMLNodes(nodes, excludeMap);
         await this.validate(xmlTempString);
     }
 
@@ -145,48 +143,46 @@ export default class Report extends SfdxCommand {
     return (await query).records;
   }
 
-
   private async buildDFSGraph(allRecords: MetadataComponentDependency[], deps: DependencyGraph): Promise<Node[]> {
-    let initialNodes = Array.from(deps.nodes);
+    const initialNodes = Array.from(deps.nodes);
     deps.buildGraph(allRecords);
     deps.runDFS(initialNodes);
     return Array.from(deps.nodes);
   }
 
-  private async validate(xmlTempString: string): Promise<any> {
-    let tempFolder = FileWriter.createTempFolder() + '/';
+  private async validate(xmlTempString: string): Promise<void> {
+    const tempFolder = FileWriter.createTempFolder() + '/';
 
-    
-    let file =  tempFolder + 'package.xml';
+    const file =  tempFolder + 'package.xml';
     FileWriter.writeFile(tempFolder, 'package.xml', xmlTempString);
-    let username = this.flags.targetusername;
+    const username = this.flags.targetusername;
     let cmd = 'sfdx force:mdapi:retrieve -u ' + username + ' -k ' + file + ' -r ' + tempFolder;
-    
-    await this.sh(cmd);
-        
-    cmd = 'sfdx force:mdapi:deploy -w 10 -u ' + username + ' -c -f ' + tempFolder  + 'unpackaged.zip';
-    
+
     await this.sh(cmd);
 
-    let cleanupCommand = 'rm -rf ' + tempFolder;
+    cmd = 'sfdx force:mdapi:deploy -w 10 -u ' + username + ' -c -f ' + tempFolder  + 'unpackaged.zip';
+
+    await this.sh(cmd);
+
+    const cleanupCommand = 'rm -rf ' + tempFolder;
 
     await this.sh(cleanupCommand);
   }
 
-  private generateOutputs(deps: DependencyGraph, nodes: Node[], excludeMap: Map<String, Member[]>) {
+  private generateOutputs(deps: DependencyGraph, nodes: Node[], excludeMap: Map<string, Member[]>) {
     let xmlString = '';
     if (this.flags.generatemanifest) {
       xmlString = ClusterPackager.writeXMLNodes(nodes, excludeMap);
       if (this.flags.outputdir) {
         FileWriter.writeFile(this.flags.outputdir, 'package.xml', xmlString);
       } else {
-        FileWriter.writeFile('.','package.xml', xmlString);
+        FileWriter.writeFile('.', 'package.xml', xmlString);
       }
     }
 
     let output = '';
     let fileName = 'graph.dot';
-    if (this.flags.resultformat == 'xml') {
+    if (this.flags.resultformat === 'xml') {
       output = ClusterPackager.writeXMLNodes(nodes, excludeMap);
       fileName = 'package.xml';
     } else {
@@ -195,19 +191,19 @@ export default class Report extends SfdxCommand {
 
     if (this.flags.outputdir) {
       FileWriter.writeFile(this.flags.outputdir, fileName, output);
-      if (this.flags.resultformat == 'dot') {
+      if (this.flags.resultformat === 'dot') {
         this.ux.log ('Created file: ' + this.flags.outputdir + '/graph.dot');
       }
-      if (this.flags.resultformat == 'xml' || this.flags.generatemanifest) {
+      if (this.flags.resultformat === 'xml' || this.flags.generatemanifest) {
         this.ux.log('Created file: ' + this.flags.outputdir + '/package.xml');
       }
     } else {
-      this.ux.log(output)
+      this.ux.log(output);
     }
   }
 
   private async sh(cmd) {
-    return new Promise(function (resolve, reject) {
+    return new Promise((resolve, reject) => {
       process.exec(cmd, (err, stdout, stderr) => {
         if (err) {
           console.log(err);
@@ -219,5 +215,4 @@ export default class Report extends SfdxCommand {
     });
   }
 
-  
 }

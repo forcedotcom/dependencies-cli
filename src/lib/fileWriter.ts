@@ -1,14 +1,12 @@
-import fs = require('fs');
-import shell = require('shelljs');
 import crypto = require('crypto');
+import fs = require('fs');
 import path = require('path');
+import shell = require('shelljs');
 
 export class FileWriter {
-    
-    private static homedir = require('os').homedir();
 
     public static createFolder(folderName: string): string {
-        let actualFolder = folderName;
+        const actualFolder = folderName;
         if (actualFolder.match(/^~/))  {
             actualFolder.replace('~', FileWriter.homedir);
         }
@@ -19,19 +17,19 @@ export class FileWriter {
     }
 
     public static writeFile(folderName, fileName, text): void {
-        let actualFolder = FileWriter.createFolder(folderName);
-        let completeFile = path.join(actualFolder, fileName);
+        const actualFolder = FileWriter.createFolder(folderName);
+        const completeFile = path.join(actualFolder, fileName);
         fs.writeFileSync(completeFile, text);
     }
 
     public static createTempFolder(): string {
         let tempFolder = 'tmp';
         while (fs.existsSync(tempFolder)) {
-            tempFolder = tempFolder + crypto.randomBytes(16).toString('hex'); 
+            tempFolder = tempFolder + crypto.randomBytes(16).toString('hex');
         }
         shell.mkdir('-p', tempFolder);
         return tempFolder;
     }
-
+    private static homedir = require('os').homedir();
 
 }

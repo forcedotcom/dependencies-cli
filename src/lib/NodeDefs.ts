@@ -127,51 +127,50 @@ export class NodeGroup extends NodeImpl {
         this.nodes.add(node as ScalarNode);
     }
 }
-  
-  export type Edge = {
-    from: string;
-    to: string;
-  };
-  
-  export interface Record {
-    Id?: string;
-  }
-  
-  export interface MetadataComponentDependency extends Record {
-    MetadataComponentId: string;
-    MetadataComponentName: string;
-    MetadataComponentType: string;
-    RefMetadataComponentId: string;
-    RefMetadataComponentName: string;
-    RefMetadataComponentType: string;
-  }
-  
-  export interface CustomField extends Record {
-    TableEnumOrId: string;
-  }
-  
-  export interface ValidationRule extends Record {
-    EntityDefinitionId: string;
-  }
-  
-  export interface CustomObject extends Record {
-    DeveloperName: string;
-  }
 
-  export interface QuickAction extends Record  {
-      SobjectType: string;
-  }
-  
-  export interface FieldDefinition {
-    DurableId: string;
-    DataType: string;
-    EntityDefinitionId: string;
-  }
-  
-  export type ComponentNode = {
-    id: string;
-    name: string;
-    type: string;
-    parent: string;
-  }
-  
+export type Edge = {
+from: string;
+to: string;
+};
+
+export interface Record {
+Id?: string;
+}
+
+export interface MetadataComponentDependency extends Record {
+MetadataComponentId: string;
+MetadataComponentName: string;
+MetadataComponentType: string;
+RefMetadataComponentId: string;
+RefMetadataComponentName: string;
+RefMetadataComponentType: string;
+}
+
+export interface CustomField extends Record {
+TableEnumOrId: string;
+}
+
+export interface ValidationRule extends Record {
+EntityDefinitionId: string;
+}
+
+export interface CustomObject extends Record {
+DeveloperName: string;
+}
+
+export interface QuickAction extends Record  {
+    SobjectType: string;
+}
+
+export interface FieldDefinition {
+DurableId: string;
+DataType: string;
+EntityDefinitionId: string;
+}
+
+export type ComponentNode = {
+id: string;
+name: string;
+type: string;
+parent: string;
+};

@@ -1,10 +1,10 @@
-import assert = require('assert');
 import {core, SfdxCommand} from '@salesforce/command';
+import assert = require('assert');
 import {join} from 'path';
 import {ClusterPackager } from '../../../lib/clusterPackager';
+import {ComponentGraph} from '../../../lib/componentGraph';
 import {FileWriter} from '../../../lib/fileWriter';
 import {Node, NodeGroup, ScalarNode } from '../../../lib/NodeDefs';
-import {ComponentGraph} from '../../../lib/componentGraph';
 
 core.Messages.importMessagesDirectory(join(__dirname));
 const messages = core.Messages.loadMessages('dependencies-cli', 'analyze');
@@ -15,14 +15,14 @@ export default class Analyze extends SfdxCommand {
     public static description = messages.getMessage('commandDescription');
 
     public static examples = [
-    `sfdx andyinthecloud:dependencies:componentizer -u DevHub 
+    `sfdx andyinthecloud:dependencies:componentizer -u DevHub
     `
     ];
 
     public static args = [{name: 'file'}];
 
     // tslint:disable-next-line:no-any
-    public static buildGraph(results: any, connectAuras: boolean = false, forwards:boolean = true, backwards:boolean = false): ComponentGraph {
+    public static buildGraph(results: any, connectAuras: boolean = false, forwards: boolean = true, backwards: boolean = false): ComponentGraph {
         const graph: ComponentGraph = new ComponentGraph();
         for (const edge of results) {
             if (edge.RefMetadataComponentName.startsWith('0')) {
@@ -52,19 +52,18 @@ export default class Analyze extends SfdxCommand {
             dstDetails.set('name', (dstName as String));
             dstDetails.set('type', (dstType as String));
             const dstNode: Node = graph.getOrAddNode(dstId, dstDetails);
-            
             if (forwards) {
                 graph.addEdge(srcNode, dstNode);
 
-                if (connectAuras && srcType === 'AuraDefinition' && dstType === 'AuraDefinitionBundle' || srcType == 'FlexiPage') {
+                if (connectAuras && srcType === 'AuraDefinition' && dstType === 'AuraDefinitionBundle' || srcType === 'FlexiPage') {
                     graph.addEdge(dstNode, srcNode); // Also add reverse reference
                 }
-            } 
+            }
 
             if (backwards) {
                 graph.addEdge(dstNode, srcNode);
 
-                if (connectAuras && srcType === 'AuraDefinition' && dstType === 'AuraDefinitionBundle' || srcType == 'FlexiPage') {
+                if (connectAuras && srcType === 'AuraDefinition' && dstType === 'AuraDefinitionBundle' || srcType === 'FlexiPage') {
                     graph.addEdge(srcNode, dstNode); // Also add reverse reference
                 }
             }
@@ -113,8 +112,8 @@ export default class Analyze extends SfdxCommand {
                 let type: string;
                 if (node instanceof NodeGroup) {
                     type = 'Cluster';
-                    let xmlString = ClusterPackager.writeXMLNodeGroup((node as NodeGroup));
-                    let folder = Analyze.outputFolder + (node as NodeGroup).name + '/';
+                    const xmlString = ClusterPackager.writeXMLNodeGroup((node as NodeGroup));
+                    const folder = Analyze.outputFolder + (node as NodeGroup).name + '/';
                     FileWriter.writeFile(folder, 'package.xml', xmlString);
                 } else {
                     type = ((node.details.get('type')) as String).valueOf();

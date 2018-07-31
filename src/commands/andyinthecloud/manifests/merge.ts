@@ -3,28 +3,28 @@ import {ClusterPackager} from '../../../lib/clusterPackager';
 import { FileWriter } from '../../../lib/fileWriter';
 import {Member, PackageMerger} from '../../../lib/packageMerger';
 
-
 export default class PackageMerging extends SfdxCommand {
-  private homedir = require('os').homedir();
 
   public static description = 'This tool allows you to merge several package.xmls together to create one base package.xml.' +
   'You can put the file names (including paths) to the package.xmls as args (as many as you want) and the base package.xml will be outputted to the console.';
 
   public static strict = false;
 
-  static flagsConfig = {
+  public static flagsConfig = {
     help: flags.help({char: 'h', description: 'get some help'}),
     outputdirectory: flags.string({char: 'd', description: 'output folder location to put package.xml'})
     // flag with no value (-f, --force)
   };
 
-  public async run(): Promise<String> {
+  private homedir = require('os').homedir();
 
-    const fileArray = new Array<Map<String, Member[]>>();
+  public async run(): Promise<string> {
+
+    const fileArray = new Array<Map<string, Member[]>>();
     let cont = false;
     for (const file of this.argv) {
       if (file === '-d' || file === '--outputdir') { // TODO: Find a better way to get args and flags
-        cont = true; // Skip next arg also 
+        cont = true; // Skip next arg also
         continue;
       }
       if (cont) {
@@ -43,14 +43,14 @@ export default class PackageMerging extends SfdxCommand {
     const packageString = ClusterPackager.writeXMLMap(basePackageArray);
 
     if (this.flags.outputdirectory) {
-      FileWriter.writeFile(this.flags.outputdirectory, 'package.xml', packageString); 
+      FileWriter.writeFile(this.flags.outputdirectory, 'package.xml', packageString);
     }
     this.ux.log(packageString);
 
     return packageString;
   }
 
-  private mergeArrays(fileArray: Array<Map<String, Member[]>>): Map<String, Member[]> {
+  private mergeArrays(fileArray: Array<Map<string, Member[]>>): Map<string, Member[]> {
     const base = fileArray[0];
     for (const file of fileArray) {
       base.forEach((pair: Member[]) => {
