@@ -2,20 +2,19 @@ import fs = require('fs');
 
 export class Member {
     constructor(public name: string, public type: string) { }
-  
+
     public equals(other: Member): boolean {
       return (this.name === other.name && this.type === other.type);
     }
 }
 
-
 export class PackageMerger {
 
     public static parseXML = require('xml2js');
 
-    public static parseIntoMap(fileName: string): Map<String, Member[]> {
+    public static parseIntoMap(fileName: string): Map<string, Member[]> {
         const xmlOutput = fs.readFileSync(fileName);
-        const outputMap = new Map<String, Member[]>();
+        const outputMap = new Map<string, Member[]>();
         PackageMerger.parseXML.parseString(xmlOutput, (err, res) => {
         if (err) {
             console.log('INVALID XML FILE');
@@ -36,11 +35,11 @@ export class PackageMerger {
         return outputMap;
     }
 
-    public static containsMember(name: String, type: String, map: Map<String, Member[]>): boolean {
+    public static containsMember(name: string, type: string, map: Map<string, Member[]>, checkParent: boolean = false): boolean {
         if (map == null) {
         return false;
         }
-        const arr = map.get(type);
+        let arr = map.get(type);
         if (arr) {
         for (const mem of arr) {
             if (mem.name === name && mem.type === type) {
@@ -48,6 +47,18 @@ export class PackageMerger {
             }
         }
         }
+        if (checkParent) {
+        // Check Custom Objects as well
+            arr = map.get('CustomObject');
+            if (arr) {
+                for (const mem of arr) {
+                    if (name.startsWith(mem.name)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
         return false;
     }
 

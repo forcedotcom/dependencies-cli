@@ -1,8 +1,9 @@
-import {Node, NodeImpl, ScalarNode} from './NodeDefs'
+// @ts-nocheck
+import {Node, NodeImpl, ScalarNode} from './NodeDefs';
 export abstract class AbstractGraph {
     protected nodesMap: Map<string, Node> = new Map<string, Node>();
-    public abstract getEdges(Node): IterableIterator<Node>;
-    
+    public abstract getEdges(node: Node): IterableIterator<Node>;
+
     public get nodes() {
         return this.nodesMap.values();
     }
@@ -22,9 +23,9 @@ export abstract class AbstractGraph {
     public getOrAddNode(name: string, details: Map<string, object>): Node {
         let n: Node = this.nodesMap.get(name);
         if (n) {
-            return n;   
+            return n;
         }
-    
+
         n = new ScalarNode(name, details);
         this.nodesMap.set(name, n);
         return n;
@@ -39,7 +40,7 @@ export abstract class AbstractGraph {
         });
         return found;
     }
-    
+
     protected getNodeShortId(name: string): Node {
         let found: Node;
         Array.from(this.nodes).forEach(node => {
