@@ -22,19 +22,13 @@ You can pass flags to it to filter down the output further, since in most orgs t
 sfdx update
 ```
 
-2) Clone the repository:
+2) Install the plugin via npm
 
 ```
-git clone git@github.com:afawcett/dependencies-cli.git && cd dependencies-cli
+sfdx plugins:install dependencies-cli
 ```
 
-3) Link the plugin:
-
-```
-sfdx plugins:link .
-```
-
-4) Run the command:
+3) Run the command:
 
 ```
 sfdx andyinthecloud:dependencies:report -u [alias|username]
