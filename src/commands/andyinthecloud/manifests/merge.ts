@@ -16,8 +16,6 @@ export default class PackageMerging extends SfdxCommand {
     // flag with no value (-f, --force)
   };
 
-  private homedir = require('os').homedir();
-
   public async run(): Promise<string> {
 
     const fileArray = new Array<Map<string, Member[]>>();
