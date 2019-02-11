@@ -1,8 +1,8 @@
 // TODO: Merge dependencyGraph and componentGraph
 import { Tooling } from 'jsforce';
-import {AbstractGraph} from './abstractGraph';
-import {FindAllDependencies} from './DFSLib';
-import {ComponentNode, CustomField, CustomObject, Edge, FieldDefinition, MetadataComponentDependency, Node, QuickAction, ScalarNode, ValidationRule} from './NodeDefs';
+import { AbstractGraph } from './abstractGraph';
+import { FindAllDependencies } from './DFSLib';
+import { ComponentNode, CustomField, CustomObject, Edge, FieldDefinition, MetadataComponentDependency, Node, QuickAction, ScalarNode, ValidationRule } from './NodeDefs';
 
 export const componentsWithParents = ['CustomField', 'ValidationRule', 'QuickAction'];
 
@@ -18,18 +18,18 @@ export class DependencyGraph extends AbstractGraph {
   private quickActions: QuickAction[];
 
   constructor(tool: Tooling) {
-      super();
-      this.tooling = tool;
-   }
+    super();
+    this.tooling = tool;
+  }
 
   public async init() {
     this.allComponentIds = await this.retrieveAllComponentIds();
-    this.customFields = await this.retrieveCustomFields(this.allComponentIds);
+    this.customFields = await this.retrieveCustomFields(this.allComponentIds, new Array<CustomField>());
     this.validationRules = await this.retrieveValidationRules(this.allComponentIds);
     this.quickActions = await this.retrieveQuickActions(this.allComponentIds);
-    this.customObjects = await this.retrieveCustomObjects(this.getObjectIds());
+    this.customObjects = await this.retrieveCustomObjects();
     const customFieldEntities = this.customFields.map(r => r.TableEnumOrId);
-    this.customFieldDefinitions = await this.retrieveLookupRelationships(customFieldEntities);
+    this.customFieldDefinitions = await this.retrieveLookupRelationships(customFieldEntities, new Array<FieldDefinition>());
     const lookupRelationships = this.customFieldDefinitions.filter(x => x.DataType.startsWith('Lookup'));
     lookupRelationships.forEach(element => {
       element.DataType = element.DataType.slice(element.DataType.indexOf('(') + 1, element.DataType.lastIndexOf(')'));
@@ -84,42 +84,42 @@ export class DependencyGraph extends AbstractGraph {
       if (record.MetadataComponentType === 'AuraDefinition' && record.RefMetadataComponentType === 'AuraDefinitionBundle') {
         this.edges.add({ from: record.RefMetadataComponentId, to: record.MetadataComponentId }); // Also add reverse reference
         this.addEdge(dstNode, srcNode);
-        }
+      }
 
     }
     this.addFieldRelationships();
   }
 
   public runDFS(initialNodes: Node[]) {
-      const dfs = new FindAllDependencies(this);
-      initialNodes.forEach(node => {
-          const graphNode = this.getOrAddNode(node.name, node.details); // Grab node from this graph
-          dfs.runNode(graphNode);
-      });
+    const dfs = new FindAllDependencies(this);
+    initialNodes.forEach(node => {
+      const graphNode = this.getOrAddNode(node.name, node.details); // Grab node from this graph
+      dfs.runNode(graphNode);
+    });
 
-      this.nodesMap = dfs.visited;
-      this.edges = dfs.visitedEdges;
+    this.nodesMap = dfs.visited;
+    this.edges = dfs.visitedEdges;
 
   }
 
-public getEdges(src: Node): IterableIterator<Node> {
+  public getEdges(src: Node): IterableIterator<Node> {
     return (src as ScalarNode).getEdges();
-}
+  }
 
-public addFieldRelationships() {
+  public addFieldRelationships() {
     this.customFieldDefinitions.forEach(fielddef => {
-        const n1 = this.getNodeShortId(fielddef.EntityDefinitionId);
-        const objName = fielddef.DataType.slice(fielddef.DataType.indexOf('(') + 1, fielddef.DataType.lastIndexOf(')'));
-        const n2: Node = this.getNodeFromName(objName);
-        if (n1 != null && n2 != null) {
-            this.addEdge(n1, n2);
-        }
+      const n1 = this.getNodeShortId(fielddef.EntityDefinitionId);
+      const objName = fielddef.DataType.slice(fielddef.DataType.indexOf('(') + 1, fielddef.DataType.lastIndexOf(')'));
+      const n2: Node = this.getNodeFromName(objName);
+      if (n1 != null && n2 != null) {
+        this.addEdge(n1, n2);
+      }
     });
-}
+  }
 
   /**
-   * Render as DOT format
-   */
+  * Render as DOT format
+  */
   public toDotFormat(): string {
 
     // TODO Depending on the size of orgs, you may not want to
@@ -150,8 +150,8 @@ public addFieldRelationships() {
   public toJson() {
     const jsonRepresentation = new Array<ComponentNode>();
     for (const node of this.nodes) {
-        const jsonNode: ComponentNode = {id: node.name, name: (node.details.get('name') as String).valueOf(), type: (node.details.get('type') as String).valueOf(), parent: (node.details.get('parent') as String).valueOf()};
-        jsonRepresentation.push(jsonNode);
+      const jsonNode: ComponentNode = { id: node.name, name: (node.details.get('name') as String).valueOf(), type: (node.details.get('type') as String).valueOf(), parent: (node.details.get('parent') as String).valueOf() };
+      jsonRepresentation.push(jsonNode);
     }
 
     return { nodes: jsonRepresentation, edges: Array.from(this.edges) };
@@ -172,14 +172,74 @@ public addFieldRelationships() {
     return (await this.tooling.query<T>(query)).records;
   }
 
-  public async retrieveCustomFields(ids: string[]): Promise<CustomField[]> {
-    const query = `SELECT Id, TableEnumOrId FROM CustomField c WHERE c.Id In ${this.arrayToInIdString(ids)}`;
-    return await this.retrieveRecords<CustomField>(query);
+  private splitIds(ids: string[], query: string, maxNumberOfIds = 0) {
+
+    /* HKA: split potentially long lists of ids into sublists
+    
+    A SOQL query can only have 20K chars and a long list can potentially exceed that limit
+    A SOQL query passed as URL parameter has to be limitted in size as well. Approximately 16K is the max URI length
+    A few types of SOQL queries limit the number of attributes to be passed. OPTIONAL parameter.
+    query.length = 58 (80 when URL encoded)
+    id.length = 18 + 3 (23 when URL encoded)
+    */
+    const maxURIlength = 12000;
+    const idNumChars = 23;
+
+    if (maxNumberOfIds && ids.length > maxNumberOfIds) {
+      var index = maxNumberOfIds;
+    } else
+      if (((ids.length * idNumChars) + query.length) > maxURIlength) {
+        var index = Math.floor((maxURIlength - query.length) / idNumChars);
+      } else {
+        var index = ids.length;
+      }
+
+    // produce two sets of ids, the left array small enougth to run the query with
+    // the right array containing the rest
+    var allIds = {
+      left: ids.splice(0, index),
+      right: ids
+    }
+ 
+    return allIds;
   }
 
-  public async retrieveLookupRelationships(ids: string[]): Promise<FieldDefinition[]> {
-    const query = `SELECT EntityDefinitionId,DataType,DurableId FROM FieldDefinition c WHERE c.EntityDefinitionId In ${this.arrayToInIdString(ids)}`;
-    return await this.retrieveRecords<FieldDefinition>(query);
+  public async retrieveCustomFields(ids: string[], resultset: CustomField[]): Promise<CustomField[]> {
+
+    var query = `SELECT Id, TableEnumOrId FROM CustomField c WHERE c.Id In `;
+    var splitIds = this.splitIds(ids, query);
+
+    query = query.concat(this.arrayToInIdString(splitIds.left));
+
+    // run the query
+    resultset = resultset.concat(await this.retrieveRecords<CustomField>(query));
+
+    // recursive call to compute the next query
+    if (splitIds.right.length > 0) {
+      this.retrieveCustomFields(splitIds.right, resultset);
+    }
+
+    return resultset;
+  }
+
+  public async retrieveLookupRelationships(ids: string[], resultset: FieldDefinition[]): Promise<FieldDefinition[]> {
+
+    var query = `SELECT EntityDefinitionId,DataType,DurableId FROM FieldDefinition c WHERE c.EntityDefinitionId In `;
+
+    const maxNumberOfIds = 25;
+    var splitIds = this.splitIds(ids, query, maxNumberOfIds);
+
+    query = query.concat(this.arrayToInIdString(splitIds.left));
+
+    // run the query
+    resultset = resultset.concat(await this.retrieveRecords<FieldDefinition>(query));
+
+    // recursive call to compute the next query
+    if (splitIds.right.length > 0) {
+      this.retrieveLookupRelationships(splitIds.right, resultset);
+    }
+
+    return resultset;
   }
 
   public async retrieveValidationRules(ids: string[]): Promise<ValidationRule[]> {
@@ -192,7 +252,7 @@ public addFieldRelationships() {
     return await this.retrieveRecords<QuickAction>(query);
   }
 
-  public async retrieveCustomObjects(ids: string[]): Promise<CustomObject[]> {
+  public async retrieveCustomObjects(): Promise<CustomObject[]> {
     const query = `SELECT Id, DeveloperName FROM CustomObject c WHERE c.Id In ${this.arrayToInIdString(this.getObjectIds())}`;
     return await this.retrieveRecords<CustomObject>(query);
   }

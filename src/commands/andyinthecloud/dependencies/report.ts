@@ -1,9 +1,7 @@
 import {core, flags, SfdxCommand } from '@salesforce/command';
-import {Connection} from '@salesforce/core';
 import process = require('child_process');
 import {ClusterPackager} from '../../../lib/clusterPackager';
 import {DependencyGraph} from '../../../lib/dependencyGraph';
-import {FindAllDependencies} from '../../../lib/DFSLib';
 import {FileWriter} from '../../../lib/fileWriter';
 import {MetadataComponentDependency, Node} from '../../../lib/NodeDefs';
 import {Member, PackageMerger} from '../../../lib/PackageMerger';
