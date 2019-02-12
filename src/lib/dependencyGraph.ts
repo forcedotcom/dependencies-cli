@@ -226,7 +226,7 @@ export class DependencyGraph extends AbstractGraph {
 
     var query = `SELECT EntityDefinitionId,DataType,DurableId FROM FieldDefinition c WHERE c.EntityDefinitionId In `;
 
-    const maxNumberOfIds = 25;
+    const maxNumberOfIds = 10;
     var splitIds = this.splitIds(ids, query, maxNumberOfIds);
 
     query = query.concat(this.arrayToInIdString(splitIds.left));
