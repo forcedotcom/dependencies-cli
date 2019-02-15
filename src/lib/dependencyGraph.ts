@@ -11,11 +11,14 @@ export class DependencyGraph extends AbstractGraph {
 
   private tooling: Tooling;
   private allComponentIds: string[];
+  private allCustomObjectIds: string[];
   private customFields: CustomField[];
   private validationRules: ValidationRule[];
   private customObjects: CustomObject[];
   private customFieldDefinitions: FieldDefinition[];
   private quickActions: QuickAction[];
+
+  private maxNumberOfIds = 10;
 
   constructor(tool: Tooling) {
     super();
@@ -25,9 +28,10 @@ export class DependencyGraph extends AbstractGraph {
   public async init() {
     this.allComponentIds = await this.retrieveAllComponentIds();
     this.customFields = await this.retrieveCustomFields(this.allComponentIds, new Array<CustomField>());
-    this.validationRules = await this.retrieveValidationRules(this.allComponentIds);
-    this.quickActions = await this.retrieveQuickActions(this.allComponentIds);
-    this.customObjects = await this.retrieveCustomObjects();
+    this.validationRules = await this.retrieveValidationRules(this.allComponentIds, new Array<ValidationRule>());
+    this.quickActions = await this.retrieveQuickActions(this.allComponentIds, new Array<QuickAction>());
+    this.allCustomObjectIds = await this.getObjectIds();
+    this.customObjects = await this.retrieveCustomObjects(this.allCustomObjectIds, new Array<CustomObject>());
     const customFieldEntities = this.customFields.map(r => r.TableEnumOrId);
     this.customFieldDefinitions = await this.retrieveLookupRelationships(customFieldEntities, new Array<FieldDefinition>());
     const lookupRelationships = this.customFieldDefinitions.filter(x => x.DataType.startsWith('Lookup'));
@@ -150,7 +154,8 @@ export class DependencyGraph extends AbstractGraph {
   public toJson() {
     const jsonRepresentation = new Array<ComponentNode>();
     for (const node of this.nodes) {
-      const jsonNode: ComponentNode = { id: node.name, name: (node.details.get('name') as String).valueOf(), type: (node.details.get('type') as String).valueOf(), parent: (node.details.get('parent') as String).valueOf() };
+      const jsonNode: ComponentNode = { id: node.name, name: (node.details.get('name') as String).valueOf(), 
+      type: (node.details.get('type') as String).valueOf(), parent: (node.details.get('parent') as String).valueOf() };
       jsonRepresentation.push(jsonNode);
     }
 
@@ -201,13 +206,16 @@ export class DependencyGraph extends AbstractGraph {
       right: ids
     }
  
+    // console.log(" query = " + query + " allIds.left.length = " + allIds.left.length + 
+    // " allIds.right.length = " + allIds.right.length);
+
     return allIds;
   }
 
   public async retrieveCustomFields(ids: string[], resultset: CustomField[]): Promise<CustomField[]> {
 
     var query = `SELECT Id, TableEnumOrId FROM CustomField c WHERE c.Id In `;
-    var splitIds = this.splitIds(ids, query);
+    var splitIds = this.splitIds(ids, query, this.maxNumberOfIds);
 
     query = query.concat(this.arrayToInIdString(splitIds.left));
 
@@ -226,8 +234,7 @@ export class DependencyGraph extends AbstractGraph {
 
     var query = `SELECT EntityDefinitionId,DataType,DurableId FROM FieldDefinition c WHERE c.EntityDefinitionId In `;
 
-    const maxNumberOfIds = 10;
-    var splitIds = this.splitIds(ids, query, maxNumberOfIds);
+    var splitIds = this.splitIds(ids, query, this.maxNumberOfIds);
 
     query = query.concat(this.arrayToInIdString(splitIds.left));
 
@@ -242,18 +249,59 @@ export class DependencyGraph extends AbstractGraph {
     return resultset;
   }
 
-  public async retrieveValidationRules(ids: string[]): Promise<ValidationRule[]> {
-    const query = `SELECT Id, EntityDefinitionId FROM ValidationRule c WHERE c.Id In ${this.arrayToInIdString(ids)}`;
+  public async retrieveValidationRules(ids: string[], resultset:ValidationRule[]): Promise<ValidationRule[]> {
+
+    var query = `SELECT Id, EntityDefinitionId FROM ValidationRule c WHERE c.Id In `;
+
+    var splitIds = this.splitIds(ids, query, this.maxNumberOfIds);
+
+    query = query.concat(this.arrayToInIdString(splitIds.left));
+
+    // run the query
+    resultset = resultset.concat(await this.retrieveRecords<FieldDefinition>(query));
+
+    // recursive call to compute the next query
+    if (splitIds.right.length > 0) {
+      this.retrieveValidationRules(splitIds.right, resultset);
+    }
+
     return await this.retrieveRecords<ValidationRule>(query);
   }
 
-  public async retrieveQuickActions(ids: string[]): Promise<QuickAction[]> {
-    const query = `SELECT Id, SobjectType FROM QuickActionDefinition c WHERE c.Id In ${this.arrayToInIdString(ids)}`;
+  public async retrieveQuickActions(ids: string[], resultset:QuickAction[]): Promise<QuickAction[]> {
+    
+    var query = `SELECT Id, SobjectType FROM QuickActionDefinition c WHERE c.Id In `;
+    
+    var splitIds = this.splitIds(ids, query, this.maxNumberOfIds);
+
+    query = query.concat(this.arrayToInIdString(splitIds.left));
+
+    // run the query
+    resultset = resultset.concat(await this.retrieveRecords<QuickAction>(query));
+
+    // recursive call to compute the next query
+    if (splitIds.right.length > 0) {
+      this.retrieveQuickActions(splitIds.right, resultset);
+    }
+
     return await this.retrieveRecords<QuickAction>(query);
   }
 
-  public async retrieveCustomObjects(): Promise<CustomObject[]> {
-    const query = `SELECT Id, DeveloperName FROM CustomObject c WHERE c.Id In ${this.arrayToInIdString(this.getObjectIds())}`;
+  public async retrieveCustomObjects(ids: string[], resultset:CustomObject[]): Promise<CustomObject[]> {
+    var query = `SELECT Id, DeveloperName FROM CustomObject c WHERE c.Id In `;
+
+    var splitIds = this.splitIds(ids, query, this.maxNumberOfIds);
+
+    query = query.concat(this.arrayToInIdString(splitIds.left));
+
+    // run the query
+    resultset = resultset.concat(await this.retrieveRecords<CustomObject>(query));
+
+    // recursive call to compute the next query
+    if (splitIds.right.length > 0) {
+      this.retrieveCustomObjects(splitIds.right, resultset);
+    }
+
     return await this.retrieveRecords<CustomObject>(query);
   }
 
@@ -262,7 +310,10 @@ export class DependencyGraph extends AbstractGraph {
   }
 
   private async retrieveAllComponentIds(): Promise<string[]> {
-    const query = "SELECT MetadataComponentId,RefMetadataComponentId FROM MetadataComponentDependency WHERE (MetadataComponentType = 'CustomField' OR RefMetadataComponentType = 'CustomField') OR (MetadataComponentType = 'ValidationRule' OR RefMetadataComponentType = 'ValidationRule') OR (MetadataComponentType = 'QuickAction' OR RefMetadataComponentType = 'QuickAction')";
+    const query = "SELECT MetadataComponentId,RefMetadataComponentId FROM MetadataComponentDependency \
+    WHERE (MetadataComponentType = 'CustomField' OR RefMetadataComponentType = 'CustomField') \
+    OR (MetadataComponentType = 'ValidationRule' OR RefMetadataComponentType = 'ValidationRule') \
+    OR (MetadataComponentType = 'QuickAction' OR RefMetadataComponentType = 'QuickAction')";
 
     // Get all Custom Field Ids in MetadataComponent and RefMetadata Component
     const customComponentIds = await this.retrieveRecords<MetadataComponentDependency>(query);
