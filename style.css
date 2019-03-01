@@ -1,0 +1,52 @@
+// style.css
+
+html {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  overflow: hidden;
+  background: linear-gradient(135deg, #ffffff 0%,#e8f1f5 100%);
+}
+
+.container {
+  position: absolute;
+  padding: 20px;
+  top: 50%;
+  left: 50%;
+  background-color: white;
+  border-radius: 4px;
+  transform: translate(-50%, -50%);
+  box-shadow: 0px 50px 100px 0px rgba(0,0,102,0.1);
+  text-align: center;
+}
+
+.container h1 {
+  color: #333;
+}
+
+.bar {
+  fill: #6875ff;
+  border-radius: 2px;
+}
+
+.bar:hover {
+  fill: #1edede;
+}
+
+.tooltip {
+  opacity: 0;
+  background-color: rgb(170, 204, 247);
+  padding: 5px;
+  border-radius: 4px;
+  transition: opacity 0.2s ease;
+}
