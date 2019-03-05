@@ -1,14 +1,191 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+<style>
+  .links line {
+    stroke: #999;
+    stroke-opacity: 0.6;
+  }
+
+  .nodes circle {
+    stroke: #fff;
+    stroke-width: 1.5px;
+  }
+
+  text {
+    font-family: sans-serif;
+    font-size: 10px;
+  }
+</style>
+
+<!-- 
+Code requires https://github.com/d3/d3-force  
+  
+Some sample code and references used from:
+https://bl.ocks.org/heybignick/3faf257bbbbc7743bb72310d03b86ee8
+https://bl.ocks.org/puzzler10/4438752bb93f45dc5ad5214efaa12e4a
+http://bl.ocks.org/jhb/5955887
+
+-->
+
 <body>
-<script src="//d3js.org/d3.v4.min.js"></script>
-<script src="https://unpkg.com/viz.js@1.8.0/viz.js" type="javascript/worker"></script>
-<script src="https://unpkg.com/d3-graphviz@1.4.0/build/d3-graphviz.min.js"></script>
-<div id="graph" style="text-align: center;"></div>
-<script>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
 
-d3.select("#graph").graphviz()
-    .fade(false)
-    .renderDot('digraph  {a -> b}');
+  <input type="file" id="files" name="files[]" multiple />
+  <output id="list"></output>
 
-</script>
+  <div id="graph" style="text-align: center;" width="1600 " height="900"></div>
+  <svg width="1600 " height="900"></svg>
+
+  <script>
+
+    document.getElementById('files').addEventListener('change', function (event) {
+      var files = handleFileSelect(event);
+
+      for (var i = 0, f; f = files[i]; i++) {
+
+        var svg = d3.select("svg"),
+          width = +svg.attr("width"),
+          height = +svg.attr("height");
+
+        var color = d3.scaleOrdinal(d3.schemeCategory20);
+
+        var simulation = d3.forceSimulation()
+          .force("link", d3.forceLink().id(function (d) { return d.id; }))
+          .force("charge", d3.forceManyBody())
+          .force("center", d3.forceCenter(width / 2, height / 2));
+
+        d3.json(f.name, function (error, dotJson) {
+          if (error) throw error;
+
+          // remove old graphs on reload
+          d3.selectAll("g > *").remove();
+
+          var graph = dotJson.result;
+          graph.nodes = graph.nodes;
+          graph.links = graph.edges;
+
+          var nodeById = d3.map();
+
+          graph.nodes.forEach(function (node) {
+            nodeById.set(node.id, node);
+          });
+
+          graph.links.forEach(function (link) {
+            link.source = nodeById.get(link.from);
+            link.target = nodeById.get(link.to);
+          });
+
+
+          //add encompassing group for the zoom 
+          var g = svg.append("g")
+            .attr("class", "everything");
+
+          var link = g.append("g")
+            .attr("class", "links")
+            .selectAll("line")
+            .data(graph.links)
+            .enter().append("line")
+            .attr("stroke-width", function (d) { return Math.sqrt(d.value); });
+
+          var node = g.append("g")
+            .attr("class", "nodes")
+            .selectAll("g")
+            .data(graph.nodes)
+            .enter().append("g")
+
+          var circles = node.append("circle")
+            .attr("r", 5)
+            .attr("fill", function (d) { return color(d.type); })
+            .call(d3.drag()
+              .on("start", dragstarted)
+              .on("drag", dragged)
+              .on("end", dragended));
+
+          /*
+        var lables = node.append("text")
+          .text(function (d) {
+            return d.name;
+          })
+          .attr('x', 6)
+          .attr('y', 3);
+          */
+
+          node.append("title")
+            .text(function (d) { return String(d.type).concat(":").concat(d.name); });
+
+          simulation
+            .nodes(graph.nodes)
+            .on("tick", ticked);
+
+          simulation.force("link")
+            .links(graph.links);
+
+
+
+          //add zoom capabilities 
+          var zoom_handler = d3.zoom()
+            .on("zoom", zoom_actions);
+
+          zoom_handler(svg);
+
+
+          function ticked() {
+            link
+              .attr("x1", function (d) { return d.source.x; })
+              .attr("y1", function (d) { return d.source.y; })
+              .attr("x2", function (d) { return d.target.x; })
+              .attr("y2", function (d) { return d.target.y; });
+
+            node
+              .attr("transform", function (d) {
+                return "translate(" + d.x + "," + d.y + ")";
+              })
+          }
+
+          //Zoom functions 
+          function zoom_actions() {
+            g.attr("transform", d3.event.transform)
+          }
+        })
+      };
+
+      function dragstarted(d) {
+        if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      }
+
+      function dragged(d) {
+        d.fx = d3.event.x;
+        d.fy = d3.event.y;
+      }
+
+      function dragended(d) {
+        if (!d3.event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      }
+
+      function handleFileSelect(evt) {
+        var files = evt.target.files; // FileList object
+
+        // Loop through the FileList and print some attributes
+        for (var i = 0, f; f = files[i]; i++) {
+
+          var output = [];
+
+          output.push('<li><strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
+            f.size, ' bytes, last modified: ',
+            f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a',
+            '</li>');
+
+          document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';
+
+        }
+        return files;
+      }
+
+    }, false);
+
+  </script>
+</body>
