@@ -34,7 +34,70 @@ sfdx plugins:install dependencies-cli
 sfdx andyinthecloud:dependencies:report -u [alias|username]
 ```
 
+
+## Rendering graph output locally
+
+We document two options to visualize the produced graph locally:
+
+1) Render the SVG as dependency graph in an image
+2) Render the SVG as [d3-force](https://github.com/d3/d3-force) graph in JavaScript
+
+### 1. Render the SVG as dependency graph in an image
+
+- requires [Graphviz](http://graphviz.org/)
+
+```
+brew install graphviz
+```
+
+- produce the DOT graph file output
+
+```
+sfdx andyinthecloud:dependencies:report -u [alias|username] -r dot  | tee graph.dot
+
+```
+
+- convert the DOT file to SVG
+
+```
+dot -T svg graph.dot > graph.svg
+```
+
+- open the SVG directly in your browser (Google Chrome works best)
+
+```
+open -a "Google Chrome" graph.svg
+```
+
+### 2. Render the SVG as [d3-force](https://github.com/d3/d3-force) graph in JavaScript
+
+- requires [http-server](https://www.npmjs.com/package/http-server)
+
+```
+npm install http-server
+```
+
+- produce the graph in JSON format
+
+```
+sfdx andyinthecloud:dependencies:report -u [alias|username] --json  | tee graph.json
+```
+
+- start the http server
+
+```
+http-server -a localhost -p 8000 &
+```
+
+- open the browser with [http://localhost:8000/index.html](http://localhost:8000/index.html) and select the produced JSON file to render
+
+```
+open -a "Google Chrome" http://localhost:8000
+```
+
 ## Example Output
+
+1) Raw DOT format output
 
 ```
 digraph graphname {
@@ -99,3 +162,12 @@ digraph graphname {
   X00N11000002q9aoEAA->X00N11000002pkkvEAA
 }
 ```
+
+
+2) SVG dependency graph output
+
+![Graph](./img/example2.png)
+
+3) D3 force graph output
+
+![Graph](./img/example3.png)

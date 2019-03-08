@@ -1,5 +1,5 @@
 // TODO: Merge dependencyGraph and componentGraph
-import { Tooling } from 'jsforce';
+import { Tooling, Connection } from 'jsforce';
 import { AbstractGraph } from './abstractGraph';
 import { FindAllDependencies } from './DFSLib';
 import { ComponentNode, CustomField, CustomObject, Edge, FieldDefinition, MetadataComponentDependency, Node, QuickAction, ScalarNode, ValidationRule } from './NodeDefs';
@@ -10,6 +10,7 @@ export class DependencyGraph extends AbstractGraph {
   public edges: Set<Edge> = new Set<Edge>();
 
   private tooling: Tooling;
+  private connection: Connection;
   private allComponentIds: string[];
   private allCustomObjectIds: string[];
   private customFields: CustomField[];
@@ -20,9 +21,12 @@ export class DependencyGraph extends AbstractGraph {
 
   private maxNumberOfIds = 10;
 
-  constructor(tool: Tooling) {
+  constructor(tool: Tooling, conn: Connection) {
     super();
     this.tooling = tool;
+    this.connection = conn;
+
+    this.connection.bulk.pollTimeout = 25000; // Bulk timeout can be specified globally on the connection object
   }
 
   public async init() {
@@ -34,6 +38,7 @@ export class DependencyGraph extends AbstractGraph {
     this.customObjects = await this.retrieveCustomObjects(this.allCustomObjectIds, new Array<CustomObject>());
     const customFieldEntities = this.customFields.map(r => r.TableEnumOrId);
     this.customFieldDefinitions = await this.retrieveLookupRelationships(customFieldEntities, new Array<FieldDefinition>());
+    // this.customFieldDefinitions = await this.bulkRetrieveLookupRelationships(customFieldEntities, new Array<FieldDefinition>());
     const lookupRelationships = this.customFieldDefinitions.filter(x => x.DataType.startsWith('Lookup'));
     lookupRelationships.forEach(element => {
       element.DataType = element.DataType.slice(element.DataType.indexOf('(') + 1, element.DataType.lastIndexOf(')'));
@@ -154,8 +159,10 @@ export class DependencyGraph extends AbstractGraph {
   public toJson() {
     const jsonRepresentation = new Array<ComponentNode>();
     for (const node of this.nodes) {
-      const jsonNode: ComponentNode = { id: node.name, name: (node.details.get('name') as String).valueOf(), 
-      type: (node.details.get('type') as String).valueOf(), parent: (node.details.get('parent') as String).valueOf() };
+      const jsonNode: ComponentNode = {
+        id: node.name, name: (node.details.get('name') as String).valueOf(),
+        type: (node.details.get('type') as String).valueOf(), parent: (node.details.get('parent') as String).valueOf()
+      };
       jsonRepresentation.push(jsonNode);
     }
 
@@ -175,6 +182,15 @@ export class DependencyGraph extends AbstractGraph {
 
   public async retrieveRecords<T>(query: string) {
     return (await this.tooling.query<T>(query)).records;
+  }
+
+  public async retrieveBulkRecords<T>(query: string) {
+    return (await this.connection.bulk.query(query)
+    .on('record', function(rec) {
+      console.log(rec);
+      return rec}))
+    .on('error', function(err) { 
+      console.error(err); });
   }
 
   private splitIds(ids: string[], query: string, maxNumberOfIds = 0) {
@@ -205,7 +221,7 @@ export class DependencyGraph extends AbstractGraph {
       left: ids.splice(0, index),
       right: ids
     }
- 
+
     // console.log(" query = " + query + " allIds.left.length = " + allIds.left.length + 
     // " allIds.right.length = " + allIds.right.length);
 
@@ -217,7 +233,7 @@ export class DependencyGraph extends AbstractGraph {
     var query = `SELECT Id, TableEnumOrId FROM CustomField c WHERE c.Id In `;
     var splitIds = this.splitIds(ids, query, this.maxNumberOfIds);
 
-    query = query.concat(this.arrayToInIdString(splitIds.left));
+    query = query.concat(this.arrayToInIdString(splitIds.left)).concat(" limit 2000");
 
     // run the query
     resultset = resultset.concat(await this.retrieveRecords<CustomField>(query));
@@ -230,13 +246,32 @@ export class DependencyGraph extends AbstractGraph {
     return resultset;
   }
 
+  public async bulkRetrieveLookupRelationships(ids: string[], resultset: FieldDefinition[]): Promise<FieldDefinition[]> {
+
+    var query = `SELECT EntityDefinitionId,DataType,DurableId FROM FieldDefinition c WHERE c.EntityDefinitionId In `;
+
+    var splitIds = this.splitIds(ids, query, this.maxNumberOfIds);
+
+    query = query.concat(this.arrayToInIdString(splitIds.left)).concat(" limit 2000");
+
+    // run the query
+    resultset = resultset.concat(await this.retrieveBulkRecords<FieldDefinition>(query));
+
+    // recursive call to compute the next query
+    if (splitIds.right.length > 0) {
+      this.bulkRetrieveLookupRelationships(splitIds.right, resultset);
+    }
+
+    return resultset;
+  }
+
   public async retrieveLookupRelationships(ids: string[], resultset: FieldDefinition[]): Promise<FieldDefinition[]> {
 
     var query = `SELECT EntityDefinitionId,DataType,DurableId FROM FieldDefinition c WHERE c.EntityDefinitionId In `;
 
     var splitIds = this.splitIds(ids, query, this.maxNumberOfIds);
 
-    query = query.concat(this.arrayToInIdString(splitIds.left));
+    query = query.concat(this.arrayToInIdString(splitIds.left)).concat(" limit 2000");
 
     // run the query
     resultset = resultset.concat(await this.retrieveRecords<FieldDefinition>(query));
@@ -249,13 +284,13 @@ export class DependencyGraph extends AbstractGraph {
     return resultset;
   }
 
-  public async retrieveValidationRules(ids: string[], resultset:ValidationRule[]): Promise<ValidationRule[]> {
+  public async retrieveValidationRules(ids: string[], resultset: ValidationRule[]): Promise<ValidationRule[]> {
 
     var query = `SELECT Id, EntityDefinitionId FROM ValidationRule c WHERE c.Id In `;
 
     var splitIds = this.splitIds(ids, query, this.maxNumberOfIds);
 
-    query = query.concat(this.arrayToInIdString(splitIds.left));
+    query = query.concat(this.arrayToInIdString(splitIds.left)).concat(" limit 2000");
 
     // run the query
     resultset = resultset.concat(await this.retrieveRecords<FieldDefinition>(query));
@@ -268,13 +303,13 @@ export class DependencyGraph extends AbstractGraph {
     return await this.retrieveRecords<ValidationRule>(query);
   }
 
-  public async retrieveQuickActions(ids: string[], resultset:QuickAction[]): Promise<QuickAction[]> {
-    
+  public async retrieveQuickActions(ids: string[], resultset: QuickAction[]): Promise<QuickAction[]> {
+
     var query = `SELECT Id, SobjectType FROM QuickActionDefinition c WHERE c.Id In `;
-    
+
     var splitIds = this.splitIds(ids, query, this.maxNumberOfIds);
 
-    query = query.concat(this.arrayToInIdString(splitIds.left));
+    query = query.concat(this.arrayToInIdString(splitIds.left)).concat(" limit 2000");
 
     // run the query
     resultset = resultset.concat(await this.retrieveRecords<QuickAction>(query));
@@ -287,12 +322,12 @@ export class DependencyGraph extends AbstractGraph {
     return await this.retrieveRecords<QuickAction>(query);
   }
 
-  public async retrieveCustomObjects(ids: string[], resultset:CustomObject[]): Promise<CustomObject[]> {
+  public async retrieveCustomObjects(ids: string[], resultset: CustomObject[]): Promise<CustomObject[]> {
     var query = `SELECT Id, DeveloperName FROM CustomObject c WHERE c.Id In `;
 
     var splitIds = this.splitIds(ids, query, this.maxNumberOfIds);
 
-    query = query.concat(this.arrayToInIdString(splitIds.left));
+    query = query.concat(this.arrayToInIdString(splitIds.left)).concat(" limit 2000");
 
     // run the query
     resultset = resultset.concat(await this.retrieveRecords<CustomObject>(query));

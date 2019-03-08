@@ -47,7 +47,7 @@ export default class Report extends SfdxCommand {
     const conn = this.org.getConnection();
     conn.version = '43.0';
 
-    const deps = new DependencyGraph(conn.tooling);
+    const deps = new DependencyGraph(conn.tooling, conn);
     await deps.init();
     const records = await this.getDependencyRecords(conn);
 
