@@ -37,18 +37,6 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
 
   <hr>
   <div id="filters" style="text-align: left;">
-
-    <button onclick="submitButtonStyle(this)" type="button" class="filter-btn" id="Layout">Layout</button>
-    <button onclick="submitButtonStyle(this)" type="button" class="filter-btn" id="WebLink">WebLink</button>
-    <button onclick="submitButtonStyle(this)" type="button" class="filter-btn" id="ApexPage">ApexPage</button>
-    <button onclick="submitButtonStyle(this)" type="button" class="filter-btn" id="FlexiPage">FlexiPage</button>
-    <button onclick="submitButtonStyle(this)" type="button" class="filter-btn" id="CustomObject">CustomObject</button>
-    <button onclick="submitButtonStyle(this)" type="button" class="filter-btn" id="CustomField">CustomField</button>
-    <button onclick="submitButtonStyle(this)" type="button" class="filter-btn"
-      id="AuraDefinitionBundle">AuraDefinitionBundle</button>
-    <button onclick="submitButtonStyle(this)" type="button" class="filter-btn" id="CustomTab">CustomTab</button>
-    <button onclick="submitButtonStyle(this)" type="button" class="filter-btn"
-      id="StandardEntity">StandardEntity</button>
   </div>
 
   <output id="selection"></output>
@@ -57,7 +45,7 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
 
     <button onclick="submitButtonStyle(this)" type="button" class="layout-btn" id="Labels">Labels</button>
     <button onclick="submitButtonStyle(this)" type="button" class="freeze-btn" id="Freeze">Freeze</button>
-  
+
   </div>
 
   <svg width="1600 " height="900"></svg>
@@ -100,9 +88,9 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
       d3.json(f.name, function (error, dotJson) {
         if (error) {
           alert(String("Unable to read file ").concat(f.name).concat(" \n\n")
-          .concat("Please make sure the file is valid and located in the context root path of your http-server.")); 
+            .concat("Please make sure the file is valid and located in the context root path of your http-server."));
 
-          window.location.reload(false); 
+          window.location.reload(false);
           throw error;
         }
 
@@ -110,27 +98,37 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
         d3.selectAll("g > *").remove();
         store = [];
 
-        //	filtered types
-        typeFilterList = [];
-
-        // start first by activating all filters
-        $('.filter-btn').each(function (index, value) {
-          typeFilterList.push($(this).attr('id'));
-          value.style.backgroundColor = "white";
-        });
-
         var graph = dotJson.result;
         var nodeById = d3.map();
+        var typeName = d3.map();
 
         // *** NODES ***
         graph.nodes.forEach(function (node) {
           nodeById.set(node.id, node);
+          typeName.set(node.type, node.type);
         });
 
         // *** LINKS ****
         graph.edges.forEach(function (link) {
           link.source = nodeById.get(link.from);
           link.target = nodeById.get(link.to);
+        });
+
+        // create filter buttons for every type
+        var typeFilterButtons = [], typeFilterList = [];
+
+        Object.keys(typeName).forEach(function (type) {
+          typeFilterButtons.
+            push('<button onclick="submitButtonStyle(this)" type="button" class="filter-btn" id=',
+              typeName[type], '>', typeName[type], '</button>');
+        });
+
+        document.getElementById('filters').innerHTML = '<ul>' + typeFilterButtons.join('') + '</ul>';
+
+        // start first by activating all filters
+        $('.filter-btn').each(function (index, value) {
+          typeFilterList.push($(this).attr('id'));
+          value.style.backgroundColor = "white";
         });
 
         //add encompassing group for the zoom 
@@ -157,6 +155,9 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
         var circles = node.append("circle")
           .attr("r", 5)
           .attr("fill", function (d) { return color(d.type); })
+
+        var titles = node.append("title")
+          .text(function (d) { return d.type + ":" + d.name + "\n" + "(" + d.id + ")"; });
 
         //	layout button event handlers
         $('.layout-btn').on("click", function () {
@@ -347,6 +348,7 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
       });
 
 
+      // drag functions
       function dragstarted(d) {
 
         $('.freeze-btn').click();
@@ -366,11 +368,16 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
         $('.freeze-btn').click();
         if (!d3.event.active) simulation.alphaTarget(0);
 
-        d.fx = null;
-        d.fy = null;
+        // d.fx = null;
+        // d.fy = null;
+
+        d.fx = d3.event.x;
+        d.fy = d3.event.y;
+
         simulation.stop();
       }
 
+      // file functions
       function handleFileSelect(evt) {
 
         var f = evt.target.files[0]; // Single file object requested only
