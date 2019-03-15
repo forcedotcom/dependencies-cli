@@ -37,6 +37,7 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
 
   <hr>
   <div id="filters" style="text-align: left;">
+    <div id="dropDowns" style="text-align: left;"></div>
   </div>
 
   <output id="selection"></output>
@@ -125,9 +126,39 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
 
         document.getElementById('filters').innerHTML = '<ul>' + typeFilterButtons.join('') + '</ul>';
 
-        // start first by activating all filters
+        // start first by activating all type filters
         $('.filter-btn').each(function (index, value) {
           typeFilterList.push($(this).attr('id'));
+          value.style.backgroundColor = "white";
+        });
+
+
+        // create drop down filters for every entity by type
+        var entityFilterList = [];
+
+        var nodeByType = d3.nest()
+          .key(function (d) { return d.type; })
+          .key(function (d) { return d.id; })
+          .entries(graph.nodes);
+
+        Object.keys(nodeByType).forEach(function (type) {
+          var thisEntitySelection = [];
+
+          nodeByType[type].values.forEach(function (entityList) {
+            entityList.values.forEach(function (entity) {
+              thisEntitySelection.
+                push('<object value="' + entity.name + '">' + entity.name + '</object>');
+            });
+          });
+
+          document.getElementById('filters').innerHTML('dropDowns') = "'<ul><select>' + thisEntitySelection.toString() + '</select></ul>';
+
+        });
+
+
+        // for selection drop-down lists do a select all by default
+        $('.filter-selection').each(function (index, value) {
+          entityFilterList.push($(this).attr('id'));
           value.style.backgroundColor = "white";
         });
 
@@ -209,6 +240,20 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
             typeFilterList.splice(typeFilterList.indexOf(id), 1)
           } else {
             typeFilterList.push(id);
+          }
+
+          filter();
+          update();
+        });
+
+        //	filter selection event handlers
+        $('.filter-selection').on("click", function () {
+          var id = $(this).attr("id");
+
+          if (entityFilterList.includes(id)) {
+            entityFilterList.splice(entityFilterList.indexOf(id), 1)
+          } else {
+            entityFilterList.push(id);
           }
 
           filter();
