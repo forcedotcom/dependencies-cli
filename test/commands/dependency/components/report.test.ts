@@ -95,7 +95,7 @@ describe('org', () => {
         return {done: true, nextRecordsUrl: null, records: [] };
     })
     .stdout({ print: true })
-    .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com'])
+    .command(['org:dependencies:report', '--targetusername', 'test@org.com'])
     .it('runs org --targetusername test@org.com', ctx => {
       const expectedEmptyOuput =
 `digraph graphname {
@@ -122,7 +122,7 @@ describe('org test one object', () => {
         return {done: true, nextRecordsUrl: null, records: []};
     })
     .stdout({ print: true })
-    .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com'])
+    .command(['org:dependencies:report', '--targetusername', 'test@org.com'])
     .it('runs org --targetusername test@org.com', ctx => {
     
       expect(ctx.stdout).to.contains(dotOutput1);
@@ -143,7 +143,7 @@ describe('org test two objects' , () => {
         return {done: true, nextRecordsUrl: null, records: []};
     })
     .stdout({ print: true })
-    .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com'])
+    .command(['org:dependencies:report', '--targetusername', 'test@org.com'])
     .it('runs org --targetusername test@org.com', ctx => {
     
       expect(ctx.stdout).to.contains(dotOutput2Objects);
@@ -172,7 +172,7 @@ describe('org test one custom field' , () => {
         return {done: true, nextRecordsUrl: null, records: []};
     })
     .stdout({ print: true })
-    .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com'])
+    .command(['org:dependencies:report', '--targetusername', 'test@org.com'])
     .it('runs org --targetusername test@org.com', ctx => {
     
       expect(ctx.stdout).to.contains(dotOutput1CustomField);
@@ -201,7 +201,7 @@ describe('org test one validation rule' , () => {
         return {done: true, nextRecordsUrl: null, records: []};
     })
     .stdout({ print: true })
-    .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com'])
+    .command(['org:dependencies:report', '--targetusername', 'test@org.com'])
     .it('runs org --targetusername test@org.com', ctx => {
     
       expect(ctx.stdout).to.contains(dotOutput1ValidationRule);
@@ -230,7 +230,7 @@ describe('org test two custom fields, 1 validation rule' , () => {
         return {done: true, nextRecordsUrl: null, records: []};
     })
     .stdout({ print: true })
-    .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com'])
+    .command(['org:dependencies:report', '--targetusername', 'test@org.com'])
     .it('runs org --targetusername test@org.com', ctx => {
     
       expect(ctx.stdout).to.contains(dotOutput2);
@@ -259,7 +259,7 @@ describe('org test two custom fields, 1 validation rule, with include list' , ()
         return {done: true, nextRecordsUrl: null, records: []};
     })
     .stdout({ print: true })
-    .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com', '-i', 'CustomField'])
+    .command(['org:dependencies:report', '--targetusername', 'test@org.com', '-i', 'CustomField'])
     .it('runs org --targetusername test@org.com', ctx => {
       
       expect(requestUrl).to.equal(urlWithCustomFieldIncludefilter);
@@ -289,7 +289,7 @@ describe('org test two custom fields, 1 validation rule, with include and exclud
         return {records: []};
     })
     .stdout({ print: true })
-    .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com', '-i', 'CustomField', '-e', 'CustomObject'])
+    .command(['org:dependencies:report', '--targetusername', 'test@org.com', '-i', 'CustomField', '-e', 'CustomObject'])
     .it('runs org --targetusername test@org.com', ctx => {
       
       expect(requestUrl).to.equal(urlWithIncludeAndExcludefilter);
@@ -347,7 +347,7 @@ describe ('Exclude Package tests', () => {
           return {done: true, nextRecordsUrl: null, records: []};
       })
       .stdout({ print: true })
-      .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com', '-m', '-d', 'folder', '-x', 'arg1'])
+      .command(['org:dependencies:report', '--targetusername', 'test@org.com', '-m', '-d', 'folder', '-x', 'arg1'])
       .it('runs org --targetusername test@org.com', ctx => {
         expect(contents).to.equal(xml1VRExcludePackage);
         expect(ctx.stdout).to.contains(dotOutput1ValidationRule);
@@ -375,7 +375,7 @@ describe ('Exclude Package tests', () => {
           return {done: true, nextRecordsUrl: null, records: []};
       })
       .stdout({ print: true })
-      .command(['andyinthecloud:dependencies:report', '--targetusername', 'test@org.com', '-m', '-i', 'CustomField', '-d', 'folder', '-x', 'arg1'])
+      .command(['org:dependencies:report', '--targetusername', 'test@org.com', '-m', '-i', 'CustomField', '-d', 'folder', '-x', 'arg1'])
       .it('runs org --targetusername test@org.com', ctx => {
         expect(contents).to.equal(xmlWithExcludePackage);
         expect(ctx.stdout).to.contains(dotOutput2);

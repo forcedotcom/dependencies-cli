@@ -31,7 +31,7 @@ sfdx plugins:install dependencies-cli
 3) Run the command:
 
 ```
-sfdx andyinthecloud:dependencies:report -u [alias|username]
+sfdx dependency:components:report -u [alias|username]
 ```
 
 
@@ -53,7 +53,7 @@ brew install graphviz
 - produce the DOT graph file output
 
 ```
-sfdx andyinthecloud:dependencies:report -u [alias|username] -r dot  | tee graph.dot
+sfdx dependency:components:report -u [alias|username] -r dot  | tee graph.dot
 
 ```
 
@@ -80,7 +80,7 @@ npm install http-server
 - produce the graph in JSON format
 
 ```
-sfdx andyinthecloud:dependencies:report -u [alias|username] --json  | tee graph.json
+sfdx dependency:components:report -u [alias|username] --json  | tee graph.json
 ```
 
 - start the http server

@@ -1,5 +1,5 @@
 import { expect, test } from '@salesforce/command/dist/test';
-import * as Analyze from '../../src/commands/andyinthecloud/dependencies/componentizer';
+import * as Analyze from '../../src/commands/dependency/components/componentizer';
 import * as Assert from 'assert';
 import {Node, Graph} from '../../src/lib/componentGraph';
 import {DepthFirstSearch} from '../../src/lib/DFSLib';
@@ -141,7 +141,7 @@ describe ('Simple', function() {
                 return obj1.result;
             })
             .stdout({ print: true })
-            .command(['andyinthecloud:dependencies:componentizer', '-u', 'test@org.com'])
+            .command(['org:dependencies:componentizer', '-u', 'test@org.com'])
             .it('runs org --targetusername test@org.com', ctx => {
             
             })

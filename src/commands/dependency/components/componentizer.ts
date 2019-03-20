@@ -7,7 +7,7 @@ import {FileWriter} from '../../../lib/fileWriter';
 import {Node, NodeGroup, ScalarNode } from '../../../lib/NodeDefs';
 
 core.Messages.importMessagesDirectory(join(__dirname));
-const messages = core.Messages.loadMessages('dependencies-cli', 'analyze');
+const messages = core.Messages.loadMessages('dependencies-cli', 'components');
 
 export default class Analyze extends SfdxCommand {
     public static outputFolder = 'lib/';
@@ -15,7 +15,7 @@ export default class Analyze extends SfdxCommand {
     public static description = messages.getMessage('commandDescription');
 
     public static examples = [
-    `sfdx andyinthecloud:dependencies:componentizer -u DevHub
+    `sfdx org:dependencies:componentizer -u DevHub
     `
     ];
 

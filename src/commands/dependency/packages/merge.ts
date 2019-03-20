@@ -1,4 +1,4 @@
-import {flags, SfdxCommand} from '@salesforce/command';
+import {flags, core, SfdxCommand} from '@salesforce/command';
 import {ClusterPackager} from '../../../lib/clusterPackager';
 import { FileWriter } from '../../../lib/fileWriter';
 import {Member, PackageMerger} from '../../../lib/packageMerger';

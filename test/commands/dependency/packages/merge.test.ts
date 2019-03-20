@@ -42,7 +42,7 @@ describe('All file tests for Merging', () => {
   describe('Empty files', () => {
     test
     .stdout({ print: true })
-    .command(['andyinthecloud:manifests:merge' , 'nan', 'nan'])
+    .command(['org:manifests:merge' , 'nan', 'nan'])
     .it('Sends in empty', ctx => { 
       expect(ctx.stdout).to.contain(emptyXml);
     })
@@ -52,7 +52,7 @@ describe('All file tests for Merging', () => {
   describe('1 real file, 1 empty file', () => {
     test
     .stdout({ print: true })
-    .command(['andyinthecloud:manifests:merge' , 'arg1', 'nan'])
+    .command(['org:manifests:merge' , 'arg1', 'nan'])
     .it('Sends in empty', ctx => { 
       expect(ctx.stdout).to.contain(emptyXml);
     })
@@ -62,7 +62,7 @@ describe('All file tests for Merging', () => {
   describe('2 real files with nothing in common', () => {
     test
     .stdout({ print: true })
-    .command(['andyinthecloud:manifests:merge' , 'arg1', 'arg2'])
+    .command(['org:manifests:merge' , 'arg1', 'arg2'])
     .it('Sends in empty', ctx => { 
       expect(ctx.stdout).to.contain(emptyXml);
     })
@@ -72,7 +72,7 @@ describe('All file tests for Merging', () => {
   describe('2 real files', () => {
     test
     .stdout({ print: true })
-    .command(['andyinthecloud:manifests:merge' , 'arg1', 'arg3'])
+    .command(['org:manifests:merge' , 'arg1', 'arg3'])
     .it('Sends in empty', ctx => { 
       expect(ctx.stdout).to.contain(combinedXml);
     })

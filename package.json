@@ -1,12 +1,13 @@
 {
   "name": "dependencies-cli",
-  "version": "1.0.2",
+  "version": "2.0.0-beta",
   "author": "Andrew Fawcett, Justin Kalloor, Holger Kache",
   "bugs": "https://github.com/afawcett/dependencies-cli/issues",
   "dependencies": {
     "@oclif/config": "^1.6.27",
     "@oclif/errors": "^1.0.9",
     "@salesforce/command": "^1.2.0",
+    "@salesforce/core": "^1.2.0",
     "babel-preset-latest": "^6.24.1",
     "child-process": "^1.0.2",
     "child_process": "^1.0.2",
@@ -48,7 +49,7 @@
     "typescript": "^2.7.2"
   },
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=8.4.0"
   },
   "files": [
     ".oclif.manifest.json",

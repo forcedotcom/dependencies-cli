@@ -1,4 +1,4 @@
-import * as Analyze from '../../../../src/commands/andyinthecloud/dependencies/componentizer';
+import * as Analyze from '../../../../src/commands/dependency/components/componentizer';
 import * as Assert from 'assert';
 import { expect, test } from '@salesforce/command/dist/test';
 import {Node,Graph} from '../../../../src/lib/componentGraph';
