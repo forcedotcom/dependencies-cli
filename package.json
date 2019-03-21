@@ -1,7 +1,7 @@
 {
   "name": "dependencies-cli",
-  "version": "1.0.1",
-  "author": "Andrew Fawcett, Justin Kalloor",
+  "version": "1.0.3",
+  "author": "Andrew Fawcett, Justin Kalloor, Holger Kache",
   "bugs": "https://github.com/afawcett/dependencies-cli/issues",
   "dependencies": {
     "@oclif/config": "^1.6.27",

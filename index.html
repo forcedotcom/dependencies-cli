@@ -36,8 +36,8 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
   <output id="list"></output>
 
   <hr>
-  <div id="filters" style="text-align: left;">
-  </div>
+  <div id="filters" style="text-align: left;"></div>
+  <div id="dropDowns" style="text-align: left;"></div>
 
   <output id="selection"></output>
   <hr>
@@ -125,10 +125,44 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
 
         document.getElementById('filters').innerHTML = '<ul>' + typeFilterButtons.join('') + '</ul>';
 
-        // start first by activating all filters
+        // start first by activating all type filters
         $('.filter-btn').each(function (index, value) {
           typeFilterList.push($(this).attr('id'));
           value.style.backgroundColor = "white";
+        });
+
+
+        // create drop down filters for every entity by type
+        var entityTypes = [];
+
+        var nodeByType = d3.nest()
+          .key(function (d) { return d.type; })
+          .key(function (d) { return d.id; })
+          .entries(graph.nodes);
+
+        Object.keys(nodeByType).forEach(function (type) {
+
+          entityTypes.push('<select class="filter-selection" size=4 multiple id=',
+            nodeByType[type].key, ' name=', nodeByType[type].key, '>');
+
+          nodeByType[type].values.forEach(function (entityList) {
+
+            entityList.values.forEach(function (entity) {
+              entityTypes.push('<option class="filter-option" type=', nodeByType[type].key,
+                ' value=', entity.id, '>', entity.name, '</object>');
+
+            });
+
+          });
+          entityTypes.push('</select>');
+        });
+
+        document.getElementById('dropDowns').innerHTML = '<ul>' + entityTypes.join('') + '</ul>';
+
+
+        // for selection drop-down lists do a de-select all by default
+        $('.filter-option').each(function (index, value) {
+          value.selected = false;
         });
 
         //add encompassing group for the zoom 
@@ -201,15 +235,42 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
         filter();
         update();
 
-        //	filter button event handlers
+        // 1. LEVEL: filter button event handler
         $('.filter-btn').on("click", function () {
           var id = $(this).attr("id");
 
           if (typeFilterList.includes(id)) {
-            typeFilterList.splice(typeFilterList.indexOf(id), 1)
+            typeFilterList.splice(typeFilterList.indexOf(id), 1);
+
+            // select all entities of the given type
+            $('#' + id + ' option').prop('selected', true);
+
           } else {
             typeFilterList.push(id);
+
+            // de-select all entities of the given type
+            $('#' + id + ' option').prop('selected', false);
           }
+
+          filter();
+          update();
+        });
+
+        //	2. LEVEL: event handler for every single entity
+        $('.filter-option').on("click", function () {
+          var id = $(this).attr("value");
+          var type = $(this).attr("type");
+
+          // flip the button red when an entity of that given type is selected
+          $('.filter-btn').each(function (key, value) {
+
+            if (value.id == type) {
+              if (typeFilterList.includes(type)) {
+                typeFilterList.splice(typeFilterList.indexOf(type), 1);
+                value.style.backgroundColor = "red";
+              }
+            }
+          });
 
           filter();
           update();
@@ -308,12 +369,20 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
 
           var output = [];
 
-          //	add and remove nodes from data based on type filters
+          var entityList = [];
+
+          $('.filter-option').each(function (index, option) {
+            if (option.selected) {
+              entityList.push(option.value);
+            }
+          });
+
+          // 1.	add and remove nodes from data based on entity filters
           store.nodes.forEach(function (n) {
-            if (!typeFilterList.includes(n.type) && n.filtered) {
+            if (entityList.includes(n.id) && n.filtered) {
               n.filtered = false;
               graph.nodes.push($.extend(true, {}, n));
-            } else if (typeFilterList.includes(n.type) && !n.filtered) {
+            } else if (!entityList.includes(n.id) && !n.filtered) {
               n.filtered = true;
               graph.nodes.forEach(function (d, i) {
                 if (n.id === d.id) {
@@ -323,12 +392,15 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
             }
           });
 
-          //	add and remove links from data based on availability of nodes
+          // 2.	add and remove links from data based on availability of node types
           store.edges.forEach(function (l) {
-            if (!(typeFilterList.includes(l.source.type) || typeFilterList.includes(l.target.type)) && l.filtered) {
+            if (entityList.includes(l.source.id) && entityList.includes(l.target.id) && l.filtered) {
               l.filtered = false;
               graph.edges.push($.extend(true, {}, l));
-            } else if ((typeFilterList.includes(l.source.type) || typeFilterList.includes(l.target.type)) && !l.filtered) {
+            } else if (
+              (!
+                (entityList.includes(l.source.id) && entityList.includes(l.target.id))
+              ) && !l.filtered) {
               l.filtered = true;
               graph.edges.forEach(function (d, i) {
                 if ((l.from === d.from) && (l.to == d.to)) {
