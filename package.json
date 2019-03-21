@@ -1,6 +1,6 @@
 {
   "name": "dependencies-cli",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "author": "Andrew Fawcett, Justin Kalloor, Holger Kache",
   "bugs": "https://github.com/afawcett/dependencies-cli/issues",
   "dependencies": {
