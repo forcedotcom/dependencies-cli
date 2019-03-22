@@ -33,6 +33,8 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
   <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 
   <input type="file" id="file" name="file" single />
+  <button type="button" class="export-btn" id="export">Export ...</button>
+
   <output id="list"></output>
 
   <hr>
@@ -45,7 +47,6 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
 
     <button onclick="submitButtonStyle(this)" type="button" class="layout-btn" id="Labels">Labels</button>
     <button onclick="submitButtonStyle(this)" type="button" class="freeze-btn" id="Freeze">Freeze</button>
-
   </div>
 
   <svg width="1600 " height="900"></svg>
@@ -98,7 +99,7 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
         d3.selectAll("g > *").remove();
         store = [];
 
-        var graph = dotJson.result;
+        var  graph = dotJson.result;
         var nodeById = d3.map();
         var typeName = d3.map();
 
@@ -223,6 +224,30 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
             freeze = false;
             simulation.restart();
           }
+        });
+
+        // export button event handler
+        $('.export-btn').on("click", function () {
+
+          var exportGraph = {
+            "result":
+            {
+              "nodes": graph.nodes,
+              "edges": graph.edges
+            }
+          };
+
+          var file = new Blob([JSON.stringify(exportGraph)], { type: "data:application/json" });
+          var a = document.createElement("a"),
+            url = URL.createObjectURL(file);
+          a.href = url;
+          a.download = "export.json";
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function () {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+          }, 0);
         });
 
         //add zoom capabilities 
