@@ -5,6 +5,8 @@
     "rootDirs": [
       "./src"
     ],
+    "lib": ["dom", "es2017"],
+    "target": "es2017",
     "baseUrl": "./",
     "paths" : {
       "*" : ["./node_modules/@salesforce/core/typings/*"]

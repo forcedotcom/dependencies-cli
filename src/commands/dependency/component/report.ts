@@ -5,6 +5,7 @@ import {DependencyGraph} from '../../../lib/dependencyGraph';
 import {FileWriter} from '../../../lib/fileWriter';
 import {MetadataComponentDependency, Node} from '../../../lib/NodeDefs';
 import {Member, PackageMerger} from '../../../lib/PackageMerger';
+import { AnyJson } from '@salesforce/ts-types';
 
 core.Messages.importMessagesDirectory(__dirname);
 const messages = core.Messages.loadMessages('dependencies-cli', 'depends');
@@ -43,7 +44,7 @@ export default class Report extends SfdxCommand {
 
   protected static requiresUsername = true;
 
-  public async run(): Promise<core.AnyJson> {
+  public async run(): Promise<AnyJson> {
     const conn = this.org.getConnection();
     conn.version = '43.0';
 
