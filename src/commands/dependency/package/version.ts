@@ -5,7 +5,6 @@ import {PackageGraph} from '../../../lib/packageGraph';
 import { Package } from '../../../lib/PackageDefs';
 
 import process = require('child_process');
-import { parse } from "url";
 
 export default class Version extends SfdxCommand {
 
@@ -54,15 +53,14 @@ export default class Version extends SfdxCommand {
         /*
         * 2. ADMIN EXPERIENCE
         */
-       const installedPackages = new Array();
-
         this.getForcePackageInstalledList().
         then(async (installedPackages) => {
     
             const graph = new PackageGraph(conn.tooling, conn, installedPackages);
             await graph.init();
-            await graph.buildGraph();
-            console.log(graph.toJson());
+            graph.buildGraph();
+            // console.log(graph.toJson());
+            console.log(graph.toDotFormat());
 
         })
         .catch((error) => {
@@ -81,7 +79,6 @@ export default class Version extends SfdxCommand {
         let cmd = 'NODE_OPTIONS=--inspect=0 sfdx force:package:installed:list -u ' + username + ' --json ';
 
         await this.sh(cmd).then((stdout: string) => {
-           console.log(stdout);
 
            var output = JSON.parse(stdout);
             if (output.result) {

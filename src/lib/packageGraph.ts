@@ -1,11 +1,10 @@
 // TODO: Merge dependencyGraph and componentGraph
-import { Tooling, Connection, DeployResultLocator } from 'jsforce';
+import { Tooling, Connection } from 'jsforce';
 import { AbstractGraph } from './abstractGraph';
 import { FindAllDependencies } from './DFSLib';
 import { Package, PackageNode, PackageDependency, SubscriberPackageVersion } from './PackageDefs';
 import { Edge, Node, ScalarNode } from './NodeDefs';
 import { isNull } from 'util';
-import { resolve } from 'url';
 
 
 export class PackageGraph extends AbstractGraph {
@@ -34,48 +33,50 @@ export class PackageGraph extends AbstractGraph {
     this.nodesMap = new Map<string, Node>();
     this.edges = new Set<Edge>();
 
-    for (const record of this.packageDependencies) {
-      record.Source.Id;
-      const srcId: string = record.Source.Id;;
-      const srcPath: string = record.Source.Path;
-      const srcName = record.Source.Name;
-      const srcNamespace: string = record.Source.Namespace;
-      const srcVersionId = record.Source.VersionId;
-      const srcVersionName = record.Source.VersionName;
-      const srcVersionNumber = record.Source.VersionNumber;
+    if (!isNull(this.packageDependencies)) {
+      for (const record of this.packageDependencies) {
+        record.Source.Id;
+        const srcId: string = record.Source.Id;;
+        const srcPath: string = record.Source.Path;
+        const srcName = record.Source.Name;
+        const srcNamespace: string = record.Source.Namespace;
+        const srcVersionId = record.Source.VersionId;
+        const srcVersionName = record.Source.VersionName;
+        const srcVersionNumber = record.Source.VersionNumber;
 
-      const dstId: string = record.Target.Id;
-      const dstPath: string = record.Target.Path;
-      const dstName: string = record.Target.Name;
-      const dstNamespace: string = record.Target.Namespace;
-      const dstVersionId: string = record.Target.VersionId;
-      const dstVersionName: string = record.Target.VersionName;
-      const dstVersionNumber: string = record.Target.VersionNumber;
+        const dstId: string = record.Target.Id;
+        const dstPath: string = record.Target.Path;
+        const dstName: string = record.Target.Name;
+        const dstNamespace: string = record.Target.Namespace;
+        const dstVersionId: string = record.Target.VersionId;
+        const dstVersionName: string = record.Target.VersionName;
+        const dstVersionNumber: string = record.Target.VersionNumber;
 
-      const srcDetails = new Map<string, object>();
-      srcDetails.set('id', (srcId as String));
-      srcDetails.set('name', (srcName as String));
-      srcDetails.set('path', (srcPath as String));
-      srcDetails.set('namespace', (srcNamespace as String));
-      srcDetails.set('versionId', (srcVersionId as String));
-      srcDetails.set('versionName', (srcVersionName as String));
-      srcDetails.set('versionNumber', (srcVersionNumber as String));
-      const srcNode: Node = this.getOrAddNode(srcId, srcDetails);
+        const srcDetails = new Map<string, object>();
+        srcDetails.set('id', (srcId as String));
+        srcDetails.set('name', (srcName as String));
+        srcDetails.set('path', (srcPath as String));
+        srcDetails.set('namespace', (srcNamespace as String));
+        srcDetails.set('versionId', (srcVersionId as String));
+        srcDetails.set('versionName', (srcVersionName as String));
+        srcDetails.set('versionNumber', (srcVersionNumber as String));
+        const srcNode: Node = this.getOrAddNode(srcId, srcDetails);
 
-      const dstDetails = new Map<string, object>();
-      dstDetails.set('id', (dstId as String));
-      dstDetails.set('name', (dstName as String));
-      dstDetails.set('path', (dstPath as String));
-      dstDetails.set('namespace', (dstNamespace as String));
-      dstDetails.set('versionId', (dstVersionId as String));
-      dstDetails.set('versionName', (dstVersionName as String));
-      dstDetails.set('versionNumber', (dstVersionNumber as String));
-      const dstNode: Node = this.getOrAddNode(dstId, dstDetails);
+        const dstDetails = new Map<string, object>();
+        dstDetails.set('id', (dstId as String));
+        dstDetails.set('name', (dstName as String));
+        dstDetails.set('path', (dstPath as String));
+        dstDetails.set('namespace', (dstNamespace as String));
+        dstDetails.set('versionId', (dstVersionId as String));
+        dstDetails.set('versionName', (dstVersionName as String));
+        dstDetails.set('versionNumber', (dstVersionNumber as String));
+        const dstNode: Node = this.getOrAddNode(dstId, dstDetails);
 
-      this.edges.add({ from: record.Source.VersionId, to: record.Target.VersionId });
-      this.addEdge(srcNode, dstNode);
+        this.edges.add({ from: record.Source.VersionId, to: record.Target.VersionId });
+        this.addEdge(srcNode, dstNode);
+      }
+      this.addPackageRelationships();
     }
-    this.addPackageRelationships();
   }
 
   public runDFS(initialNodes: Node[]) {
@@ -132,7 +133,9 @@ export class PackageGraph extends AbstractGraph {
     dot += '  // Nodes\n';
 
     for (const node of this.nodes) {
-      dot += `  X${node.name} [label=<${node.details.get('parent')}${node.details.get('name')}<BR/><FONT POINT-SIZE="8">${node.details.get('type')}</FONT>>]\n`;
+      dot += `  X${node.details.get('versionId')} [label=<${node.details.get('name')} ${node.details.get('versionNumber')}`;
+      dot += `<BR/><FONT POINT-SIZE="8">${node.details.get('id')}</FONT>`;
+      dot += `<BR/><FONT POINT-SIZE="8">${node.details.get('versionId')}</FONT>>]\n`;
     }
 
     dot += '  // Paths\n';
@@ -174,40 +177,35 @@ export class PackageGraph extends AbstractGraph {
   }
 
 
-  private async retrieveDependencies(ids: Package[], resultset: SubscriberPackageVersion[]): Promise<PackageDependency[]> {
+  private async retrieveDependencies(packages: Package[], resultset: SubscriberPackageVersion[]): Promise<PackageDependency[]> {
 
-    return new Promise((resolve, reject) => {
-      const result: PackageDependency[] = [];
+    var queryString = 'SELECT Dependencies FROM SubscriberPackageVersion WHERE Id=';
 
-      var queryString = 'SELECT Dependencies FROM SubscriberPackageVersion WHERE Id=';
+    let dependencies: PackageDependency[] = [];
 
-      ids.forEach(async _package => {
+    for (const _package of packages) {
 
-        // run the query
-        await this.retrieveRecords<SubscriberPackageVersion>(queryString.concat(`\'${_package.VersionId}\'`)).then((resultset) => {
+      // run the query
+      let resultset = (await this.retrieveRecords<SubscriberPackageVersion>(queryString.concat(`\'${_package.VersionId}\'`)));
 
-          for (const _elem of resultset) {
-            if (!isNull(_elem.Dependencies)) {
+      for (const _elem of resultset) {
+        if (!isNull(_elem.Dependencies)) {
 
-              for (const _id of _elem.Dependencies.ids) {
+          for (const _id of _elem.Dependencies['ids']) {
 
-                // TODO: This code assumes that a dependency is always an installed package 
-                // (with a matching version id). Expand this to include packages that are not installed.
-                const _dependency: PackageDependency = {
-                  Source: _package,
-                  Target: ids.find(Target => Target.VersionId == _id.subscriberPackageVersionId)
-                }
-
-                result.push(_dependency);
-              }
+            // TODO: This code assumes that a dependency is always an installed package 
+            // (with a matching version id). Expand this to include packages that are not installed.
+            const _dependency: PackageDependency = {
+              Source: _package,
+              Target: packages.find(Target => Target.VersionId == _id.subscriberPackageVersionId)
             }
+
+            dependencies.push(_dependency);
           }
-          resolve(result);
-        }).catch((error) => {
-          console.log(error);
-          reject(error);
-        });
-      });
-    });
-  }
+        }
+      }
+    };
+
+    return dependencies;
+  };
 }
