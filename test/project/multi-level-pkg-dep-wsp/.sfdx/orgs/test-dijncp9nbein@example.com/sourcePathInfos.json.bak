@@ -1,0 +1,571 @@
+[
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/force-app",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/force-app",
+            "isDirectory": true,
+            "size": 128,
+            "modifiedTime": 1535049803120,
+            "changeTime": 1553567655136,
+            "contentHash": "51d86f3b64a3d9a0048d192f02147b0e9e9594e4",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": true
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/force-app/main",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/force-app/main",
+            "isDirectory": true,
+            "size": 128,
+            "modifiedTime": 1535049816873,
+            "changeTime": 1553567655136,
+            "contentHash": "ae41ed56706e4439a34cda97ac997d7988935c2f",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/force-app/main/default",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/force-app/main/default",
+            "isDirectory": true,
+            "size": 96,
+            "modifiedTime": 1550618881596,
+            "changeTime": 1553567655136,
+            "contentHash": "eaa3d84cb77d92a21b111fd1e37f53edc1ff9de0",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp",
+        {
+            "state": "u",
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp",
+            "isDirectory": true,
+            "isMetadataFile": false,
+            "size": 416,
+            "modifiedTime": 1553569885529,
+            "changeTime": 1553569885529,
+            "isWorkspace": true,
+            "contentHash": "bf4aac7f2e67af358d7263a2100d439d040b226a"
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgA-src",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgA-src",
+            "isDirectory": true,
+            "size": 128,
+            "modifiedTime": 1535049803120,
+            "changeTime": 1553567994478,
+            "contentHash": "51d86f3b64a3d9a0048d192f02147b0e9e9594e4",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": true
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgA-src/main",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgA-src/main",
+            "isDirectory": true,
+            "size": 128,
+            "modifiedTime": 1535049816873,
+            "changeTime": 1553567974292,
+            "contentHash": "ae41ed56706e4439a34cda97ac997d7988935c2f",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgA-src/main/default",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgA-src/main/default",
+            "isDirectory": true,
+            "size": 128,
+            "modifiedTime": 1553568293595,
+            "changeTime": 1553568293595,
+            "contentHash": "6dd19893420f151927655f6bf0589244b9ee4859",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgA-src/main/default/objects",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgA-src/main/default/objects",
+            "isDirectory": true,
+            "size": 128,
+            "modifiedTime": 1553568425378,
+            "changeTime": 1553568425378,
+            "contentHash": "140b86fc26d3de3bce050434b3e40e0bd6bd379b",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgA-src/main/default/objects/objA1__c",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgA-src/main/default/objects/objA1__c",
+            "isDirectory": true,
+            "size": 96,
+            "modifiedTime": 1553568419130,
+            "changeTime": 1553568425378,
+            "contentHash": "f26c9dede35e31c61150274611068f96ca5fba47",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgA-src/main/default/objects/objA1__c/objA1__c.object-meta.xml",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgA-src/main/default/objects/objA1__c/objA1__c.object-meta.xml",
+            "isDirectory": false,
+            "size": 2009,
+            "modifiedTime": 1553568443279,
+            "changeTime": 1553568443279,
+            "contentHash": "06c832ba03ebbb92cb4a4c64c3a21d04bc7f1285",
+            "isMetadataFile": true,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgB-src",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgB-src",
+            "isDirectory": true,
+            "size": 128,
+            "modifiedTime": 1535049803120,
+            "changeTime": 1553569765734,
+            "contentHash": "51d86f3b64a3d9a0048d192f02147b0e9e9594e4",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": true
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgB-src/main",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgB-src/main",
+            "isDirectory": true,
+            "size": 128,
+            "modifiedTime": 1535049816873,
+            "changeTime": 1553567982004,
+            "contentHash": "ae41ed56706e4439a34cda97ac997d7988935c2f",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgB-src/main/default",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgB-src/main/default",
+            "isDirectory": true,
+            "size": 128,
+            "modifiedTime": 1553568343737,
+            "changeTime": 1553568343737,
+            "contentHash": "6dd19893420f151927655f6bf0589244b9ee4859",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgB-src/main/default/objects",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgB-src/main/default/objects",
+            "isDirectory": true,
+            "size": 160,
+            "modifiedTime": 1553568486619,
+            "changeTime": 1553568486619,
+            "contentHash": "4215eb0a8609eaabe043b204f7b07388cfdaa284",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgB-src/main/default/objects/objA1__c",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgB-src/main/default/objects/objA1__c",
+            "isDirectory": true,
+            "size": 128,
+            "modifiedTime": 1553568515757,
+            "changeTime": 1553568515757,
+            "contentHash": "48cec6aef632803ba5c0677bd6e52a3b108559a8",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgB-src/main/default/objects/objA1__c/fields",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgB-src/main/default/objects/objA1__c/fields",
+            "isDirectory": true,
+            "size": 96,
+            "modifiedTime": 1553568540483,
+            "changeTime": 1553568540483,
+            "contentHash": "fc85ac1f8423661fe6043704fd6839d1b2d1d53c",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgB-src/main/default/objects/objA1__c/fields/f1_on_objA1__c.field-meta.xml",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgB-src/main/default/objects/objA1__c/fields/f1_on_objA1__c.field-meta.xml",
+            "isDirectory": false,
+            "size": 328,
+            "modifiedTime": 1553568895341,
+            "changeTime": 1553568895341,
+            "contentHash": "2e9a97e43fcf343724d32b217f574a64d7f37d58",
+            "isMetadataFile": true,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgB-src/main/default/objects/objB1__c",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgB-src/main/default/objects/objB1__c",
+            "isDirectory": true,
+            "size": 96,
+            "modifiedTime": 1553568465354,
+            "changeTime": 1553568475483,
+            "contentHash": "3cc40fe88520ba5459637765c38b4037c4d6e789",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgB-src/main/default/objects/objB1__c/objB1__c.object-meta.xml",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgB-src/main/default/objects/objB1__c/objB1__c.object-meta.xml",
+            "isDirectory": false,
+            "size": 2009,
+            "modifiedTime": 1553568934291,
+            "changeTime": 1553568934291,
+            "contentHash": "ab9b98a532cfb36c2b557f66e777fcf1ca20f4d2",
+            "isMetadataFile": true,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgC-src",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgC-src",
+            "isDirectory": true,
+            "size": 128,
+            "modifiedTime": 1535049803120,
+            "changeTime": 1553569838188,
+            "contentHash": "51d86f3b64a3d9a0048d192f02147b0e9e9594e4",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": true
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgC-src/main",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgC-src/main",
+            "isDirectory": true,
+            "size": 128,
+            "modifiedTime": 1535049816873,
+            "changeTime": 1553567982783,
+            "contentHash": "ae41ed56706e4439a34cda97ac997d7988935c2f",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgC-src/main/default",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgC-src/main/default",
+            "isDirectory": true,
+            "size": 128,
+            "modifiedTime": 1553569266771,
+            "changeTime": 1553569266771,
+            "contentHash": "6dd19893420f151927655f6bf0589244b9ee4859",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgC-src/main/default/objects",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgC-src/main/default/objects",
+            "isDirectory": true,
+            "size": 128,
+            "modifiedTime": 1553569271778,
+            "changeTime": 1553569271778,
+            "contentHash": "140b86fc26d3de3bce050434b3e40e0bd6bd379b",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgC-src/main/default/objects/objA1__c",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgC-src/main/default/objects/objA1__c",
+            "isDirectory": true,
+            "size": 128,
+            "modifiedTime": 1553568515757,
+            "changeTime": 1553569266771,
+            "contentHash": "48cec6aef632803ba5c0677bd6e52a3b108559a8",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgC-src/main/default/objects/objA1__c/fields",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgC-src/main/default/objects/objA1__c/fields",
+            "isDirectory": true,
+            "size": 96,
+            "modifiedTime": 1553568604274,
+            "changeTime": 1553568604274,
+            "contentHash": "7f075c6121303da93d37014ec69c8db1885745cc",
+            "isMetadataFile": false,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgC-src/main/default/objects/objA1__c/fields/f2_on_objA1__c.field-meta.xml",
+        {
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgC-src/main/default/objects/objA1__c/fields/f2_on_objA1__c.field-meta.xml",
+            "isDirectory": false,
+            "size": 328,
+            "modifiedTime": 1553568971942,
+            "changeTime": 1553568971942,
+            "contentHash": "de879a443879b2ebcd22ae9f0f468fcdc462bd37",
+            "isMetadataFile": true,
+            "state": "u",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src",
+        {
+            "state": "u",
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src",
+            "isDirectory": true,
+            "isMetadataFile": false,
+            "size": 128,
+            "modifiedTime": 1535049803120,
+            "changeTime": 1553569885529,
+            "contentHash": "51d86f3b64a3d9a0048d192f02147b0e9e9594e4",
+            "isWorkspace": false,
+            "isArtifactRoot": true
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main",
+        {
+            "state": "u",
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main",
+            "isDirectory": true,
+            "isMetadataFile": false,
+            "size": 128,
+            "modifiedTime": 1535049816873,
+            "changeTime": 1553567983402,
+            "contentHash": "ae41ed56706e4439a34cda97ac997d7988935c2f",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default",
+        {
+            "state": "u",
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default",
+            "isDirectory": true,
+            "isMetadataFile": false,
+            "size": 128,
+            "modifiedTime": 1553569286867,
+            "changeTime": 1553569286867,
+            "contentHash": "6dd19893420f151927655f6bf0589244b9ee4859",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default/objects",
+        {
+            "state": "u",
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default/objects",
+            "isDirectory": true,
+            "isMetadataFile": false,
+            "size": 192,
+            "modifiedTime": 1553569291873,
+            "changeTime": 1553569291873,
+            "contentHash": "85a2628ff245a48fb890e9c01294e67ee538d155",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default/objects/objA1__c",
+        {
+            "state": "u",
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default/objects/objA1__c",
+            "isDirectory": true,
+            "isMetadataFile": false,
+            "size": 128,
+            "modifiedTime": 1553568515757,
+            "changeTime": 1553569286860,
+            "contentHash": "48cec6aef632803ba5c0677bd6e52a3b108559a8",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default/objects/objA1__c/fields",
+        {
+            "state": "u",
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default/objects/objA1__c/fields",
+            "isDirectory": true,
+            "isMetadataFile": false,
+            "size": 96,
+            "modifiedTime": 1553568588749,
+            "changeTime": 1553568588749,
+            "contentHash": "1bba8d8b39087171172fb27a7375320642a47e2a",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default/objects/objA1__c/fields/f3_on_objA1__c.field-meta.xml",
+        {
+            "state": "u",
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default/objects/objA1__c/fields/f3_on_objA1__c.field-meta.xml",
+            "isDirectory": false,
+            "isMetadataFile": true,
+            "size": 328,
+            "modifiedTime": 1553569009095,
+            "changeTime": 1553569009095,
+            "contentHash": "618fb4e70a3e8575ecd70793c47251be9a531d61",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default/objects/objB1__c",
+        {
+            "state": "u",
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default/objects/objB1__c",
+            "isDirectory": true,
+            "isMetadataFile": false,
+            "size": 128,
+            "modifiedTime": 1553568515757,
+            "changeTime": 1553569286864,
+            "contentHash": "48cec6aef632803ba5c0677bd6e52a3b108559a8",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default/objects/objB1__c/fields",
+        {
+            "state": "u",
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default/objects/objB1__c/fields",
+            "isDirectory": true,
+            "isMetadataFile": false,
+            "size": 96,
+            "modifiedTime": 1553568701992,
+            "changeTime": 1553568701992,
+            "contentHash": "bcbcb8b874e051d7505b50fb8fb1d60498818998",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default/objects/objB1__c/fields/f1_on_objB1__c.field-meta.xml",
+        {
+            "state": "u",
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default/objects/objB1__c/fields/f1_on_objB1__c.field-meta.xml",
+            "isDirectory": false,
+            "isMetadataFile": true,
+            "size": 328,
+            "modifiedTime": 1553569036445,
+            "changeTime": 1553569036445,
+            "contentHash": "58015d2109af0d00addecb973c1500c3cda98383",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default/objects/objD1__c",
+        {
+            "state": "u",
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default/objects/objD1__c",
+            "isDirectory": true,
+            "isMetadataFile": false,
+            "size": 128,
+            "modifiedTime": 1553568772143,
+            "changeTime": 1553569286867,
+            "contentHash": "d89db7d34d0b02a7852d9ad6ac8c15b581069d2a",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ],
+    [
+        "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default/objects/objD1__c/objD1__c.object-meta.xml",
+        {
+            "state": "u",
+            "sourcePath": "/Users/dburki/Desktop/D/sfdx/218/0507-hub-gs0/multi-level-pkg-dep-wsp/pkgD-src/main/default/objects/objD1__c/objD1__c.object-meta.xml",
+            "isDirectory": false,
+            "isMetadataFile": true,
+            "size": 2009,
+            "modifiedTime": 1553569059833,
+            "changeTime": 1553569059833,
+            "contentHash": "6985a20fe1339572bc11c42125444cc7d3a27063",
+            "isWorkspace": false,
+            "isArtifactRoot": false
+        }
+    ]
+]

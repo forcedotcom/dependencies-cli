@@ -1,0 +1,94 @@
+{
+    "packageDirectories": [
+        {
+            "path": "force-app",
+            "default": true
+        },
+        {
+            "path": "pkgA-src",
+            "package": "pkgA-0325",
+            "versionName": "ver 0.1",
+            "versionNumber": "0.1.0.NEXT",
+            "default": false
+        },
+        {
+            "path": "pkgB-src",
+            "package": "pkgB-0325",
+            "versionName": "ver 0.1",
+            "versionNumber": "0.1.0.NEXT",
+            "default": false,
+            "dependencies": [
+                {
+                    "package": "pkgA-0325",
+                    "versionNumber": "0.1.0.LATEST"
+                }
+            ]
+        },
+        {
+            "path": "pkgC-src",
+            "package": "pkgC-0325",
+            "versionName": "ver 0.1",
+            "versionNumber": "0.1.0.NEXT",
+            "default": false,
+            "dependencies": [
+                {
+                    "package": "pkgA-0325",
+                    "versionNumber": "0.1.0.LATEST"
+                }
+            ]
+        },
+        {
+            "path": "pkgD-src",
+            "package": "pkgD-0325",
+            "versionName": "ver 0.1",
+            "versionNumber": "0.1.0.NEXT",
+            "default": false,
+            "dependencies": [
+                {
+                    "package": "pkgA-0325",
+                    "versionNumber": "0.1.0.LATEST"
+                },
+                {
+                    "package": "pkgB-0325",
+                    "versionNumber": "0.1.0.LATEST"
+                }
+            ]
+        },
+        {
+            "path": "pkgE-src",
+            "package": "pkgE-0325",
+            "versionName": "ver 0.1",
+            "versionNumber": "0.1.0.NEXT",
+            "default": false,
+            "dependencies": [
+                {
+                    "package": "pkgA-0325",
+                    "versionNumber": "0.1.0.LATEST"
+                },
+                {
+                    "package": "pkgB-0325",
+                    "versionNumber": "0.1.0.LATEST"
+                },
+                {
+                    "package": "pkgD-0325",
+                    "versionNumber": "0.1.0.LATEST"
+                }
+            ]
+        }
+    ],
+    "namespace": "",
+    "sfdcLoginUrl": "https://login.salesforce.com",
+    "sourceApiVersion": "45.0",
+    "packageAliases": {
+        "pkgA-0325": "0HoB000000000LVKAY",
+        "pkgB-0325": "0HoB000000000LaKAI",
+        "pkgC-0325": "0HoB000000000LfKAI",
+        "pkgD-0325": "0HoB000000000LkKAI",
+        "pkgE-0325": "0HoB000000000LpKAI",
+        "pkgA-0325@0.1.0-1": "04tB0000000ATR1IAO",
+        "pkgB-0325@0.1.0-1": "04tB0000000ATR6IAO",
+        "pkgC-0325@0.1.0-1": "04tB0000000ATRBIA4",
+        "pkgD-0325@0.1.0-1": "04tB0000000ATRGIA4",
+        "pkgE-0325@0.1.0-1": "04tB0000000ATRLIA4"
+    }
+}

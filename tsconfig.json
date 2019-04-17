@@ -5,6 +5,8 @@
     "rootDirs": [
       "./src"
     ],
+    "downlevelIteration": true,
+    "sourceMap": true,
     "baseUrl": "./",
     "paths" : {
       "*" : ["./node_modules/@salesforce/core/typings/*"]

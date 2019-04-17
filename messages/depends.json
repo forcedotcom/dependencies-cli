@@ -1,5 +1,5 @@
 {
-  "description": "Prints a greeting and your org id(s)!",
+  "description": "Produces a dependency graph representing all object level dependencies in your org.",
   "resultformatFlagDescription": "the result format of the output. If dot is chosen, org will be shown as dependency image in .dot file format. If xml is chosen, a package.xml for the org will be created and outputted to the console. To put in a specific folder, use outputdir; ignore with --json",
   "metadatacomponentnameFlagDescription": "filter by component in the format '<entityType>:<entityName>; e.g. CustomField:Thumbnail",
   "querycriteriaFlagDescription": "the criteria to filter the dependency records; e.g. RefMetadataComponentName='Thumbnail'",

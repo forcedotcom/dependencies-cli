@@ -1,0 +1,7 @@
+{
+    "orgName": "dev1",
+    "edition": "Developer",
+    "orgPreferences" : {
+        "enabled": ["S1DesktopEnabled"]
+    }
+}
