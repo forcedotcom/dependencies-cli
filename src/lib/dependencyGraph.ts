@@ -1,5 +1,5 @@
 // TODO: Merge dependencyGraph and componentGraph
-import { Tooling, Connection } from 'jsforce';
+import { Connection } from '@salesforce/core';
 import { AbstractGraph } from './abstractGraph';
 import { FindAllDependencies } from './DFSLib';
 import { ComponentNode, CustomField, CustomObject, Edge, FieldDefinition, MetadataComponentDependency, Node, QuickAction, ScalarNode, ValidationRule } from './NodeDefs';
@@ -9,7 +9,6 @@ export const componentsWithParents = ['CustomField', 'ValidationRule', 'QuickAct
 export class DependencyGraph extends AbstractGraph {
   public edges: Set<Edge> = new Set<Edge>();
 
-  private tooling: Tooling;
   private connection: Connection;
   private allComponentIds: string[];
   private allCustomObjectIds: string[];
@@ -21,9 +20,8 @@ export class DependencyGraph extends AbstractGraph {
 
   private maxNumberOfIds = 10;
 
-  constructor(tool: Tooling, conn: Connection) {
+  constructor(conn: Connection) {
     super();
-    this.tooling = tool;
     this.connection = conn;
 
     this.connection.bulk.pollTimeout = 25000; // Bulk timeout can be specified globally on the connection object
@@ -181,7 +179,7 @@ export class DependencyGraph extends AbstractGraph {
   }
 
   public async retrieveRecords<T>(query: string) {
-    return (await this.tooling.query<T>(query)).records;
+    return (await this.connection.tooling.query<T>(query)).records;
   }
 
   public async retrieveBulkRecords<T>(query: string) {

@@ -14,6 +14,8 @@ export default class Version extends SfdxCommand {
 
     }
 
+    protected static requiresUsername = true;
+
     protected static supportsDevhubUsername = true;
     protected static supportsUsername = true;
     protected static requiresProject = true;
@@ -56,7 +58,7 @@ export default class Version extends SfdxCommand {
         this.getForcePackageInstalledList().
         then(async (installedPackages) => {
     
-            const graph = new PackageGraph(conn.tooling, conn, installedPackages);
+            const graph = new PackageGraph(conn, installedPackages);
             await graph.init();
             graph.buildGraph();
             // console.log(graph.toJson());

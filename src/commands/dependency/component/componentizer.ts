@@ -5,6 +5,7 @@ import {ClusterPackager } from '../../../lib/clusterPackager';
 import {ComponentGraph} from '../../../lib/componentGraph';
 import {FileWriter} from '../../../lib/fileWriter';
 import {Node, NodeGroup, ScalarNode } from '../../../lib/NodeDefs';
+import { Connection } from '@salesforce/core';
 
 core.Messages.importMessagesDirectory(join(__dirname));
 const messages = core.Messages.loadMessages('dependencies-cli', 'components');
@@ -15,11 +16,12 @@ export default class Analyze extends SfdxCommand {
     public static description = messages.getMessage('commandDescription');
 
     public static examples = [
-    `sfdx org:dependencies:componentizer -u DevHub
-    `
+    `sfdx org:dependencies:componentizer -u DevHub`
     ];
 
     public static args = [{name: 'file'}];
+
+    protected static requiresUsername = true;
 
     // tslint:disable-next-line:no-any
     public static buildGraph(results: any, connectAuras: boolean = false, forwards: boolean = true, backwards: boolean = false): ComponentGraph {
@@ -92,8 +94,8 @@ export default class Analyze extends SfdxCommand {
 
     public async run(): Promise<Map<string, Node[]>> {
         // const orgId = this.org.getOrgId();
-        const anyConn = this.org.getConnection();
-        anyConn.version = '43.0';
+        const anyConn = <Connection> this.org.getConnection();
+        anyConn.version = '45.0';
         const conn = anyConn.tooling;
         const queryResults =
             await conn.query('SELECT MetadataComponentId, MetadataComponentNamespace, ' +

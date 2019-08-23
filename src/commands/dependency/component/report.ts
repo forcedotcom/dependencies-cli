@@ -1,4 +1,7 @@
-import {core, flags, SfdxCommand } from '@salesforce/command';
+import {core, flags } from '@salesforce/command';
+import { SfdxCommand } from "@salesforce/command";
+import { Connection } from '@salesforce/core';
+import {join} from 'path';
 import process = require('child_process');
 import {ClusterPackager} from '../../../lib/clusterPackager';
 import {DependencyGraph} from '../../../lib/dependencyGraph';
@@ -7,10 +10,11 @@ import {MetadataComponentDependency, Node} from '../../../lib/NodeDefs';
 import {Member, PackageMerger} from '../../../lib/PackageMerger';
 import { AnyJson } from '@salesforce/ts-types';
 
-core.Messages.importMessagesDirectory(__dirname);
+core.Messages.importMessagesDirectory(join(__dirname));
 const messages = core.Messages.loadMessages('dependencies-cli', 'depends');
 
 export default class Report extends SfdxCommand {
+
   public static description = messages.getMessage('description');
   public static examples = [messages.getMessage('example1')];
 
@@ -45,10 +49,10 @@ export default class Report extends SfdxCommand {
   protected static requiresUsername = true;
 
   public async run(): Promise<AnyJson> {
-    const conn = this.org.getConnection();
-    conn.version = '43.0';
+    const conn = <Connection> this.org.getConnection();
+    conn.version = '45.0';
 
-    const deps = new DependencyGraph(conn.tooling, conn);
+    const deps = new DependencyGraph(conn);
     await deps.init();
     const records = await this.getDependencyRecords(conn);
 

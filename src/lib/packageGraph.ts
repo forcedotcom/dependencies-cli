@@ -1,23 +1,21 @@
 // TODO: Merge dependencyGraph and componentGraph
-import { Tooling, Connection } from 'jsforce';
+import { Connection } from '@salesforce/core';
 import { AbstractGraph } from './abstractGraph';
 import { FindAllDependencies } from './DFSLib';
 import { Package, PackageNode, PackageDependency, SubscriberPackageVersion } from './PackageDefs';
 import { Edge, Node, ScalarNode } from './NodeDefs';
-import { isNull } from 'util';
+import { isNull, isUndefined } from 'util';
 
 
 export class PackageGraph extends AbstractGraph {
   public edges: Set<Edge> = new Set<Edge>();
 
-  private tooling: Tooling;
   private connection: Connection;
   private subscriberPackages: Package[];
   private packageDependencies: PackageDependency[];
 
-  constructor(tool: Tooling, conn: Connection, subscriberPacks: Package[]) {
+  constructor(conn: Connection, subscriberPacks: Package[]) {
     super();
-    this.tooling = tool;
     this.connection = conn;
     this.subscriberPackages = subscriberPacks;
 
@@ -35,45 +33,57 @@ export class PackageGraph extends AbstractGraph {
 
     if (!isNull(this.packageDependencies)) {
       for (const record of this.packageDependencies) {
-        record.Source.Id;
-        const srcId: string = record.Source.Id;;
-        const srcPath: string = record.Source.Path;
-        const srcName = record.Source.Name;
-        const srcNamespace: string = record.Source.Namespace;
-        const srcVersionId = record.Source.VersionId;
-        const srcVersionName = record.Source.VersionName;
-        const srcVersionNumber = record.Source.VersionNumber;
 
-        const dstId: string = record.Target.Id;
-        const dstPath: string = record.Target.Path;
-        const dstName: string = record.Target.Name;
-        const dstNamespace: string = record.Target.Namespace;
-        const dstVersionId: string = record.Target.VersionId;
-        const dstVersionName: string = record.Target.VersionName;
-        const dstVersionNumber: string = record.Target.VersionNumber;
+        var srcNode: Node;
 
-        const srcDetails = new Map<string, object>();
-        srcDetails.set('id', (srcId as String));
-        srcDetails.set('name', (srcName as String));
-        srcDetails.set('path', (srcPath as String));
-        srcDetails.set('namespace', (srcNamespace as String));
-        srcDetails.set('versionId', (srcVersionId as String));
-        srcDetails.set('versionName', (srcVersionName as String));
-        srcDetails.set('versionNumber', (srcVersionNumber as String));
-        const srcNode: Node = this.getOrAddNode(srcId, srcDetails);
+        if (!isUndefined(record.Source)) {
+          record.Source.Id;
+          const srcId: string = record.Source.Id;;
+          const srcPath: string = record.Source.Path;
+          const srcName = record.Source.Name;
+          const srcNamespace: string = record.Source.Namespace;
+          const srcVersionId = record.Source.VersionId;
+          const srcVersionName = record.Source.VersionName;
+          const srcVersionNumber = record.Source.VersionNumber;
 
-        const dstDetails = new Map<string, object>();
-        dstDetails.set('id', (dstId as String));
-        dstDetails.set('name', (dstName as String));
-        dstDetails.set('path', (dstPath as String));
-        dstDetails.set('namespace', (dstNamespace as String));
-        dstDetails.set('versionId', (dstVersionId as String));
-        dstDetails.set('versionName', (dstVersionName as String));
-        dstDetails.set('versionNumber', (dstVersionNumber as String));
-        const dstNode: Node = this.getOrAddNode(dstId, dstDetails);
 
-        this.edges.add({ from: record.Source.VersionId, to: record.Target.VersionId });
-        this.addEdge(srcNode, dstNode);
+          const srcDetails = new Map<string, object>();
+          srcDetails.set('id', (srcId as String));
+          srcDetails.set('name', (srcName as String));
+          srcDetails.set('path', (srcPath as String));
+          srcDetails.set('namespace', (srcNamespace as String));
+          srcDetails.set('versionId', (srcVersionId as String));
+          srcDetails.set('versionName', (srcVersionName as String));
+          srcDetails.set('versionNumber', (srcVersionNumber as String));
+          srcNode = this.getOrAddNode(srcId, srcDetails);
+        }
+
+        var dstNode: Node;
+
+        if (!isUndefined(record.Target)) {
+          const dstId: string = record.Target.Id;
+          const dstPath: string = record.Target.Path;
+          const dstName: string = record.Target.Name;
+          const dstNamespace: string = record.Target.Namespace;
+          const dstVersionId: string = record.Target.VersionId;
+          const dstVersionName: string = record.Target.VersionName;
+          const dstVersionNumber: string = record.Target.VersionNumber;
+
+          const dstDetails = new Map<string, object>();
+          dstDetails.set('id', (dstId as String));
+          dstDetails.set('name', (dstName as String));
+          dstDetails.set('path', (dstPath as String));
+          dstDetails.set('namespace', (dstNamespace as String));
+          dstDetails.set('versionId', (dstVersionId as String));
+          dstDetails.set('versionName', (dstVersionName as String));
+          dstDetails.set('versionNumber', (dstVersionNumber as String));
+          dstNode = this.getOrAddNode(dstId, dstDetails);
+        }
+
+        if (!isUndefined(record.Source) && !isUndefined(record.Target)) {
+          this.edges.add({ from: record.Source.VersionId, to: record.Target.VersionId });
+          this.addEdge(srcNode, dstNode);
+        }
       }
       this.addPackageRelationships();
     }
@@ -97,15 +107,21 @@ export class PackageGraph extends AbstractGraph {
 
   public addPackageRelationships() {
     this.packageDependencies.forEach(packagedef => {
-      const n1 = this.getNodeVersionId(packagedef.Source.VersionId);
-      const n2: Node = this.getNodeVersionId(packagedef.Target.VersionId);
-      if (n1 != null && n2 != null) {
-        this.addEdge(n1, n2);
+
+      if (!isUndefined(packagedef.Source) && !isUndefined(packagedef.Target)) {
+        const n1 = this.getNodeVersionId(packagedef.Source.VersionId);
+        const n2: Node = this.getNodeVersionId(packagedef.Target.VersionId);
+        if (n1 != null && n2 != null) {
+          this.addEdge(n1, n2);
+        }
       }
     });
   }
 
   protected getNodeVersionId(versionId: string): Node {
+
+    if (isNull(versionId)) return null;
+
     let found: Node;
     Array.from(this.nodes).forEach(node => {
       if ((node.details.get('versionId') as String) == versionId) {
@@ -162,7 +178,7 @@ export class PackageGraph extends AbstractGraph {
   }
 
   public async retrieveRecords<T>(query: string) {
-    return (await this.tooling.query<T>(query)).records;
+    return (await this.connection.tooling.query<T>(query)).records;
   }
 
   public async retrieveBulkRecords<T>(query: string) {
