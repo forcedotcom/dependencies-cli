@@ -1,22 +1,27 @@
 # dependencies-cli
-Sample command line utilities around the [Salesforce Dependencies API](https://releasenotes.docs.salesforce.com/en-us/summer18/release-notes/rn_metadata_metadatacomponentdependency.htm). This API is currently in Pilot.
 
-## Introduction : Dependency Grapher ##
+This project implements an SFDX plugin for the [Salesforce Dependencies API](https://releasenotes.docs.salesforce.com/en-us/summer18/release-notes/rn_metadata_metadatacomponentdependency.htm). With the plugin you are able to analyze dependencies between Salesforce [second-generation packages](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_dev2gp_intro.htm) as well as dependencies between Salesforce objects deployed in your org. The plugin is meant for Salesforce developers and administrators trying to
 
-![Graph](https://raw.githubusercontent.com/afawcett/dependencies-cli/master/img/example2.png)
+1. Analyze package and object level dependencies
+2. Untangle large monolithic orgs to split into smaller (more managable) orgs
+3. Indentify and extract base packages with shared objects
+4. Identify package level version dependencies
 
-This command produces [DOT formatted](https://www.graphviz.org/doc/info/lang.html) output for dependencies in an org allowing you visualize the dependencies in the org (see below for an example). 
+The plugin does not automate any of these steps but uses graph technology to help navigate the complexities of a Salesforce org. The main output thus far is a set of D3.js force directed graphs used to visualize dependencies and recommendation actions.
 
-You can pass flags to it to filter down the output further, since in most orgs the output can be quite dense. You can then paste the output from this command into [this website](http://viz-js.com/) to see the results or install locally on your desktop one of the following.
+> Note: A few commands use the [Salesforce Dependencies API](https://releasenotes.docs.salesforce.com/en-us/summer18/release-notes/rn_metadata_metadatacomponentdependency.htm) which is currently in open beta for production orgs but fully enabled for sandbox orgs. Please make sure your org has the API enabled or work with Salesforce support to enable it.
 
-- [GraphViz Commandline](https://www.graphviz.org/download/)
-- [VSCode Extension](https://marketplace.visualstudio.com/items?itemName=EFanZh.graphviz-preview)
+** The plugin is NOT a Salesforce supported project and release as a community project under open source licenses. Anyone is invited to help improve and extend the code. **
 
-## Setup and Use
+## Install
 
-**NOTE:** This command will in due course be published to NPM and thus unless you wish to contribute to the code for this plugin you will not need to perform the following steps. Meanwhile if you want to give it a go please feel free to install the command as follows.
+0) [Install the Salesforce CLI](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_install_cli.htm) (SFDX)
 
-1) Make sure you have the latest Salesforce CLI:
+```
+npm install sfdx-cli --global
+```
+
+1) Make sure you have the latest version
 
 ```
 sfdx update
@@ -28,11 +33,142 @@ sfdx update
 sfdx plugins:install dependencies-cli
 ```
 
-3) Run the command:
+3) Test the plugin
 
 ```
-sfdx dependency:components:report -u [alias|username]
+sfdx dependency
 ```
+
+returns
+
+```
+Analyzes object graph dependencies in your org
+
+USAGE
+  $ sfdx dependency:COMMAND
+
+COMMANDS
+
+TOPICS
+  Run help for each topic below to view subcommands
+
+  dependency:component  Analyzes object graph dependencies in your org
+  dependency:package    Computes a score representing the variance between linked and available package versions.
+```
+
+4) Authorize an org
+
+```
+sfdx force:auth:web:login
+```
+
+returns
+
+```
+Successfully authorized <userId> with org ID <orgId>
+You may now close the browser
+```
+
+## Usage
+
+The plugin command structure is as follows
+```
+dependency
+  |-component
+     |---componentizer
+     |---report
+  |-package
+     |---drift
+     |---merge
+     |---version
+
+```
+ 
+`dependency:component` Analyzes object graph dependencies in your org
+`dependency:package` Analyzes package version dependencies in your org
+
+### `dependency:component:componentizer`
+
+Analyzes object graph dependencies in your org
+
+USAGE:
+`sfdx org:dependency:componentizer -u <userId>`
+
+The response lists the leaf nodes in a graph, grouped by object type.
+
+### `dependency:component:report`
+
+Produces a dependency graph representing all object level dependencies in your org.
+
+
+## Build
+
+There are two options to A) build and deploy the sfdx plugin or B) build the node.js application for local testing. Option B is interesting only if you want to maintain different versions, one deployed as SFDX plugin and another one for development testing. Build time is equally fast for both options.
+
+### A Build the SFDX plugin
+
+0) Uninstall the existing plugin
+
+```
+sfdx plugins:uninstall dependencies-cli
+```
+
+1) Build and install the plugin from the project root folder
+
+```
+sfdx plugins:link ./
+```
+
+2) Test the plugin
+
+```
+sfdx dependency
+```
+
+### B Build the node.js application for local testing
+
+0) Run yarn clean in the project root folder
+
+```
+yarn run clean
+```
+
+1) Build the code using npm run scripts in the project root folder
+
+```
+npm run-script build
+```
+
+2) Test your changes with a local bin/run script
+
+```
+bin/run dependency
+```
+
+## Troubleshooting
+
+__ERROR running dependency:component:componentizer:  sObject type 'MetadataComponentDependency' is not supported.__
+
+Explanation: This error indicates that your org does not have the metadata dependency API enabled. The API is still in beta for production orgs as of release Summer`19.
+
+Resolution: Contact your Salesforce support and provide them the <orgId> to work with. Salesforce support should enable the `Enable MetadataComponentDependency API` perm for your org.
+
+__ERROR running dependency:component:componentizer:  No AuthInfo found for name <userId>__
+
+Explanation: This error indicates that you forgot to provide the -u flag needed for the command execution. The SFDX plugin attempts to use the default user id but requires dedicated authentication info.
+
+Resolution: Supply the `-u <userId>` option with the command.
+
+### BACKUP
+
+![Graph](https://raw.githubusercontent.com/afawcett/dependencies-cli/master/img/example2.png)
+
+This command produces [DOT formatted](https://www.graphviz.org/doc/info/lang.html) output for dependencies in an org allowing you visualize the dependencies in the org (see below for an example). 
+
+You can pass flags to it to filter down the output further, since in most orgs the output can be quite dense. You can then paste the output from this command into [this website](http://viz-js.com/) to see the results or install locally on your desktop one of the following.
+
+- [GraphViz Commandline](https://www.graphviz.org/download/)
+- [VSCode Extension](https://marketplace.visualstudio.com/items?itemName=EFanZh.graphviz-preview)
 
 
 ## Rendering graph output locally

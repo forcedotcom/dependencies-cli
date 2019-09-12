@@ -16,7 +16,7 @@ const messages = core.Messages.loadMessages('dependencies-cli', 'depends');
 export default class Report extends SfdxCommand {
 
   public static description = messages.getMessage('description');
-  public static examples = [messages.getMessage('example1')];
+  public static examples = [messages.getMessage('example')];
 
   protected static flagsConfig = {
     resultformat: flags.string({ char: 'r', description: messages.getMessage('resultformatFlagDescription'), default: 'dot', options: ['dot', 'xml'] }),

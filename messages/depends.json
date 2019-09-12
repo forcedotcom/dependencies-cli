@@ -11,5 +11,5 @@
   "getIncludeDependents":"For all objects in the include list, get all components that depend on that component, directly or indirectly",
   "excludePackageDescription": "Does not include any of the objects listed in an attached package.xml into the generated package.xml",
   "validateDescription": "Validates the created package.xml using force:mdapi:retrieve and force:mdapi:deploy. Does nothing if it is a valid package.xml, but will error if it is invalid. Takes a long time to validate (force:mdapi:deploy)",
-  "example1": "$ sfdx andyinthelcloud:depends --includelist CustomField:Thumbnail --generatemanifest --outputdir OutputFolder "
+  "example": "sfdx dependency:component:report -u hkache@salesforce.dev1.com\nsfdx dependency:component:report -u hkache@salesforce.dev1.com --json\nsfdx dependency:component:report -u hkache@salesforce.dev1.com --includelist CustomField:Thumbnail --generatemanifest --outputdir OutputFolder"
 }

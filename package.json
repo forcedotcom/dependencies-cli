@@ -6,6 +6,7 @@
   "dependencies": {
     "@oclif/config": "^1.6.27",
     "@oclif/errors": "^1.0.9",
+    "@salesforce-ux/design-system": "^2.9.4",
     "@salesforce/command": "^1.2.0",
     "@salesforce/core": "^1.2.0",
     "babel-preset-env": "^1.7.0",

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+
 <style>
   .links line {
     stroke: #999;
@@ -15,6 +16,13 @@
     font-family: sans-serif;
     font-size: 10px;
   }
+
+  rect {
+    stroke: #999;
+    fill: none;
+    stroke-opacity: 0.6;
+    pointer-events: all;
+  }
 </style>
 
 <!-- 
@@ -25,10 +33,13 @@ https://bl.ocks.org/heybignick/3faf257bbbbc7743bb72310d03b86ee8
 https://bl.ocks.org/puzzler10/4438752bb93f45dc5ad5214efaa12e4a
 http://bl.ocks.org/jhb/5955887
 https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
+http://bl.ocks.org/tgk/6068367
+http://bl.ocks.org/lgersman/5311083
 
 -->
 
 <body>
+
   <script src="https://d3js.org/d3.v4.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 
@@ -38,6 +49,7 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
   <output id="list"></output>
 
   <hr>
+
   <div id="filters" style="text-align: left;"></div>
   <div id="dropDowns" style="text-align: left;"></div>
 
@@ -45,8 +57,16 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
   <hr>
   <div id="layouts" style="text-align: left;">
 
-    <button onclick="submitButtonStyle(this)" type="button" class="layout-btn" id="Labels">Labels</button>
-    <button onclick="submitButtonStyle(this)" type="button" class="freeze-btn" id="Freeze">Freeze</button>
+    <button onclick="submitButtonStyle(this)" type="button" class="layout-btn" id="Labels">Show Labels</button>
+    <button onclick="submitButtonStyle(this)" type="button" class="freeze-btn" id="Freeze">Freeze Graph</button>
+    <button onclick="submitButtonStyle(this)" type="button" class="increase-force-btn" id="Expand">Expand Graph</button>
+    <button onclick="submitButtonStyle(this)" type="button" class="reduce-force-btn" id="Collapse">Collapse Graph</button>
+    <button onclick="submitButtonStyle(this)" type="button" class="deselect-btn" id="Deselect">Remove Node</button>
+    <button onclick="submitButtonStyle(this)" type="button" class="remove-graph-btn" id="RemoveGraph">Remove
+      Connected Nodes</button>
+    <button onclick="submitButtonStyle(this)" type="button" class="expand-graph-btn" id="ExpandGraph">Expand
+      Node</button>
+
   </div>
 
   <svg width="1600 " height="900"></svg>
@@ -72,6 +92,9 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
       // layout toggles
       var labels = false;
       var freeze = false;
+      var deselect = false;
+      var removeGraph = false;
+      var expandGraph = false;
 
       var f = handleFileSelect(event);
 
@@ -81,10 +104,22 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
 
       var color = d3.scaleOrdinal(d3.schemeCategory20);
 
+      // computes how connected nodes gravitate towards the center
+      // Option 1: positive force -> attraction
+      var attractForce = d3.forceManyBody().strength(80).distanceMax(100).distanceMin(80);
+      // Option 2: negative force -> repulsion
+      var chargeForce = d3.forceManyBody().strength(-80).distanceMax(100).distanceMin(80);
+
+      // avoids overlapping nodes
+      var collisionForce = d3.forceCollide(12).strength(1).iterations(1);
+
       var simulation = d3.forceSimulation()
         .force("link", d3.forceLink().id(function (d) { return d.id; }))
-        .force("charge", d3.forceManyBody())
+        .force("charge", chargeForce)
+        .force("attractForce", attractForce)
+        .force("collisionForce", collisionForce)
         .force("center", d3.forceCenter(width / 2, height / 2));
+
 
       d3.json(f.name, function (error, dotJson) {
         if (error) {
@@ -99,7 +134,7 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
         d3.selectAll("g > *").remove();
         store = [];
 
-        var  graph = dotJson.result;
+        var graph = dotJson.result;
         var nodeById = d3.map();
         var typeName = d3.map();
 
@@ -190,6 +225,7 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
         var circles = node.append("circle")
           .attr("r", 5)
           .attr("fill", function (d) { return color(d.type); })
+          .on("mousedown", mousedownNode)
 
         var titles = node.append("title")
           .text(function (d) { return d.type + ":" + d.name + "\n" + "(" + d.id + ")"; });
@@ -223,6 +259,84 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
           else if ((id == 'Freeze' && freeze)) {
             freeze = false;
             simulation.restart();
+          }
+        });
+
+        //	reduce force button event handlers
+        $('.reduce-force-btn').on("click", function () {
+          $(this)[0].style.backgroundColor = "white";
+          
+          const forceX = d3.forceX(width / 2).strength(0.015)
+          const forceY = d3.forceY(height / 2).strength(0.015)
+
+          var attractStrength = 80;
+          var minDistance = 10;
+          var maxDistance = 20;
+
+          var newAttractForce = d3.forceManyBody().strength(attractStrength).distanceMax(maxDistance).distanceMin(minDistance);
+         
+          simulation.force("charge", null)
+          simulation.force("attractForce", newAttractForce)
+          simulation.force('x', forceX)
+          simulation.force('y',  forceY)
+
+          filter();
+          update();
+        });
+
+        //	increase force button event handlers
+        $('.increase-force-btn').on("click", function () {
+
+          $(this)[0].style.backgroundColor = "white";
+
+          const forceX = d3.forceX(width / 2).strength(0.01) // 0.015
+          const forceY = d3.forceY(height / 2).strength(0.01) // 0.015
+          
+          var chargeStrength = -100;
+          var minDistance = Math.min(width / 2, graph.nodes.length); // 300
+          var maxDistance = Math.max(width, graph.nodes.length); // 500
+
+          var newChargeForce = d3.forceManyBody().strength(chargeStrength).distanceMax(maxDistance).distanceMin(minDistance);
+          simulation.force("attractForce", null)
+          simulation.force("charge", newChargeForce)
+
+          simulation.force('x', forceX)
+          simulation.force('y',  forceY)
+ 
+          filter();
+          update();
+        });
+
+        //	deselect nodes button event handler
+        $('.deselect-btn').on("click", function () {
+          var id = $(this).attr("id");
+          if ((id == 'Deselect' && !deselect)) {
+            deselect = true;
+          }
+          else if ((id == 'Deselect' && deselect)) {
+            deselect = false;
+          }
+        });
+
+        //	remove graph button event handler
+        $('.remove-graph-btn').on("click", function () {
+          var id = $(this).attr("id");
+          if ((id == 'RemoveGraph' && !removeGraph)) {
+            removeGraph = true;
+          }
+          else if ((id == 'RemoveGraph' && removeGraph)) {
+            removeGraph = false;
+          }
+        });
+
+        //	expand graph button event handler
+        $('.expand-graph-btn').on("click", function () {
+          var id = $(this).attr("id");
+          if ((id == 'ExpandGraph' && !expandGraph)) {
+            expandGraph = true;
+          }
+          else if ((id == 'ExpandGraph' && expandGraph)) {
+            expandGraph = false;
           }
         });
 
@@ -309,9 +423,12 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
         // Update pattern for updating the graph
         function update() {
 
+          var typeNames = new Set();
+
           // *** NODES ***
           graph.nodes.forEach(function (node) {
             nodeById.set(node.id, node);
+            typeNames.add(node.type);
           });
 
           //	UPDATE
@@ -332,6 +449,7 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
           var circles = newNode.append("circle")
             .attr("r", 5)
             .attr("fill", function (d) { return color(d.type); })
+            .on("mousedown", mousedownNode)
 
           var titles = newNode.append("title")
             .text(function (d) { return d.type + ":" + d.name + "\n" + "(" + d.id + ")"; });
@@ -372,10 +490,29 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
           simulation.force("link")
             .links(graph.edges);
 
-          $('.freeze-btn').click();
           simulation.alpha(1).alphaTarget(0).restart();
+
+          // run the simulation but immediately advance the timer 
+          // this will allow all links to be drawn without triggering a new force
+          if (freeze) {
+            // See https://github.com/d3/d3-force/blob/master/README.md#simulation_tick
+            for (var i = 0, n = Math.ceil(Math.log(simulation.alphaMin()) / Math.log(1 - simulation.alphaDecay())); i < n; ++i) {
+              simulation.tick();
+            }
+          }
+
+          // flip the filter button color depending on selected item types
+          $('.filter-btn').each(function (key, value) {
+            value.style.backgroundColor = "white";
+            var type = value.id
+
+            if (typeNames.has(type)) {
+              value.style.backgroundColor = "red";
+            }
+          });
         }
 
+        
         function ticked() {
           link
             .attr("x1", function (d) { return d.source.x; })
@@ -388,8 +525,165 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
               return "translate(" + d.x + "," + d.y + ")";
             })
         }
+   
+        // Mouse down handler for all of ..
+        // 1) remove nodes
+        // 2) remove entire graphs
+        // 3) expand graphs
+        // .. based on the activated button
+        function mousedownNode(d, i) {
 
-        //	filter function
+          if ((deselect) || (removeGraph)) {
+            // remove clicked node from the selection for the given type
+            $("select#" + d.type).each(function (index, option) {
+              for (var i = 0; i < option.selectedOptions.length; i++) {
+                if (option.selectedOptions[i].value == d.id) {
+                  option.selectedOptions[i].selected = false
+                }
+              }
+            });
+
+            if (removeGraph) {
+              // recursively remove all connected nodes from the selection (regardless of type)
+
+              var removeableNodes = [];
+
+              // add seed node to list and process recursively
+              removeableNodes.push(d.id);
+              remove(removeableNodes, 0);
+            }
+          }
+
+          // expand node selection based on clicked node
+          if (expandGraph) {
+            // recursively add connected nodes to a selection (across types)
+            var expandableNodes = [];
+
+            // add seed node to list and process recursively
+            expandableNodes.push(d.id);
+            expand(expandableNodes, 0);
+
+          }
+
+          // freeze simulation and update graph only if needed
+          if ((deselect) || (removeGraph) || expandGraph) {
+            d3.event.stopPropagation();
+
+            filter();
+            update();
+          }
+        }
+
+        // removal function (recursive)
+        function remove(removeableNodes, numberOfRemoveableNodes) {
+
+          // check for seed element
+          if (removeableNodes.length == 0) {
+            return;
+          }
+
+          // check for growing list
+          if (numberOfRemoveableNodes == removeableNodes.length) {
+            return;
+          }
+
+          numberOfRemoveableNodes = removeableNodes.length;
+
+          // pass through all edges, adding connected source and target nodes
+          store.edges.forEach(function (l) {
+            if (removeableNodes.includes(l.source.id)) {
+
+              // add elements not already in the list
+              if (!removeableNodes.includes(l.target.id)) { removeableNodes.push(l.target.id) }
+
+              // process elements already in the list
+              $("select#" + l.target.type).each(function (index, option) {
+                for (var i = 0; i < option.selectedOptions.length; i++) {
+                  if (option.selectedOptions[i].value == l.target.id) {
+                    option.selectedOptions[i].selected = false
+                  }
+                }
+              });
+            }
+            if (removeableNodes.includes(l.target.id)) {
+
+              // add elements not already in the list
+              if (!removeableNodes.includes(l.source.id)) { removeableNodes.push(l.source.id) }
+
+              // process elements already in the list
+              $("select#" + l.source.type).each(function (index, option) {
+                for (var i = 0; i < option.selectedOptions.length; i++) {
+                  if (option.selectedOptions[i].value == l.source.id) {
+                    option.selectedOptions[i].selected = false
+                  }
+                }
+              });
+            }
+
+          });
+
+          // keep going only if the list keeps growing
+          remove(removeableNodes, numberOfRemoveableNodes);
+        }
+
+        // expand function (recursive)
+        function expand(expandableNodes, numberOfExpandableNodes) {
+
+          // check for seed element
+          if (expandableNodes.length == 0) {
+            return;
+          }
+
+          // check for growing list
+          if (numberOfExpandableNodes == expandableNodes.length) {
+            return;
+          }
+
+          numberOfExpandableNodes = expandableNodes.length;
+
+          // pass through all edges, adding connected source and target nodes
+          store.edges.forEach(function (l) {
+            if (expandableNodes.includes(l.source.id)) {
+
+              // add elements not already in the list
+              if (!expandableNodes.includes(l.target.id)) { expandableNodes.push(l.target.id) }
+
+              // process elements already in the list
+              $("select#" + l.target.type).each(function (index, option) {
+                for (var i = 0; i < option.options.length; i++) {
+                  if (option.options[i].value == l.target.id) {
+                    if (!option.options[i].selected) {
+                      option.options[i].selected = true
+                    }
+                  }
+                }
+              });
+            }
+            if (expandableNodes.includes(l.target.id)) {
+
+              // add elements not already in the list
+              if (!expandableNodes.includes(l.source.id)) { expandableNodes.push(l.source.id) }
+
+              // process elements already in the list
+              $("select#" + l.source.type).each(function (index, option) {
+                for (var i = 0; i < option.options.length; i++) {
+                  if (option.options[i].value == l.source.id) {
+                    if (!option.options[i].selected) {
+
+                      option.options[i].selected = true
+                    }
+                  }
+                }
+              });
+            }
+
+          });
+
+          // keep going only if the list keeps growing
+          expand(expandableNodes, numberOfExpandableNodes);
+        }
+
+        // filter function
         function filter() {
 
           var output = [];

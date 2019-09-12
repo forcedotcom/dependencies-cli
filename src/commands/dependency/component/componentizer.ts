@@ -5,7 +5,7 @@ import {ClusterPackager } from '../../../lib/clusterPackager';
 import {ComponentGraph} from '../../../lib/componentGraph';
 import {FileWriter} from '../../../lib/fileWriter';
 import {Node, NodeGroup, ScalarNode } from '../../../lib/NodeDefs';
-import { Connection } from '@salesforce/core';
+import {Connection} from '@salesforce/core';
 
 core.Messages.importMessagesDirectory(join(__dirname));
 const messages = core.Messages.loadMessages('dependencies-cli', 'components');
@@ -14,10 +14,7 @@ export default class Analyze extends SfdxCommand {
     public static outputFolder = 'lib/';
 
     public static description = messages.getMessage('commandDescription');
-
-    public static examples = [
-    `sfdx org:dependencies:componentizer -u DevHub`
-    ];
+    public static examples = [messages.getMessage('example')];
 
     public static args = [{name: 'file'}];
 
