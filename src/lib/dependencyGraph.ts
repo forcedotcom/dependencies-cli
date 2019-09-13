@@ -28,15 +28,18 @@ export class DependencyGraph extends AbstractGraph {
   }
 
   public async init() {
+
     this.allComponentIds = await this.retrieveAllComponentIds();
     this.customFields = await this.retrieveCustomFields(this.allComponentIds, new Array<CustomField>());
     this.validationRules = await this.retrieveValidationRules(this.allComponentIds, new Array<ValidationRule>());
     this.quickActions = await this.retrieveQuickActions(this.allComponentIds, new Array<QuickAction>());
     this.allCustomObjectIds = await this.getObjectIds();
     this.customObjects = await this.retrieveCustomObjects(this.allCustomObjectIds, new Array<CustomObject>());
-    const customFieldEntities = this.customFields.map(r => r.TableEnumOrId);
+
+    const customFieldEntities = this.customFields.map(r => r.TableEnumOrId); // HKA
     this.customFieldDefinitions = await this.retrieveLookupRelationships(customFieldEntities, new Array<FieldDefinition>());
     // this.customFieldDefinitions = await this.bulkRetrieveLookupRelationships(customFieldEntities, new Array<FieldDefinition>());
+    
     const lookupRelationships = this.customFieldDefinitions.filter(x => x.DataType.startsWith('Lookup'));
     lookupRelationships.forEach(element => {
       element.DataType = element.DataType.slice(element.DataType.indexOf('(') + 1, element.DataType.lastIndexOf(')'));
@@ -179,16 +182,25 @@ export class DependencyGraph extends AbstractGraph {
   }
 
   public async retrieveRecords<T>(query: string) {
-    return (await this.connection.tooling.query<T>(query)).records;
+    
+    try {
+      return (await this.connection.tooling.query<T>(query)).records;
+    } catch (err) {
+      console.error("dependencyGraph::retrieveRecords().err " + err.message);
+      console.error("dependencyGraph::retrieveRecords().query " + query);
+      return null;
+    }
   }
 
   public async retrieveBulkRecords<T>(query: string) {
     return (await this.connection.bulk.query(query)
-    .on('record', function(rec) {
-      console.log(rec);
-      return rec}))
-    .on('error', function(err) { 
-      console.error(err); });
+      .on('record', function (rec) {
+        console.log(rec);
+        return rec
+      }))
+      .on('error', function (err) {
+        console.error(err);
+      });
   }
 
   private splitIds(ids: string[], query: string, maxNumberOfIds = 0) {
@@ -234,7 +246,7 @@ export class DependencyGraph extends AbstractGraph {
     query = query.concat(this.arrayToInIdString(splitIds.left)).concat(" limit 2000");
 
     // run the query
-    resultset = resultset.concat(await this.retrieveRecords<CustomField>(query));
+    resultset = resultset.concat(await this.retrieveRecords<CustomField>(query) || []);
 
     // recursive call to compute the next query
     if (splitIds.right.length > 0) {
@@ -253,7 +265,7 @@ export class DependencyGraph extends AbstractGraph {
     query = query.concat(this.arrayToInIdString(splitIds.left)).concat(" limit 2000");
 
     // run the query
-    resultset = resultset.concat(await this.retrieveBulkRecords<FieldDefinition>(query));
+    resultset = resultset.concat(await this.retrieveBulkRecords<FieldDefinition>(query) || []);
 
     // recursive call to compute the next query
     if (splitIds.right.length > 0) {
@@ -272,7 +284,7 @@ export class DependencyGraph extends AbstractGraph {
     query = query.concat(this.arrayToInIdString(splitIds.left)).concat(" limit 2000");
 
     // run the query
-    resultset = resultset.concat(await this.retrieveRecords<FieldDefinition>(query));
+    resultset = resultset.concat(await this.retrieveRecords<FieldDefinition>(query) || []);
 
     // recursive call to compute the next query
     if (splitIds.right.length > 0) {
@@ -291,7 +303,7 @@ export class DependencyGraph extends AbstractGraph {
     query = query.concat(this.arrayToInIdString(splitIds.left)).concat(" limit 2000");
 
     // run the query
-    resultset = resultset.concat(await this.retrieveRecords<FieldDefinition>(query));
+    resultset = resultset.concat(await this.retrieveRecords<FieldDefinition>(query) || []);
 
     // recursive call to compute the next query
     if (splitIds.right.length > 0) {
@@ -310,7 +322,7 @@ export class DependencyGraph extends AbstractGraph {
     query = query.concat(this.arrayToInIdString(splitIds.left)).concat(" limit 2000");
 
     // run the query
-    resultset = resultset.concat(await this.retrieveRecords<QuickAction>(query));
+    resultset = resultset.concat(await this.retrieveRecords<QuickAction>(query) || []);
 
     // recursive call to compute the next query
     if (splitIds.right.length > 0) {
@@ -328,7 +340,7 @@ export class DependencyGraph extends AbstractGraph {
     query = query.concat(this.arrayToInIdString(splitIds.left)).concat(" limit 2000");
 
     // run the query
-    resultset = resultset.concat(await this.retrieveRecords<CustomObject>(query));
+    resultset = resultset.concat(await this.retrieveRecords<CustomObject>(query) || []);
 
     // recursive call to compute the next query
     if (splitIds.right.length > 0) {
@@ -363,10 +375,11 @@ export class DependencyGraph extends AbstractGraph {
   }
 
   private getObjectIds() {
+
     // Filter Ids that start with 0
-    const fieldObjectIdRecords = this.customFields.filter(x => x.TableEnumOrId.startsWith('0'));
+    const fieldObjectIdRecords = this.customFields.filter(x => {if (x != null) x.TableEnumOrId.startsWith('0')}); // HKA
     // Filter Ids that start with 0 from vrule
-    const vruleObjectIdRecords = this.validationRules.filter(x => x.EntityDefinitionId.startsWith('0'));
+    const vruleObjectIdRecords = this.validationRules.filter(x => {if (x != null) x.EntityDefinitionId.startsWith('0')}); // HKA
 
     return [
       ...fieldObjectIdRecords.map(r => r.TableEnumOrId),
@@ -379,7 +392,7 @@ export class DependencyGraph extends AbstractGraph {
       let val = record[fieldName];
       if (val.startsWith('0')) {
         // Grab the custom object the field points to
-        const customObject = this.customObjects.filter(x => x.Id.startsWith(val));
+        const customObject = this.customObjects.filter(x => {if (x != null) x.Id.startsWith(val)});
         val = customObject[0].DeveloperName + '__c';
       }
       map.set(record['Id'], val);

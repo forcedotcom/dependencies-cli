@@ -58,8 +58,16 @@ TOPICS
 
 4) Authorize an org
 
+For production orgs use 
+
 ```
 sfdx force:auth:web:login
+```
+
+For sandbox orgs use
+
+```
+sfdx force:auth:web:login -r https://test.salesforce.com
 ```
 
 returns
@@ -101,7 +109,7 @@ The response lists the leaf nodes in a graph, grouped by object type.
 Produces a dependency graph representing all object level dependencies in your org.
 
 
-## Build
+## Build and Debug
 
 There are two options to A) build and deploy the sfdx plugin or B) build the node.js application for local testing. Option B is interesting only if you want to maintain different versions, one deployed as SFDX plugin and another one for development testing. Build time is equally fast for both options.
 
@@ -144,6 +152,25 @@ npm run-script build
 ```
 bin/run dependency
 ```
+
+### C Debug the SFDX plugin (with VSCode)
+
+0) Run the plugin in debug mode
+```
+sfdx dependency:<command> --dev-suspend
+```
+
+1) Attach 
+
+#### D Debug the node.js application locally
+
+0) Before linking the plugin to Salesforce CLI run
+```
+NODE_OPTIONS=--inspect-brk bin/run dependency
+```
+
+1) Attach VS Code Debugger to `ws://127.0.0.1:9229/<PID>`
+
 
 ## Troubleshooting
 

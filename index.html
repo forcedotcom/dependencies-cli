@@ -17,11 +17,26 @@
     font-size: 10px;
   }
 
-  rect {
-    stroke: #999;
-    fill: none;
-    stroke-opacity: 0.6;
-    pointer-events: all;
+  svg {
+    border-bottom: 1px dashed grey;
+    border-right: 1px dashed grey;
+    border-top: 1px dashed grey;
+    border-left: 1px dashed grey;
+  }
+
+  #graph {
+    display: block;
+    table-layout: fixed
+  }
+
+  #graph td {
+    vertical-align: top;
+    text-align: left;
+    padding: 15px
+  }
+
+  #graph th {
+    display: inline-block
   }
 </style>
 
@@ -36,12 +51,17 @@ https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
 http://bl.ocks.org/tgk/6068367
 http://bl.ocks.org/lgersman/5311083
 
+https://mathisonian.com/writing/easy-responsive-svgs-with-viewbox
+
 -->
 
 <body>
 
   <script src="https://d3js.org/d3.v4.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+  <script src="src/d3graph/FileController.js" type="text/javascript"></script>
+
 
   <input type="file" id="file" name="file" single />
   <button type="button" class="export-btn" id="export">Export ...</button>
@@ -50,7 +70,6 @@ http://bl.ocks.org/lgersman/5311083
 
   <hr>
 
-  <div id="filters" style="text-align: left;"></div>
   <div id="dropDowns" style="text-align: left;"></div>
 
   <output id="selection"></output>
@@ -58,9 +77,11 @@ http://bl.ocks.org/lgersman/5311083
   <div id="layouts" style="text-align: left;">
 
     <button onclick="submitButtonStyle(this)" type="button" class="layout-btn" id="Labels">Show Labels</button>
-    <button onclick="submitButtonStyle(this)" type="button" class="freeze-btn" id="Freeze">Freeze Graph</button>
+    <button onclick="submitButtonStyle(this)" type="button" class="freeze-btn" id="Freeze">Freeze</button>
+    <button onclick="submitButtonStyle(this)" type="button" class="recenter-btn" id="Freeze">Recenter</button>
     <button onclick="submitButtonStyle(this)" type="button" class="increase-force-btn" id="Expand">Expand Graph</button>
-    <button onclick="submitButtonStyle(this)" type="button" class="reduce-force-btn" id="Collapse">Collapse Graph</button>
+    <button onclick="submitButtonStyle(this)" type="button" class="reduce-force-btn" id="Collapse">Collapse
+      Graph</button>
     <button onclick="submitButtonStyle(this)" type="button" class="deselect-btn" id="Deselect">Remove Node</button>
     <button onclick="submitButtonStyle(this)" type="button" class="remove-graph-btn" id="RemoveGraph">Remove
       Connected Nodes</button>
@@ -69,7 +90,19 @@ http://bl.ocks.org/lgersman/5311083
 
   </div>
 
-  <svg width="1600 " height="900"></svg>
+  <table id="graph">
+    <thead></thead>
+    <tbody>
+      <tr>
+        <td width="90%">
+          <svg width="1200" height="450"></svg></td>
+        <td width="10%">
+          <table id="filters"></table>
+        </td>
+      </tr>
+    </tbody>
+
+  </table>
 
   <script>
 
@@ -96,7 +129,7 @@ http://bl.ocks.org/lgersman/5311083
       var removeGraph = false;
       var expandGraph = false;
 
-      var f = handleFileSelect(event);
+      var f = FileController.handleFileSelect(event);
 
       var svg = d3.select("svg"),
         width = +svg.attr("width"),
@@ -129,6 +162,8 @@ http://bl.ocks.org/lgersman/5311083
           window.location.reload(false);
           throw error;
         }
+        
+        console.log(dotJson);
 
         // remove old graphs on reload
         d3.selectAll("g > *").remove();
@@ -155,11 +190,12 @@ http://bl.ocks.org/lgersman/5311083
 
         Object.keys(typeName).forEach(function (type) {
           typeFilterButtons.
-            push('<button onclick="submitButtonStyle(this)" type="button" class="filter-btn" id=',
-              typeName[type], '>', typeName[type], '</button>');
+            push('<tr><th><button onclick="submitButtonStyle(this)" type="button" class="filter-btn" id=',
+              typeName[type], '>', typeName[type], '</button></th></tr>');
         });
 
-        document.getElementById('filters').innerHTML = '<ul>' + typeFilterButtons.join('') + '</ul>';
+        document.getElementById('filters').innerHTML = '<thead>' + typeFilterButtons.join('') + '</thead>';
+
 
         // start first by activating all type filters
         $('.filter-btn').each(function (index, value) {
@@ -178,8 +214,10 @@ http://bl.ocks.org/lgersman/5311083
 
         Object.keys(nodeByType).forEach(function (type) {
 
-          entityTypes.push('<select class="filter-selection" size=4 multiple id=',
+          entityTypes.push('<td><select class="filter-selection" size=4 multiple id=',
             nodeByType[type].key, ' name=', nodeByType[type].key, '>');
+
+          entityTypes.push('<optgroup label =', nodeByType[type].key, '>');
 
           nodeByType[type].values.forEach(function (entityList) {
 
@@ -190,10 +228,11 @@ http://bl.ocks.org/lgersman/5311083
             });
 
           });
-          entityTypes.push('</select>');
+          entityTypes.push('</select></td>');
+
         });
 
-        document.getElementById('dropDowns').innerHTML = '<ul>' + entityTypes.join('') + '</ul>';
+        document.getElementById('dropDowns').innerHTML = '<tr>' + entityTypes.join('') + '</tr>';
 
 
         // for selection drop-down lists do a de-select all by default
@@ -262,10 +301,25 @@ http://bl.ocks.org/lgersman/5311083
           }
         });
 
+        //	recenter button event handlers
+        $('.recenter-btn').on("click", function () {
+          $(this)[0].style.backgroundColor = "white";
+
+          g.attr("transform", "translate(0,0)scale(1)");
+
+          // call zoom handler to reset zoom
+          svg.transition().duration(750).call(
+            zoom_handler.transform,
+            d3.zoomIdentity,
+            d3.zoomTransform(svg.node()).invert([width / 2, height / 2])
+          );
+
+        });
+
         //	reduce force button event handlers
         $('.reduce-force-btn').on("click", function () {
           $(this)[0].style.backgroundColor = "white";
-          
+
           const forceX = d3.forceX(width / 2).strength(0.015)
           const forceY = d3.forceY(height / 2).strength(0.015)
 
@@ -274,11 +328,11 @@ http://bl.ocks.org/lgersman/5311083
           var maxDistance = 20;
 
           var newAttractForce = d3.forceManyBody().strength(attractStrength).distanceMax(maxDistance).distanceMin(minDistance);
-         
+
           simulation.force("charge", null)
           simulation.force("attractForce", newAttractForce)
           simulation.force('x', forceX)
-          simulation.force('y',  forceY)
+          simulation.force('y', forceY)
 
           filter();
           update();
@@ -291,7 +345,7 @@ http://bl.ocks.org/lgersman/5311083
 
           const forceX = d3.forceX(width / 2).strength(0.01) // 0.015
           const forceY = d3.forceY(height / 2).strength(0.01) // 0.015
-          
+
           var chargeStrength = -100;
           var minDistance = Math.min(width / 2, graph.nodes.length); // 300
           var maxDistance = Math.max(width, graph.nodes.length); // 500
@@ -301,8 +355,8 @@ http://bl.ocks.org/lgersman/5311083
           simulation.force("charge", newChargeForce)
 
           simulation.force('x', forceX)
-          simulation.force('y',  forceY)
- 
+          simulation.force('y', forceY)
+
           filter();
           update();
         });
@@ -342,26 +396,7 @@ http://bl.ocks.org/lgersman/5311083
 
         // export button event handler
         $('.export-btn').on("click", function () {
-
-          var exportGraph = {
-            "result":
-            {
-              "nodes": graph.nodes,
-              "edges": graph.edges
-            }
-          };
-
-          var file = new Blob([JSON.stringify(exportGraph)], { type: "data:application/json" });
-          var a = document.createElement("a"),
-            url = URL.createObjectURL(file);
-          a.href = url;
-          a.download = "export.json";
-          document.body.appendChild(a);
-          a.click();
-          setTimeout(function () {
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-          }, 0);
+          FileController.exportGraph(graph);
         });
 
         //add zoom capabilities 
@@ -406,7 +441,7 @@ http://bl.ocks.org/lgersman/5311083
             if (value.id == type) {
               if (typeFilterList.includes(type)) {
                 typeFilterList.splice(typeFilterList.indexOf(type), 1);
-                value.style.backgroundColor = "red";
+                value.style.backgroundColor = color(type);
               }
             }
           });
@@ -507,12 +542,12 @@ http://bl.ocks.org/lgersman/5311083
             var type = value.id
 
             if (typeNames.has(type)) {
-              value.style.backgroundColor = "red";
+              value.style.backgroundColor = color(type);
             }
           });
         }
 
-        
+
         function ticked() {
           link
             .attr("x1", function (d) { return d.source.x; })
@@ -525,7 +560,7 @@ http://bl.ocks.org/lgersman/5311083
               return "translate(" + d.x + "," + d.y + ")";
             })
         }
-   
+
         // Mouse down handler for all of ..
         // 1) remove nodes
         // 2) remove entire graphs
@@ -767,24 +802,6 @@ http://bl.ocks.org/lgersman/5311083
 
         simulation.stop();
       }
-
-      // file functions
-      function handleFileSelect(evt) {
-
-        var f = evt.target.files[0]; // Single file object requested only
-
-        var output = [];
-
-        output.push('<li><strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
-          f.size, ' bytes, last modified: ',
-          f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a',
-          '</li>');
-
-        document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';
-
-        return f;
-      }
-
     });
 
   </script>
