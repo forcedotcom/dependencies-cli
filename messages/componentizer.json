@@ -1,0 +1,4 @@
+{
+  "commandDescription": "Return leaf nodes in your component dependency graph",
+  "example": "sfdx dependency:component:componentizer -u hkache@v1.training.salesforce.com"
+}

@@ -2,7 +2,7 @@ import {core, SfdxCommand } from "@salesforce/command";
 import {join} from 'path';
 
 core.Messages.importMessagesDirectory(join(__dirname));
-const messages = core.Messages.loadMessages('dependencies-cli', 'packages');
+const messages = core.Messages.loadMessages('dependencies-cli', 'drift');
 
 export default class Drift extends SfdxCommand {
     public static outputFolder = 'lib/';

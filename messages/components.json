@@ -1,4 +1,0 @@
-{
-  "commandDescription": "Analyzes object graph dependencies in your org",
-  "example": "sfdx org:dependency:componentizer -u hkache@v1.training.salesforce.com"
-}

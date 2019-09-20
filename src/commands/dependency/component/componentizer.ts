@@ -8,7 +8,7 @@ import {Node, NodeGroup, ScalarNode } from '../../../lib/NodeDefs';
 import {Connection} from '@salesforce/core';
 
 core.Messages.importMessagesDirectory(join(__dirname));
-const messages = core.Messages.loadMessages('dependencies-cli', 'components');
+const messages = core.Messages.loadMessages('dependencies-cli', 'componentizer');
 
 export default class Analyze extends SfdxCommand {
     public static outputFolder = 'lib/';

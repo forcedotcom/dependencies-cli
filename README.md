@@ -1,5 +1,9 @@
 # dependencies-cli
 
+Sample command line utilities around the Salesforce Dependencies API implemented as SFDX plugin.
+
+***The plugin is NOT a Salesforce supported project and release as a community project under open source licenses. Anyone is invited to help improve and extend the code.***
+
 This project implements an SFDX plugin for the [Salesforce Dependencies API](https://releasenotes.docs.salesforce.com/en-us/summer18/release-notes/rn_metadata_metadatacomponentdependency.htm). With the plugin you are able to analyze dependencies between Salesforce [second-generation packages](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_dev2gp_intro.htm) as well as dependencies between Salesforce objects deployed in your org. The plugin is meant for Salesforce developers and administrators trying to
 
 1. Analyze package and object level dependencies
@@ -9,9 +13,9 @@ This project implements an SFDX plugin for the [Salesforce Dependencies API](htt
 
 The plugin does not automate any of these steps but uses graph technology to help navigate the complexities of a Salesforce org. The main output thus far is a set of D3.js force directed graphs used to visualize dependencies and recommendation actions.
 
-> Note: A few commands use the [Salesforce Dependencies API](https://releasenotes.docs.salesforce.com/en-us/summer18/release-notes/rn_metadata_metadatacomponentdependency.htm) which is currently in open beta for production orgs but fully enabled for sandbox orgs. Please make sure your org has the API enabled or work with Salesforce support to enable it.
+> Note: Some commands directly need the [Salesforce Dependencies API](https://releasenotes.docs.salesforce.com/en-us/summer18/release-notes/rn_metadata_metadatacomponentdependency.htm) which is currently in open beta for production orgs but fully enabled for sandbox orgs. Please make sure your org has the API enabled or work with Salesforce support to enable it.
 
-** The plugin is NOT a Salesforce supported project and release as a community project under open source licenses. Anyone is invited to help improve and extend the code. **
+> Note: The [Salesforce Dependencies API](https://releasenotes.docs.salesforce.com/en-us/summer18/release-notes/rn_metadata_metadatacomponentdependency.htm) in its current form is limitted to return the first 2000 records of a full query only. As a consequence the plugin can only get the first 2000 objects and the dependency graph is incomplete. While we are wainting for the dependenies API to support full resultset pagination, treat this project as a starter project to a more complete solution.
 
 ## Install
 
@@ -42,18 +46,19 @@ sfdx dependency
 returns
 
 ```
-Analyzes object graph dependencies in your org
+Sample command line utilities around the Salesforce Dependencies API implemented as SFDX plugin.
 
 USAGE
   $ sfdx dependency:COMMAND
 
 COMMANDS
 
+
 TOPICS
   Run help for each topic below to view subcommands
 
-  dependency:component  Analyzes object graph dependencies in your org
-  dependency:package    Computes a score representing the variance between linked and available package versions.
+  dependency:component  Analyzes object level dependencies in your org
+  dependency:package    Analyzes package level dependencies in your dev project
 ```
 
 4) Authorize an org
@@ -79,34 +84,245 @@ You may now close the browser
 
 ## Usage
 
-The plugin command structure is as follows
+The plugin implements two topics with a couple of commmands each:
+
 ```
 dependency
   |-component
      |---componentizer
      |---report
   |-package
-     |---drift
      |---merge
      |---version
 
 ```
  
-`dependency:component` Analyzes object graph dependencies in your org
-`dependency:package` Analyzes package version dependencies in your org
+ The two topics help with two disjoint sets of questions where:
+
+`dependency:component` Analyzes ***object*** level dependencies in your org
+
+`dependency:package` Analyzes ***package*** level dependencies in your dev project
+
+Following are a details for every command to illustrate usage only. For detailed command descriptions use
+
+```
+sfdx dependency:COMMAND --help
+```
+
+## `dependency:component`
+
+Analyzes object level dependencies in your org. All commands are based on the [Salesforce Dependencies API](https://releasenotes.docs.salesforce.com/en-us/summer18/release-notes/rn_metadata_metadatacomponentdependency.htm) and require an org connection with the ```-u, --targetusername=targetusername``` option.
 
 ### `dependency:component:componentizer`
 
-Analyzes object graph dependencies in your org
+Return all leaf nodes in the directed component dependency graph.
 
 USAGE:
-`sfdx org:dependency:componentizer -u <userId>`
 
-The response lists the leaf nodes in a graph, grouped by object type.
+```sfdx dependency:component:componentizer [-u <string>] [--apiversion <string>] [--json]```
+
+The response lists the leaf nodes in the directed component dependency graph in a text form, grouped by object type. For example:
+
+```
+CustomField:
+	CustomerPriority(00N2E000008r3MxUAI)
+	NumberofLocations(00N2E000008r3MyUAI)
+	SLA(00N2E000008r3MzUAI)
+	SLAExpirationDate(00N2E000008r3N0UAI)
+
+WebLink:
+	View Campaign Influence Report(00b2E000001Yj9ZQAS)
+	Billing(00b2E000001Yj9bQAC)
+	Up-sell / Cross-sell Opportunity(00b2E000001Yj9cQAC)
+
+```
 
 ### `dependency:component:report`
 
 Produces a dependency graph representing all object level dependencies in your org.
+
+
+USAGE:
+
+```sfdx dependency:component:report [-r <string>] [-e <string>] [-d <string>] [-x <string> -m] [-a -i <string>] [-t undefined] [-v] [-u <string>] [--apiversion <string>] [--json]```
+
+ This command produces a [DOT formatted](https://www.graphviz.org/doc/info/lang.html) output by default if no `--json` option is used. Following is an example output.
+
+```
+digraph graphname {
+  rankdir=RL;
+  node[shape=Mrecord, bgcolor=black, fillcolor=lightblue, style=filled];
+  // Nodes
+  X00h11000000s7oIAAQ [label=<Case (Support) Layout<BR/><FONT POINT-SIZE="8">Layout</FONT>>]
+  X00b11000000S28TAAS [label=<Up-sell / Cross-sell Opportunity<BR/><FONT POINT-SIZE="8">WebLink</FONT>>]
+  X00h11000000s7oJAAQ [label=<Case Layout<BR/><FONT POINT-SIZE="8">Layout</FONT>>]
+  X00h11000000s7oNAAQ [label=<Account (Marketing) Layout<BR/><FONT POINT-SIZE="8">Layout</FONT>>]
+  X00b11000000S28SAAS [label=<Billing<BR/><FONT POINT-SIZE="8">WebLink</FONT>>]
+  X00N11000002qGqQEAU [label=<Account.Contract<BR/><FONT POINT-SIZE="8">CustomField</FONT>>]
+  // Paths
+  X00h11000000s7oIAAQ->X00b11000000S28TAAS
+  X00h11000000s7oJAAQ->X00b11000000S28TAAS
+  X00h11000000s7oNAAQ->X00b11000000S28SAAS
+  X00h11000000s7oNAAQ->X00N11000002qGqQEAU
+}
+```
+
+[DOT formatted](https://www.graphviz.org/doc/info/lang.html) output can easily be converted into a vector graph (SVG). You can either paste the output directly into [this website](http://viz-js.com/) for online rendering, or install software to build static or interactive SVG (using [d3.js](https://d3js.org/)).
+
+
+### 1. Render the SVG as dependency graph in an image<a name="SVG"></a>
+
+- requires [Graphviz](http://graphviz.org/)
+
+```
+brew install graphviz
+```
+
+- produce the DOT graph file output
+
+```
+sfdx dependency:components:report -u [alias|username] -r dot  | tee graph.dot
+
+```
+
+- convert the DOT file to SVG
+
+```
+dot -T svg graph.dot > graph.svg
+```
+
+- open the SVG directly in your browser (Google Chrome works best)
+
+```
+open -a "Google Chrome" graph.svg
+```
+
+Following is a small example of a static SVG produced with this process.
+
+![Graph](./img/svg.png)
+
+
+### 2. Render the SVG as [d3-force](https://github.com/d3/d3-force) graph in JavaScript
+
+- requires [http-server](https://www.npmjs.com/package/http-server)
+
+```
+npm install http-server
+```
+
+- produce the graph in JSON format
+
+```
+sfdx dependency:components:report -u [alias|username] --json  | tee graph.json
+```
+
+- start the http server
+
+```
+http-server -a localhost -p 8000 &
+```
+
+- open the browser with [http://localhost:8000/index.html](http://localhost:8000/index.html) and select the produced JSON file to render
+
+```
+open -a "Google Chrome" http://localhost:8000
+```
+
+Here an example of an interactive force directed D3 graph rendered with the above process.
+
+![D3.gif](./img/d3.gif)
+
+
+The force directed graph supports actions to navigate a large graph better, including:
+
+- filter and selection by node type
+- filter and selection by node name
+- show/hide labels
+- freeze the graph simulation
+- recenter the graph
+- expand the graph for readibility
+- collapse the graph to identify center of gravity
+- remove individual nodes
+- remove a connected graph for a given node
+- expand the fully connected graph for a given node
+- export filtered subgraph
+
+
+Using D3.js technology is an attempt to manage large graphs more easily. In addition, one can pass flags to the SFDX plugin directly to apply query filters based on type and thus reduce the output.
+
+## `dependency:package`
+
+Analyzes package level dependencies in your development projects. All commands expect a 2nd generation Salesforce project with one or multiple `package.xml`.
+
+### `dependency:package:merge`
+
+Merge multiple package.xmls to create one base package.xml containing only those objects available across all packages. This function computes the intersection of multiple first generation packages.
+
+USAGE:
+
+```sfdx dependency:package:merge [-h <help>] [-d <string>] [--json]```
+
+ This command produces a properly formatted package.xml as the result of the merge operation, for example:
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+	<types>
+		<members>Reservation_Manager__c</members>
+		<members>Spaces_Designer__c</members>
+		<name>CustomTab</name>
+	</types>
+	<types>
+		<members>Reservation_Manager</members>
+		<members>Spaces_Designer</members>
+		<members>Market_Record_Page</members>
+		<name>FlexiPage</name>
+	</types>
+	<types>
+		<members>Market__c</members>
+		<members>Reservation__c</members>
+		<name>CustomObject</name>
+	</types>
+	<types>
+		<members>Lead Layout</members>
+		<members>Campaign Layout</members>
+		<name>Layout</name>
+	</types>
+	<version>43.0</version>
+</Package>
+```
+
+### `dependency:package:version`
+
+Analyze version dependencies for packages deployed in your org using the 2nd generation development process. The command is required to run from within the SFDX project development folder and needs an org connection with the ```-u, --targetusername=targetusername``` option.
+
+USAGE:
+
+```sfdx dependency:package:version [-v <string>] [-u <string>] [--apiversion <string>]```
+
+This command produces a [DOT formatted](https://www.graphviz.org/doc/info/lang.html) output:
+
+```
+digraph graphname {
+  rankdir=RL;
+  node[shape=Mrecord, bgcolor=black, fillcolor=lightblue, style=filled];
+  // Nodes
+  X04tB0000000KAekIAG [label=<ESBaseCodeLWC 1.0.0.2<BR/><FONT POINT-SIZE="8">033B0000000buUeIAI</FONT><BR/><FONT POINT-SIZE="8">04tB0000000KAekIAG</FONT>>]
+  X04tB0000000KAefIAG [label=<ESObjects 1.0.0.2<BR/><FONT POINT-SIZE="8">033B0000000buUoIAI</FONT><BR/><FONT POINT-SIZE="8">04tB0000000KAefIAG</FONT>>]
+  X04tB0000000KAf4IAG [label=<ESBaseStylesLWC 1.0.0.2<BR/><FONT POINT-SIZE="8">033B0000000buUjIAI</FONT><BR/><FONT POINT-SIZE="8">04tB0000000KAf4IAG</FONT>>]
+  X04tB0000000KAfJIAW [label=<ESSpaceMgmtLWC 1.0.0.3<BR/><FONT POINT-SIZE="8">033B0000000buUtIAI</FONT><BR/><FONT POINT-SIZE="8">04tB0000000KAfJIAW</FONT>>]
+  // Paths
+  X04tB0000000KAekIAG->X04tB0000000KAefIAG
+  X04tB0000000KAf4IAG->X04tB0000000KAefIAG
+  X04tB0000000KAf4IAG->X04tB0000000KAekIAG
+  X04tB0000000KAfJIAW->X04tB0000000KAefIAG
+  X04tB0000000KAfJIAW->X04tB0000000KAekIAG
+}
+```
+
+To render the output as SVG use the instructions at [Render the SVG as dependency graph in an image](#SVG). Following is an example of a package dependency graph with version details.
+
+![Graph](./img/version.png)
 
 
 ## Build and Debug
@@ -186,151 +402,3 @@ Explanation: This error indicates that you forgot to provide the -u flag needed 
 
 Resolution: Supply the `-u <userId>` option with the command.
 
-### BACKUP
-
-![Graph](https://raw.githubusercontent.com/afawcett/dependencies-cli/master/img/example2.png)
-
-This command produces [DOT formatted](https://www.graphviz.org/doc/info/lang.html) output for dependencies in an org allowing you visualize the dependencies in the org (see below for an example). 
-
-You can pass flags to it to filter down the output further, since in most orgs the output can be quite dense. You can then paste the output from this command into [this website](http://viz-js.com/) to see the results or install locally on your desktop one of the following.
-
-- [GraphViz Commandline](https://www.graphviz.org/download/)
-- [VSCode Extension](https://marketplace.visualstudio.com/items?itemName=EFanZh.graphviz-preview)
-
-
-## Rendering graph output locally
-
-We document two options to visualize the produced graph locally:
-
-1) Render the SVG as dependency graph in an image
-2) Render the SVG as [d3-force](https://github.com/d3/d3-force) graph in JavaScript
-
-### 1. Render the SVG as dependency graph in an image
-
-- requires [Graphviz](http://graphviz.org/)
-
-```
-brew install graphviz
-```
-
-- produce the DOT graph file output
-
-```
-sfdx dependency:components:report -u [alias|username] -r dot  | tee graph.dot
-
-```
-
-- convert the DOT file to SVG
-
-```
-dot -T svg graph.dot > graph.svg
-```
-
-- open the SVG directly in your browser (Google Chrome works best)
-
-```
-open -a "Google Chrome" graph.svg
-```
-
-### 2. Render the SVG as [d3-force](https://github.com/d3/d3-force) graph in JavaScript
-
-- requires [http-server](https://www.npmjs.com/package/http-server)
-
-```
-npm install http-server
-```
-
-- produce the graph in JSON format
-
-```
-sfdx dependency:components:report -u [alias|username] --json  | tee graph.json
-```
-
-- start the http server
-
-```
-http-server -a localhost -p 8000 &
-```
-
-- open the browser with [http://localhost:8000/index.html](http://localhost:8000/index.html) and select the produced JSON file to render
-
-```
-open -a "Google Chrome" http://localhost:8000
-```
-
-## Example Output
-
-1) Raw DOT format output
-
-```
-digraph graphname {
-  rankdir=RL;
-  node[shape=Mrecord, bgcolor=black, fillcolor=lightblue, style=filled];
-  // Nodes
-  X00h11000000s7oIAAQ [label=<Case (Support) Layout<BR/><FONT POINT-SIZE="8">Layout</FONT>>]
-  X00b11000000S28TAAS [label=<Up-sell / Cross-sell Opportunity<BR/><FONT POINT-SIZE="8">WebLink</FONT>>]
-  X00h11000000s7oJAAQ [label=<Case Layout<BR/><FONT POINT-SIZE="8">Layout</FONT>>]
-  X00h11000000s7oNAAQ [label=<Account (Marketing) Layout<BR/><FONT POINT-SIZE="8">Layout</FONT>>]
-  X00b11000000S28SAAS [label=<Billing<BR/><FONT POINT-SIZE="8">WebLink</FONT>>]
-  X00N11000002qGqQEAU [label=<Account.Contract<BR/><FONT POINT-SIZE="8">CustomField</FONT>>]
-  X00N11000002q9aoEAA [label=<Account.formula1<BR/><FONT POINT-SIZE="8">CustomField</FONT>>]
-  X00N11000002pkkvEAA [label=<Account.Red<BR/><FONT POINT-SIZE="8">CustomField</FONT>>]
-  X00h11000000s7oOAAQ [label=<Account (Sales) Layout<BR/><FONT POINT-SIZE="8">Layout</FONT>>]
-  X00h11000000s7oPAAQ [label=<Account (Support) Layout<BR/><FONT POINT-SIZE="8">Layout</FONT>>]
-  X00h11000000s7oQAAQ [label=<Account Layout<BR/><FONT POINT-SIZE="8">Layout</FONT>>]
-  X00h11000000s7oZAAQ [label=<Opportunity (Marketing) Layout<BR/><FONT POINT-SIZE="8">Layout</FONT>>]
-  X00b11000000S28RAAS [label=<Delivery Status<BR/><FONT POINT-SIZE="8">WebLink</FONT>>]
-  X00h11000000s7oaAAA [label=<Opportunity (Sales) Layout<BR/><FONT POINT-SIZE="8">Layout</FONT>>]
-  X00h11000000s7obAAA [label=<Opportunity (Support) Layout<BR/><FONT POINT-SIZE="8">Layout</FONT>>]
-  X00h11000000s7ocAAA [label=<Opportunity Layout<BR/><FONT POINT-SIZE="8">Layout</FONT>>]
-  X00h11000000s7pfAAA [label=<Campaign Layout<BR/><FONT POINT-SIZE="8">Layout</FONT>>]
-  X00b11000000S28QAAS [label=<View Campaign Influence Report<BR/><FONT POINT-SIZE="8">WebLink</FONT>>]
-  X00h11000000s7phAAA [label=<Contract Layout<BR/><FONT POINT-SIZE="8">Layout</FONT>>]
-  X00h11000000sB5RAAU [label=<CustomObject1 Layout<BR/><FONT POINT-SIZE="8">Layout</FONT>>]
-  X00N11000002po9oEAA [label=<CustomObject1.Blue<BR/><FONT POINT-SIZE="8">CustomField</FONT>>]
-  X03d110000006W4WAAU [label=<Contract.ContractRule<BR/><FONT POINT-SIZE="8">ValidationRule</FONT>>]
-  X03d110000006W55AAE [label=<CustomObject1.IsBLueToo<BR/><FONT POINT-SIZE="8">ValidationRule</FONT>>]
-  X03d110000006W50AAE [label=<Account.IsBLue<BR/><FONT POINT-SIZE="8">ValidationRule</FONT>>]
-  X01I110000003zvLEAQ [label=<CustomObject1<BR/><FONT POINT-SIZE="8">CustomObject</FONT>>]
-  // Paths
-  X00h11000000s7oIAAQ->X00b11000000S28TAAS
-  X00h11000000s7oJAAQ->X00b11000000S28TAAS
-  X00h11000000s7oNAAQ->X00b11000000S28SAAS
-  X00h11000000s7oNAAQ->X00N11000002qGqQEAU
-  X00h11000000s7oNAAQ->X00N11000002q9aoEAA
-  X00h11000000s7oNAAQ->X00N11000002pkkvEAA
-  X00h11000000s7oOAAQ->X00N11000002q9aoEAA
-  X00h11000000s7oOAAQ->X00N11000002pkkvEAA
-  X00h11000000s7oOAAQ->X00N11000002qGqQEAU
-  X00h11000000s7oOAAQ->X00b11000000S28SAAS
-  X00h11000000s7oPAAQ->X00N11000002pkkvEAA
-  X00h11000000s7oPAAQ->X00b11000000S28SAAS
-  X00h11000000s7oPAAQ->X00N11000002qGqQEAU
-  X00h11000000s7oPAAQ->X00N11000002q9aoEAA
-  X00h11000000s7oQAAQ->X00b11000000S28SAAS
-  X00h11000000s7oQAAQ->X00N11000002pkkvEAA
-  X00h11000000s7oQAAQ->X00N11000002qGqQEAU
-  X00h11000000s7oQAAQ->X00N11000002q9aoEAA
-  X00h11000000s7oZAAQ->X00b11000000S28RAAS
-  X00h11000000s7oaAAA->X00b11000000S28RAAS
-  X00h11000000s7obAAA->X00b11000000S28RAAS
-  X00h11000000s7ocAAA->X00b11000000S28RAAS
-  X00h11000000s7pfAAA->X00b11000000S28QAAS
-  X00h11000000s7phAAA->X00N11000002qGqQEAU
-  X00h11000000sB5RAAU->X00N11000002po9oEAA
-  X03d110000006W4WAAU->X00N11000002pkkvEAA
-  X03d110000006W55AAE->X00N11000002po9oEAA
-  X03d110000006W50AAE->X00N11000002po9oEAA
-  X03d110000006W50AAE->X01I110000003zvLEAQ
-  X00N11000002q9aoEAA->X00N11000002pkkvEAA
-}
-```
-
-
-2) SVG dependency graph output
-
-![Graph](./img/example2.png)
-
-3) D3 force graph output
-
-![Graph](./img/example3.png)

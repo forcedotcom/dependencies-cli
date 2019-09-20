@@ -11,7 +11,7 @@ import {Member, PackageMerger} from '../../../lib/PackageMerger';
 import { AnyJson } from '@salesforce/ts-types';
 
 core.Messages.importMessagesDirectory(join(__dirname));
-const messages = core.Messages.loadMessages('dependencies-cli', 'depends');
+const messages = core.Messages.loadMessages('dependencies-cli', 'report');
 
 export default class Report extends SfdxCommand {
 

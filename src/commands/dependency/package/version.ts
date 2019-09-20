@@ -8,7 +8,7 @@ import process = require('child_process');
 
 export default class Version extends SfdxCommand {
 
-    public static description = 'List version updates available to packages in the org.'
+    public static description = 'Analyze version dependencies for packages within a 2nd generation development project.'
 
     protected static flagsConfig = {
 

@@ -1,11 +1,11 @@
 {
   "name": "dependencies-cli",
   "version": "2.0.0-beta",
-  "author": "Andrew Fawcett, Justin Kalloor, Holger Kache",
-  "bugs": "https://github.com/afawcett/dependencies-cli/issues",
+  "author": "Holger Kache, Andrew Fawcett, Justin Kalloor",
+  "bugs": "https://github.com/forcedotcom/dependencies-cli/issues",
   "dependencies": {
-    "@oclif/config": "^1.6.27",
-    "@oclif/errors": "^1.0.9",
+    "@oclif/config": "^1.13.3",
+    "@oclif/errors": "^1.2.2",
     "@salesforce-ux/design-system": "^2.9.4",
     "@salesforce/command": "^1.2.0",
     "@salesforce/core": "^1.2.0",
@@ -28,10 +28,10 @@
     "xml2js": "^0.4.19"
   },
   "devDependencies": {
-    "@oclif/dev-cli": "^1.2.20",
-    "@oclif/plugin-help": "^1.1.6",
-    "@oclif/test": "^1.0.1",
-    "@oclif/tslint": "^1.0.2",
+    "@oclif/dev-cli": "^1.19.5",
+    "@oclif/plugin-help": "^2.2.1",
+    "@oclif/test": "^1.2.5",
+    "@oclif/tslint": "^3.1.1",
     "@salesforce/dev-config": "^1.1.0",
     "@types/chai": "^4.1.2",
     "@types/graphlib-dot": "^0.6.1",
@@ -54,18 +54,29 @@
     "/lib",
     "/messages"
   ],
-  "homepage": "https://github.com/afawcett/dependencies-cli",
+  "homepage": "https://github.com/forcedotcom/dependencies-cli",
   "keywords": [
     "sfdx-plugin"
   ],
   "license": "MIT",
   "oclif": {
+    "topics": {
+      "dependency": {
+        "description": "Sample command line utilities around the Salesforce Dependencies API implemented as SFDX plugin."
+      },
+        "dependency:component": {
+          "description": "Analyzes object level dependencies in your org"
+        },
+        "dependency:package": {
+          "description": "Analyzes package level dependencies in your dev project"
+        }
+    },
     "commands": "./lib/commands",
     "devPlugins": [
       "@oclif/plugin-help"
     ]
   },
-  "repository": "afawcett/dependencies-cli",
+  "repository": "forcedotcom/dependencies-cli",
   "scripts": {
     "build": "rm -rf lib && tsc",
     "clean": "rm -f .oclif.manifest.json",
