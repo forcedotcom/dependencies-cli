@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<style>
+  .header {
+    text-align: left;
+    color: white;
+    font-size: 50px;
+  }
+
+  .links line {
+    stroke: #999;
+    stroke-opacity: 0.6;
+  }
+
+  .nodes circle {
+    stroke: #fff;
+    stroke-width: 1.5px;
+  }
+
+  text {
+    font-family: sans-serif;
+    font-size: 10px;
+  }
+
+  #d3graph {
+    border-bottom: 1px dashed grey;
+    border-right: 1px dashed grey;
+    border-top: 1px dashed grey;
+    border-left: 1px dashed grey;
+  }
+
+
+  #graph {
+    display: block;
+    table-layout: fixed
+  }
+
+  #graph td {
+    vertical-align: top;
+    text-align: left;
+    padding: 15px
+  }
+
+  #graph th {
+    display: inline-block
+  }
+</style>
+
+<!-- 
+Code requires https://github.com/d3/d3-force  
+  
+Some sample code and references used from:
+https://bl.ocks.org/heybignick/3faf257bbbbc7743bb72310d03b86ee8
+https://bl.ocks.org/puzzler10/4438752bb93f45dc5ad5214efaa12e4a
+http://bl.ocks.org/jhb/5955887
+https://bl.ocks.org/denisemauldin/cdd667cbaf7b45d600a634c8ae32fae5
+http://bl.ocks.org/tgk/6068367
+http://bl.ocks.org/lgersman/5311083
+
+https://mathisonian.com/writing/easy-responsive-svgs-with-viewbox
+
+-->
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="x-ua-compatible" content="ie=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Playground</title>
+  <link rel="stylesheet" type="text/css" href="/assets/styles/salesforce-lightning-design-system.css" />
+</head>
+
+<body>
+
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+  <script src="src/d3graph/fileController.js" type="text/javascript"></script>
+
+  <!-- <div class="slds-brand-band slds-brand-band_small slds-brand-band_group"></div> -->
+  <div class="slds-brand-band slds-brand-band_small"></div>
+
+  <div class="slds-p-top_small"></div>
+  <div class="slds-p-left_x-large slds-align_absolute-center">
+    <div class="header">
+      <h1>Metadata Dependency Graph</h1>
+    </div>
+  </div>
+
+  <div class="slds-p-top_small"></div>
+
+
+  <div class="slds-p-left_x-large">
+    <div class="slds-file-selector slds-file-selector_files">
+
+      <input type="file" class="slds-file-selector__input slds-assistive-text" accept="application/json"
+        id="file-upload-input-01" aria-labelledby="file-selector-primary-label file-selector-secondary-label" />
+
+
+      <label class="slds-file-selector__body" for="file-upload-input-01" id="file-selector-secondary-label">
+
+        <button class="slds-button slds-button_neutral sample-btn" id="sample">
+          <svg class="slds-button__icon slds-button__icon_left" aria-hidden="true">
+            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#magicwand"></use>
+          </svg>Sample Graph</button>
+
+        <span class="slds-file-selector__button slds-button slds-button_neutral">
+
+          <svg class="slds-button__icon slds-button__icon_left" aria-hidden="true">
+            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#upload"></use>
+          </svg>Load Graph</span>
+
+        <button class="slds-button slds-button_neutral export-btn" id="export">
+          <svg class="slds-button__icon slds-button__icon_left" aria-hidden="true">
+            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#download"></use>
+          </svg>Save Graph</button>
+
+      </label>
+
+      <div class="slds-p-left_x-large">
+        <div class="slds-form-element">
+          <div class="slds-form-element__control slds-border_bottom">
+            <div class="slds-form-element__static">
+              <p id="textarea-id-01"></p>
+              <p id="textarea-id-02"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+    </div>
+  </div>
+
+
+  <div class="slds-p-top_small"></div>
+
+  <div class="slds-p-left_x-large">
+    <div id="layouts" style="text-align: left;">
+
+      <button onclick="submitButtonStyle(this)" type="button" class="slds-button slds-button_outline-brand layout-btn"
+        id="Labels">Toggle Labels</button>
+      <button onclick="submitButtonStyle(this)" type="button" class="slds-button slds-button_outline-brand freeze-btn"
+        id="Freeze">Freeze</button>
+      <button onclick="submitButtonStyle(this)" type="button" class="slds-button slds-button_outline-brand recenter-btn"
+        id="Freeze">Recenter</button>
+      <button onclick="submitButtonStyle(this)" type="button"
+        class="slds-button slds-button_outline-brand increase-force-btn" id="Expand">Expand
+        Graph</button>
+      <button onclick="submitButtonStyle(this)" type="button"
+        class="slds-button slds-button_outline-brand reduce-force-btn" id="Collapse">Collapse
+        Graph</button>
+      <button onclick="submitButtonStyle(this)" type="button" class="slds-button slds-button_outline-brand deselect-btn"
+        id="Deselect">Remove Node</button>
+      <button onclick="submitButtonStyle(this)" type="button"
+        class="slds-button slds-button_outline-brand remove-graph-btn" id="RemoveGraph">Remove
+        Connected Nodes</button>
+      <button onclick="submitButtonStyle(this)" type="button"
+        class="slds-button slds-button_outline-brand expand-graph-btn" id="ExpandGraph">Expand
+        Node</button>
+    </div>
+  </div>
+
+  <div class="slds-p-top_small"></div>
+  <div class="slds-p-left_x-large">
+    <div class="slds-p-right_x-large">
+      <svg id="d3graph" width="1200" height="450"></svg>
+    </div>
+  </div>
+
+  <div class="slds-p-top_small"></div>
+
+  <div class="slds-p-left_x-large">
+    <details open>
+      <summary>
+        <label class="slds-form-element__label">Select Object Types</label>
+      </summary>
+      <table id="filters"></table>
+    </details>
+  </div>
+
+  <div class="slds-p-left_x-large">
+    <div class="slds-summary-detail slds-is-open">
+      <details>
+        <summary>
+          <label class="slds-form-element__label">Select Objects</label>
+        </summary>
+        <div aria-hidden="true" class="slds-summary-detail__content" id="dropDowns" style="text-align: left;"></div>
+      </details>
+    </div>
+  </div>
+
+  <script>
+
+    function submitButtonStyle(_this) {
+
+      if (_this.style.backgroundColor == "red") {
+        _this.style.backgroundColor = "white";
+      } else {
+        _this.style.backgroundColor = "red";
+      }
+    };
+
+    // sample graph button event handler
+    $('.sample-btn').on("click", function () {
+
+        // load the sample graph
+           FileController.getSampleFile("graph.json").then(data => {
+              file = new File([data], "graph.json", {
+                  type: "application/json",
+              });
+
+              // dispatch an event to the load file handler to process the file
+              var x = document.createEvent("Event");
+              x.initEvent("change", true, true);
+              x.data = { sampleFile: file };
+
+              document.getElementById('file-upload-input-01').dispatchEvent(x);
+
+              $(this).prop('disabled', 'true');
+          });
+    });
+
+    document.getElementById('file-upload-input-01').addEventListener('change', function (event) {
+
+      // $(this).prop('disabled', 'true');
+
+      //	data stores
+      var store;
+
+      // layout toggles
+      var labels = false;
+      var freeze = false;
+      var deselect = false;
+      var removeGraph = false;
+      var expandGraph = false;
+
+      var svg = d3.select("#d3graph"),
+        width = +svg.attr("width"),
+        height = +svg.attr("height");
+
+      var color = d3.scaleOrdinal(d3.schemeCategory20);
+
+      // computes how connected nodes gravitate towards the center
+      // Option 1: positive force -> attraction
+      var attractForce = d3.forceManyBody().strength(80).distanceMax(100).distanceMin(80);
+      // Option 2: negative force -> repulsion
+      var chargeForce = d3.forceManyBody().strength(-80).distanceMax(100).distanceMin(80);
+
+      // avoids overlapping nodes
+      var collisionForce = d3.forceCollide(12).strength(1).iterations(1);
+
+      var simulation = d3.forceSimulation()
+        .force("link", d3.forceLink().id(function (d) { return d.id; }))
+        .force("charge", chargeForce)
+        .force("attractForce", attractForce)
+        .force("collisionForce", collisionForce)
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+
+      FileController.handleFileSelect(event).then(file => {
+
+            console.log(file.name);
+
+            var output = [];
+
+            output.push('<li><strong>', escape(file.name), '</strong> (', file.type || 'n/a', ') - ',
+              file.size, ' bytes, last modified: ',
+              file.lastModifiedDate ? file.lastModifiedDate.toLocaleDateString() : 'n/a',
+              '</li>');
+
+            document.getElementById('textarea-id-01').innerHTML = '<ul>' + output.join('') + '</ul>';
+
+            d3.json(file.name, function (error, dotJson) {
+              if (error) {
+                alert(String("Unable to read file ").concat(file.name).concat(" \n\n"));
+
+                window.location.reload(false);
+                throw error;
+              }
+
+              console.log(dotJson);
+
+              // remove old graphs on reload
+              d3.selectAll("g > *").remove();
+              store = [];
+
+              var graph = dotJson.result;
+              var nodeById = d3.map();
+              var typeName = d3.map();
+
+              // *** NODES ***
+              graph.nodes.forEach(function (node) {
+                nodeById.set(node.id, node);
+                typeName.set(node.type, node.type);
+              });
+
+              // *** LINKS ****
+              graph.edges.forEach(function (link) {
+                link.source = nodeById.get(link.from);
+                link.target = nodeById.get(link.to);
+              });
+
+              // create filter buttons for every type
+              var typeFilterButtons = [], typeFilterList = [];
+
+              Object.keys(typeName).forEach(function (type) {
+                typeFilterButtons.
+                  push('<tr><button onclick="submitButtonStyle(this)" type="button" class="slds-button slds-button_outline-brand filter-btn" id=',
+                    typeName[type], '>', typeName[type], '</button></tr>');
+              });
+
+              document.getElementById('filters').innerHTML = '<thead>' + typeFilterButtons.join('') + '</thead>';
+
+
+              // start first by activating all type filters
+              $('.filter-btn').each(function (index, value) {
+                typeFilterList.push($(this).attr('id'));
+                value.style.backgroundColor = "white";
+              });
+
+
+              // create drop down filters for every entity by type
+              var entityTypes = [];
+
+              var nodeByType = d3.nest()
+                .key(function (d) { return d.type; })
+                .key(function (d) { return d.id; })
+                .entries(graph.nodes);
+
+              Object.keys(nodeByType).forEach(function (type) {
+
+                entityTypes.push('<td><select class="filter-selection" size=4 multiple id=',
+                  nodeByType[type].key, ' name=', nodeByType[type].key, '>');
+
+                entityTypes.push('<optgroup label =', nodeByType[type].key, '>');
+
+                nodeByType[type].values.forEach(function (entityList) {
+
+                  entityList.values.forEach(function (entity) {
+                    entityTypes.push('<option class="filter-option" type=', nodeByType[type].key,
+                      ' value=', entity.id, '>', entity.name, '</object>');
+
+                  });
+
+                });
+                entityTypes.push('</select></td>');
+
+              });
+
+              document.getElementById('dropDowns').innerHTML = '<tr>' + entityTypes.join('') + '</tr>';
+
+
+              // for selection drop-down lists do a de-select all by default
+              $('.filter-option').each(function (index, value) {
+                value.selected = false;
+              });
+
+              //add encompassing group for the zoom 
+              var g = svg.append("g")
+                .attr("class", "everything");
+
+              var link = g.append("g")
+                .attr("class", "links")
+                .selectAll("line")
+                .data(graph.edges)
+                .enter().append("line")
+                .attr("stroke-width", function (d) { return Math.sqrt(d.value); });
+
+              var node = g.append("g")
+                .attr("class", "nodes")
+                .selectAll("g")
+                .data(graph.nodes)
+                .enter().append("g")
+                .call(d3.drag()
+                  .on("start", dragstarted)
+                  .on("drag", dragged)
+                  .on("end", dragended));
+
+              var circles = node.append("circle")
+                .attr("r", 5)
+                .attr("fill", function (d) { return color(d.type); })
+                .on("mousedown", mousedownNode)
+
+              var titles = node.append("title")
+                .text(function (d) { return d.type + ":" + d.name + "\n" + "(" + d.id + ")"; });
+
+              //	layout button event handlers
+              $('.layout-btn').on("click", function () {
+                var id = $(this).attr("id");
+                if ((id == 'Labels' && !labels)) {
+                  labels = true;
+                  var texts = node.append("text")
+                    .attr('x', 6)
+                    .attr('y', 3)
+                    .text(function (d) {
+                      return d.name;
+                    });
+                }
+                else if ((id == 'Labels' && labels)) {
+                  labels = false;
+                  svg.selectAll("text").remove();
+                }
+              });
+
+
+              //	freeze button event handlers
+              $('.freeze-btn').on("click", function () {
+                var id = $(this).attr("id");
+                if ((id == 'Freeze' && !freeze)) {
+                  freeze = true;
+                  simulation.stop();
+                }
+                else if ((id == 'Freeze' && freeze)) {
+                  freeze = false;
+                  simulation.restart();
+                }
+              });
+
+              //	recenter button event handlers
+              $('.recenter-btn').on("click", function () {
+                $(this)[0].style.backgroundColor = "white";
+
+                g.attr("transform", "translate(0,0)scale(1)");
+
+                // call zoom handler to reset zoom
+                svg.transition().duration(750).call(
+                  zoom_handler.transform,
+                  d3.zoomIdentity,
+                  d3.zoomTransform(svg.node()).invert([width / 2, height / 2])
+                );
+
+              });
+
+              //	reduce force button event handlers
+              $('.reduce-force-btn').on("click", function () {
+                $(this)[0].style.backgroundColor = "white";
+
+                const forceX = d3.forceX(width / 2).strength(0.015)
+                const forceY = d3.forceY(height / 2).strength(0.015)
+
+                var attractStrength = 80;
+                var minDistance = 10;
+                var maxDistance = 20;
+
+                var newAttractForce = d3.forceManyBody().strength(attractStrength).distanceMax(maxDistance).distanceMin(minDistance);
+
+                simulation.force("charge", null)
+                simulation.force("attractForce", newAttractForce)
+                simulation.force('x', forceX)
+                simulation.force('y', forceY)
+
+                filter();
+                update();
+              });
+
+              //	increase force button event handlers
+              $('.increase-force-btn').on("click", function () {
+
+                $(this)[0].style.backgroundColor = "white";
+
+                const forceX = d3.forceX(width / 2).strength(0.01) // 0.015
+                const forceY = d3.forceY(height / 2).strength(0.01) // 0.015
+
+                var chargeStrength = -100;
+                var minDistance = Math.min(width / 2, graph.nodes.length); // 300
+                var maxDistance = Math.max(width, graph.nodes.length); // 500
+
+                var newChargeForce = d3.forceManyBody().strength(chargeStrength).distanceMax(maxDistance).distanceMin(minDistance);
+                simulation.force("attractForce", null)
+                simulation.force("charge", newChargeForce)
+
+                simulation.force('x', forceX)
+                simulation.force('y', forceY)
+
+                filter();
+                update();
+              });
+
+              //	deselect nodes button event handler
+              $('.deselect-btn').on("click", function () {
+                var id = $(this).attr("id");
+                if ((id == 'Deselect' && !deselect)) {
+                  deselect = true;
+                }
+                else if ((id == 'Deselect' && deselect)) {
+                  deselect = false;
+                }
+              });
+
+              //	remove graph button event handler
+              $('.remove-graph-btn').on("click", function () {
+                var id = $(this).attr("id");
+                if ((id == 'RemoveGraph' && !removeGraph)) {
+                  removeGraph = true;
+                }
+                else if ((id == 'RemoveGraph' && removeGraph)) {
+                  removeGraph = false;
+                }
+              });
+
+              //	expand graph button event handler
+              $('.expand-graph-btn').on("click", function () {
+                var id = $(this).attr("id");
+                if ((id == 'ExpandGraph' && !expandGraph)) {
+                  expandGraph = true;
+                }
+                else if ((id == 'ExpandGraph' && expandGraph)) {
+                  expandGraph = false;
+                }
+              });
+
+              // export button event handler
+              $('.export-btn').on("click", function () {
+                FileController.exportGraph(graph);
+              });
+
+              //add zoom capabilities 
+              var zoom_handler = d3.zoom()
+                .on("zoom", zoom_actions);
+
+              zoom_handler(svg);
+
+              store = $.extend(true, {}, graph);
+              filter();
+              update();
+
+              // 1. LEVEL: filter button event handler
+              $('.filter-btn').on("click", function () {
+                var id = $(this).attr("id");
+
+                if (typeFilterList.includes(id)) {
+                  typeFilterList.splice(typeFilterList.indexOf(id), 1);
+
+                  // select all entities of the given type
+                  $('#' + id + ' option').prop('selected', true);
+
+                } else {
+                  typeFilterList.push(id);
+
+                  // de-select all entities of the given type
+                  $('#' + id + ' option').prop('selected', false);
+                }
+
+                filter();
+                update();
+              });
+
+              //	2. LEVEL: event handler for every single entity
+              $('.filter-option').on("click", function () {
+                var id = $(this).attr("value");
+                var type = $(this).attr("type");
+
+                // flip the button red when an entity of that given type is selected
+                $('.filter-btn').each(function (key, value) {
+
+                  if (value.id == type) {
+                    if (typeFilterList.includes(type)) {
+                      typeFilterList.splice(typeFilterList.indexOf(type), 1);
+                      value.style.backgroundColor = color(type);
+                    }
+                  }
+                });
+
+                filter();
+                update();
+              });
+
+              //Zoom functions 
+              function zoom_actions() {
+                g.attr("transform", d3.event.transform)
+              }
+
+              // Update pattern for updating the graph
+              function update() {
+
+                var typeNames = new Set();
+
+                // *** NODES ***
+                graph.nodes.forEach(function (node) {
+                  nodeById.set(node.id, node);
+                  typeNames.add(node.type);
+                });
+
+                //	UPDATE
+                node = node.data(graph.nodes, function (d) { return d.id; });
+
+                //	EXIT
+                node.exit().remove();
+
+                //	ENTER
+                var newNode = node.enter().append("g")
+                  .attr("class", "node")
+                  .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended)
+                  );
+
+                var circles = newNode.append("circle")
+                  .attr("r", 5)
+                  .attr("fill", function (d) { return color(d.type); })
+                  .on("mousedown", mousedownNode)
+
+                var titles = newNode.append("title")
+                  .text(function (d) { return d.type + ":" + d.name + "\n" + "(" + d.id + ")"; });
+
+                /* var labels = newNode.append("text")
+                  .text(function (d) { return d.id; }); */
+
+                //	ENTER + UPDATE
+                node = node.merge(newNode);
+
+                // *** LINKS ****
+                graph.edges.forEach(function (link) {
+                  link.source = nodeById.get(link.from);
+                  link.target = nodeById.get(link.to);
+                });
+
+                //	UPDATE
+                link = link.data(graph.edges, function (d) { return d.from.id; });
+
+                //	EXIT
+                link.exit().remove();
+
+                //	ENTER
+                newLink = link.enter().append("line")
+                  .attr("class", "link");
+
+                newLink.append("title")
+                  .text(function (d) { return "source: " + d.source.id + "\n" + "target: " + d.target.id; });
+
+                //	ENTER + UPDATE
+                link = link.merge(newLink);
+
+                //	update simulation nodes, links, and alpha
+                simulation
+                  .nodes(graph.nodes)
+                  .on("tick", ticked);
+
+                simulation.force("link")
+                  .links(graph.edges);
+
+                simulation.alpha(1).alphaTarget(0).restart();
+
+                // run the simulation but immediately advance the timer 
+                // this will allow all links to be drawn without triggering a new force
+                if (freeze) {
+                  // See https://github.com/d3/d3-force/blob/master/README.md#simulation_tick
+                  for (var i = 0, n = Math.ceil(Math.log(simulation.alphaMin()) / Math.log(1 - simulation.alphaDecay())); i < n; ++i) {
+                    simulation.tick();
+                  }
+                }
+
+                // flip the filter button color depending on selected item types
+                $('.filter-btn').each(function (key, value) {
+                  value.style.backgroundColor = "white";
+                  var type = value.id
+
+                  if (typeNames.has(type)) {
+                    value.style.backgroundColor = color(type);
+                  }
+                });
+              }
+
+
+              function ticked() {
+                link
+                  .attr("x1", function (d) { return d.source.x; })
+                  .attr("y1", function (d) { return d.source.y; })
+                  .attr("x2", function (d) { return d.target.x; })
+                  .attr("y2", function (d) { return d.target.y; });
+
+                node
+                  .attr("transform", function (d) {
+                    return "translate(" + d.x + "," + d.y + ")";
+                  })
+              }
+
+              // Mouse down handler for all of ..
+              // 1) remove nodes
+              // 2) remove entire graphs
+              // 3) expand graphs
+              // .. based on the activated button
+              function mousedownNode(d, i) {
+
+                if ((deselect) || (removeGraph)) {
+                  // remove clicked node from the selection for the given type
+                  $("select#" + d.type).each(function (index, option) {
+                    for (var i = 0; i < option.selectedOptions.length; i++) {
+                      if (option.selectedOptions[i].value == d.id) {
+                        option.selectedOptions[i].selected = false
+                      }
+                    }
+                  });
+
+                  if (removeGraph) {
+                    // recursively remove all connected nodes from the selection (regardless of type)
+
+                    var removeableNodes = [];
+
+                    // add seed node to list and process recursively
+                    removeableNodes.push(d.id);
+                    remove(removeableNodes, 0);
+                  }
+                }
+
+                // expand node selection based on clicked node
+                if (expandGraph) {
+                  // recursively add connected nodes to a selection (across types)
+                  var expandableNodes = [];
+
+                  // add seed node to list and process recursively
+                  expandableNodes.push(d.id);
+                  expand(expandableNodes, 0);
+
+                }
+
+                // freeze simulation and update graph only if needed
+                if ((deselect) || (removeGraph) || expandGraph) {
+                  d3.event.stopPropagation();
+
+                  filter();
+                  update();
+                }
+              }
+
+              // removal function (recursive)
+              function remove(removeableNodes, numberOfRemoveableNodes) {
+
+                // check for seed element
+                if (removeableNodes.length == 0) {
+                  return;
+                }
+
+                // check for growing list
+                if (numberOfRemoveableNodes == removeableNodes.length) {
+                  return;
+                }
+
+                numberOfRemoveableNodes = removeableNodes.length;
+
+                // pass through all edges, adding connected source and target nodes
+                store.edges.forEach(function (l) {
+                  if (removeableNodes.includes(l.source.id)) {
+
+                    // add elements not already in the list
+                    if (!removeableNodes.includes(l.target.id)) { removeableNodes.push(l.target.id) }
+
+                    // process elements already in the list
+                    $("select#" + l.target.type).each(function (index, option) {
+                      for (var i = 0; i < option.selectedOptions.length; i++) {
+                        if (option.selectedOptions[i].value == l.target.id) {
+                          option.selectedOptions[i].selected = false
+                        }
+                      }
+                    });
+                  }
+                  if (removeableNodes.includes(l.target.id)) {
+
+                    // add elements not already in the list
+                    if (!removeableNodes.includes(l.source.id)) { removeableNodes.push(l.source.id) }
+
+                    // process elements already in the list
+                    $("select#" + l.source.type).each(function (index, option) {
+                      for (var i = 0; i < option.selectedOptions.length; i++) {
+                        if (option.selectedOptions[i].value == l.source.id) {
+                          option.selectedOptions[i].selected = false
+                        }
+                      }
+                    });
+                  }
+
+                });
+
+                // keep going only if the list keeps growing
+                remove(removeableNodes, numberOfRemoveableNodes);
+              }
+
+              // expand function (recursive)
+              function expand(expandableNodes, numberOfExpandableNodes) {
+
+                // check for seed element
+                if (expandableNodes.length == 0) {
+                  return;
+                }
+
+                // check for growing list
+                if (numberOfExpandableNodes == expandableNodes.length) {
+                  return;
+                }
+
+                numberOfExpandableNodes = expandableNodes.length;
+
+                // pass through all edges, adding connected source and target nodes
+                store.edges.forEach(function (l) {
+                  if (expandableNodes.includes(l.source.id)) {
+
+                    // add elements not already in the list
+                    if (!expandableNodes.includes(l.target.id)) { expandableNodes.push(l.target.id) }
+
+                    // process elements already in the list
+                    $("select#" + l.target.type).each(function (index, option) {
+                      for (var i = 0; i < option.options.length; i++) {
+                        if (option.options[i].value == l.target.id) {
+                          if (!option.options[i].selected) {
+                            option.options[i].selected = true
+                          }
+                        }
+                      }
+                    });
+                  }
+                  if (expandableNodes.includes(l.target.id)) {
+
+                    // add elements not already in the list
+                    if (!expandableNodes.includes(l.source.id)) { expandableNodes.push(l.source.id) }
+
+                    // process elements already in the list
+                    $("select#" + l.source.type).each(function (index, option) {
+                      for (var i = 0; i < option.options.length; i++) {
+                        if (option.options[i].value == l.source.id) {
+                          if (!option.options[i].selected) {
+
+                            option.options[i].selected = true
+                          }
+                        }
+                      }
+                    });
+                  }
+
+                });
+
+                // keep going only if the list keeps growing
+                expand(expandableNodes, numberOfExpandableNodes);
+              }
+
+              // filter function
+              function filter() {
+
+                var output = [];
+
+                var entityList = [];
+
+                $('.filter-option').each(function (index, option) {
+                  if (option.selected) {
+                    entityList.push(option.value);
+                  }
+                });
+
+                // 1.	add and remove nodes from data based on entity filters
+                store.nodes.forEach(function (n) {
+                  if (entityList.includes(n.id) && n.filtered) {
+                    n.filtered = false;
+                    graph.nodes.push($.extend(true, {}, n));
+                  } else if (!entityList.includes(n.id) && !n.filtered) {
+                    n.filtered = true;
+                    graph.nodes.forEach(function (d, i) {
+                      if (n.id === d.id) {
+                        graph.nodes.splice(i, 1);
+                      }
+                    });
+                  }
+                });
+
+                // 2.	add and remove links from data based on availability of node types
+                store.edges.forEach(function (l) {
+                  if (entityList.includes(l.source.id) && entityList.includes(l.target.id) && l.filtered) {
+                    l.filtered = false;
+                    graph.edges.push($.extend(true, {}, l));
+                  } else if (
+                    (!
+                      (entityList.includes(l.source.id) && entityList.includes(l.target.id))
+                    ) && !l.filtered) {
+                    l.filtered = true;
+                    graph.edges.forEach(function (d, i) {
+                      if ((l.from === d.from) && (l.to == d.to)) {
+                        graph.edges.splice(i, 1);
+                      }
+                    });
+                  }
+                });
+
+                output.push('<li>Selected <strong>entities: </strong>', escape(graph.nodes.length),
+                  '<strong> relationships: </strong>', escape(graph.edges.length),
+                  '</li>');
+
+                document.getElementById('textarea-id-02').innerHTML = '<ul>' + output.join('') + '</ul>';
+              }
+
+            });
+
+
+            // drag functions
+            function dragstarted(d) {
+
+              $('.freeze-btn').click();
+              if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+              d.fx = d.x;
+              d.fy = d.y;
+            }
+
+            function dragged(d) {
+
+              d.fx = d3.event.x;
+              d.fy = d3.event.y;
+            }
+
+            function dragended(d) {
+
+              $('.freeze-btn').click();
+              if (!d3.event.active) simulation.alphaTarget(0);
+
+              // d.fx = null;
+              // d.fy = null;
+
+              d.fx = d3.event.x;
+              d.fy = d3.event.y;
+
+              simulation.stop();
+            }
+
+      });
+
+    });
+
+
+  </script>
+</body>

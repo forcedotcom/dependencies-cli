@@ -202,12 +202,30 @@ Following is a small example of a static SVG produced with this process.
 ![Graph](./img/svg.png)
 
 
-### 2. Render the SVG as [d3-force](https://github.com/d3/d3-force) graph in JavaScript
+### 2. Render the SVG as [d3-force](https://github.com/d3/d3-force) graph
 
-- requires [http-server](https://www.npmjs.com/package/http-server)
+There are two options to launch the D3 graph, using either a pre-deployed Heroku app or running the app locally.
+
+#### 2.1 Use the Node.js app deployed at [https://sfdc-mdapi-graph.herokuapp.com](https://sfdc-mdapi-graph.herokuapp.com)
+
+- produce the graph in JSON format
 
 ```
-npm install http-server
+sfdx dependency:components:report -u [alias|username] --json  | tee graph.json
+```
+
+- open the browser with [https://sfdc-mdapi-graph.herokuapp.com](https://sfdc-mdapi-graph.herokuapp.com) and load the produced JSON file to render
+
+```
+open -a "Google Chrome" https://sfdc-mdapi-graph.herokuapp.com
+```
+
+#### 2.2 Run the Node.js app locally
+
+- start the local Node.js server
+
+```
+npm start &
 ```
 
 - produce the graph in JSON format
@@ -216,16 +234,16 @@ npm install http-server
 sfdx dependency:components:report -u [alias|username] --json  | tee graph.json
 ```
 
-- start the http server
+- open the browser with [https://localhost:8080](https://localhost:8080/) and select the produced JSON file to render
 
 ```
-http-server -a localhost -p 8000 &
+open -a "Google Chrome" https://localhost:8080
 ```
 
-- open the browser with [http://localhost:8000/index.html](http://localhost:8000/index.html) and select the produced JSON file to render
+- to kill the local Node.js server use
 
 ```
-open -a "Google Chrome" http://localhost:8000
+npm stop
 ```
 
 Here an example of an interactive force directed D3 graph rendered with the above process.
@@ -343,6 +361,12 @@ sfdx plugins:uninstall dependencies-cli
 sfdx plugins:link ./
 ```
 
+Optionally: in case of errors due to missing dependencies, install them with npm
+
+```
+npm install <package> --save
+```
+
 2) Test the plugin
 
 ```
@@ -355,6 +379,12 @@ sfdx dependency
 
 ```
 yarn run clean
+```
+
+Optionally: run yarn install in case you used npm package installer to manually install packages
+
+```
+yarn install
 ```
 
 1) Build the code using npm run scripts in the project root folder

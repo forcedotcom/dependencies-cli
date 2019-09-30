@@ -6,9 +6,9 @@
   "dependencies": {
     "@oclif/config": "^1.13.3",
     "@oclif/errors": "^1.2.2",
-    "@salesforce-ux/design-system": "^2.9.4",
-    "@salesforce/command": "^1.2.0",
-    "@salesforce/core": "^1.2.0",
+    "@salesforce-ux/design-system": "^2.10.0",
+    "@salesforce/command": "^1.5.3",
+    "@salesforce/core": "^1.3.3",
     "babel-preset-env": "^1.7.0",
     "babel-preset-latest": "^6.24.1",
     "child-process": "^1.0.2",
@@ -17,22 +17,24 @@
     "crypto": "^1.0.1",
     "debug": "^3.1.0",
     "dotenv": "^6.2.0",
-    "express": "^4.16.4",
+    "express": "^4.17.1",
     "file-exists": "^5.0.1",
     "file-system": "^2.2.2",
     "graphlib-dot": "^0.6.2",
     "http-server": "^0.11.1",
+    "multer": "^1.4.2",
+    "oclif": "^1.13.6",
     "pusher": "^2.2.0",
     "reinstall": "^2.0.0",
-    "shelljs": "^0.8.2",
-    "xml2js": "^0.4.19"
+    "shelljs": "^0.8.3",
+    "xml2js": "^0.4.22"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1.19.5",
     "@oclif/plugin-help": "^2.2.1",
     "@oclif/test": "^1.2.5",
     "@oclif/tslint": "^3.1.1",
-    "@salesforce/dev-config": "^1.1.0",
+    "@salesforce/dev-config": "^1.5.0",
     "@types/chai": "^4.1.2",
     "@types/graphlib-dot": "^0.6.1",
     "@types/jsforce": "^1.8.13",
@@ -44,10 +46,10 @@
     "sinon": "^6.0.0",
     "ts-node": "5",
     "tslint": "^5.9.1",
-    "typescript": "^3.4.5"
+    "typescript": "^3.6.3"
   },
   "engines": {
-    "node": ">=8.4.0"
+    "node": ">=12.1.0"
   },
   "files": [
     ".oclif.manifest.json",
@@ -64,12 +66,12 @@
       "dependency": {
         "description": "Sample command line utilities around the Salesforce Dependencies API implemented as SFDX plugin."
       },
-        "dependency:component": {
-          "description": "Analyzes object level dependencies in your org"
-        },
-        "dependency:package": {
-          "description": "Analyzes package level dependencies in your dev project"
-        }
+      "dependency:component": {
+        "description": "Analyzes object level dependencies in your org"
+      },
+      "dependency:package": {
+        "description": "Analyzes package level dependencies in your dev project"
+      }
     },
     "commands": "./lib/commands",
     "devPlugins": [
@@ -87,7 +89,9 @@
     "prepublishOnly": "yarn run build && oclif-dev manifest",
     "preversion": "yarn run clean",
     "test": "mocha --forbid-only \"test/**/*.test.ts\"",
-    "version": "oclif-dev readme && git add README.md"
+    "version": "oclif-dev readme && git add README.md",
+    "start": "node server.js",
+    "stop": "pkill SIGINT mdapiGraph"
   },
   "bin": {
     "componentizer": "./bin/run"
