@@ -7,7 +7,7 @@ import {ClusterPackager} from '../../../lib/clusterPackager';
 import {DependencyGraph} from '../../../lib/dependencyGraph';
 import {FileWriter} from '../../../lib/fileWriter';
 import {MetadataComponentDependency, Node} from '../../../lib/NodeDefs';
-import {Member, PackageMerger} from '../../../lib/PackageMerger';
+import {Member, PackageMerger} from '../../../lib/packageMerger';
 import { AnyJson } from '@salesforce/ts-types';
 
 core.Messages.importMessagesDirectory(join(__dirname));

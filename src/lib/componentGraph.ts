@@ -2,7 +2,7 @@
 import assert = require('assert');
 import {AbstractGraph} from './abstractGraph';
 import {FindCycles} from './DFSLib';
-import { Node, NodeGroup, NodeImpl, ScalarNode} from './Nodedefs';
+import { Node, NodeGroup, NodeImpl, ScalarNode} from './NodeDefs';
 
 export class ComponentGraph extends AbstractGraph {
     private _groupMap: Map<ScalarNode, NodeGroup> = new Map<ScalarNode, NodeGroup>();
