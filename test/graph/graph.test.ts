@@ -1,5 +1,11 @@
+/*
+ * Copyright (c) 2018, salesforce.com, inc.
+ * All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause
+ * For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/BSD-3-Clause
+ */
 import { expect, test } from '@salesforce/command/dist/test';
-import * as Analyze from '../../src/commands/dependency/components/componentizer';
+import * as Analyze from '../../src/commands/dependency/component/componentizer';
 import * as Assert from 'assert';
 import {Node, Graph} from '../../src/lib/componentGraph';
 import {DepthFirstSearch} from '../../src/lib/DFSLib';

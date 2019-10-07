@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2018, salesforce.com, inc.
+ * All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause
+ * For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/BSD-3-Clause
+ */
 import { expect, test } from '@salesforce/command/dist/test';
 import { dotOutput1, dotOutput2, oneObjectRecords, TwoFields1VRRecords, customFieldRecords, validationRuleRecords, customObjects} from '../../../lib/dependencyGraphy.test';
 import { PackageMerger, Member } from '../../../../src/lib/packageMerger';

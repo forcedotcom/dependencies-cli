@@ -1,4 +1,10 @@
-import * as Analyze from '../../../../src/commands/dependency/components/componentizer';
+/*
+ * Copyright (c) 2018, salesforce.com, inc.
+ * All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause
+ * For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/BSD-3-Clause
+ */
+import * as Analyze from '../../../../src/commands/dependency/component/componentizer';
 import * as Assert from 'assert';
 import { expect, test } from '@salesforce/command/dist/test';
 import {Node,Graph} from '../../../../src/lib/componentGraph';
