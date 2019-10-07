@@ -234,10 +234,10 @@ npm start &
 sfdx dependency:components:report -u [alias|username] --json  | tee graph.json
 ```
 
-- open the browser with [https://localhost:8080](https://localhost:8080/) and select the produced JSON file to render
+- open the browser with [http://localhost:8080](http://localhost:8080/) and select the produced JSON file to render
 
 ```
-open -a "Google Chrome" https://localhost:8080
+open -a "Google Chrome" http://localhost:8080
 ```
 
 - to kill the local Node.js server use
@@ -431,4 +431,12 @@ __ERROR running dependency:component:componentizer:  No AuthInfo found for name 
 Explanation: This error indicates that you forgot to provide the -u flag needed for the command execution. The SFDX plugin attempts to use the default user id but requires dedicated authentication info.
 
 Resolution: Supply the `-u <userId>` option with the command.
+
+__ERROR dependencyGraph::retrieveRecords().err sObject type 'CustomField' is not supported.__
+
+Explanation: This error happens with certain orgs where not all metadata object types are supported for query with the tooling API. The error is not fatal and a graph will be produced to STDOUT including all supported metadata types. The error logged to STDERR includes details for the query in question, for example:
+
+```dependencyGraph::retrieveRecords().query SELECT Id, TableEnumOrId FROM CustomField c WHERE c.Id In ('00h0M00000FoNWnQAN','00h30000000i0DcAAI','00h300000012QrnAAE','00h300000012oWtAAI','00h3000000133AJAAY','00h30000001MDH9AAO','00h30000001OIu3AAG','00h30000001OKZ1AAO','00h30000001OLxMAAW','00h30000000gnhbAAA') limit 2000```
+
+Resolution: Contact support to investigate the settings for your org and enable the failing metadata type queries.
 
