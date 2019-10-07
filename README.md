@@ -181,7 +181,7 @@ brew install graphviz
 - produce the DOT graph file output
 
 ```
-sfdx dependency:components:report -u [alias|username] -r dot  | tee graph.dot
+sfdx dependency:component:report -u [alias|username] -r dot  | tee graph.dot
 
 ```
 
@@ -211,7 +211,7 @@ There are two options to launch the D3 graph, using either a pre-deployed Heroku
 - produce the graph in JSON format
 
 ```
-sfdx dependency:components:report -u [alias|username] --json  | tee graph.json
+sfdx dependency:component:report -u [alias|username] --json  | tee graph.json
 ```
 
 - open the browser with [https://sfdc-mdapi-graph.herokuapp.com](https://sfdc-mdapi-graph.herokuapp.com) and load the produced JSON file to render
@@ -231,7 +231,7 @@ npm start &
 - produce the graph in JSON format
 
 ```
-sfdx dependency:components:report -u [alias|username] --json  | tee graph.json
+sfdx dependency:component:report -u [alias|username] --json  | tee graph.json
 ```
 
 - open the browser with [http://localhost:8080](http://localhost:8080/) and select the produced JSON file to render
