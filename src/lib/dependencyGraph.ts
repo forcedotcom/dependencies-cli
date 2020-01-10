@@ -9,6 +9,7 @@ import { Connection } from '@salesforce/core';
 import { AbstractGraph } from './abstractGraph';
 import { FindAllDependencies } from './DFSLib';
 import { ComponentNode, CustomField, CustomObject, Edge, FieldDefinition, MetadataComponentDependency, Node, QuickAction, ScalarNode, ValidationRule } from './NodeDefs';
+import { Graph } from 'graphology';
 
 export const componentsWithParents = ['CustomField', 'ValidationRule', 'QuickAction'];
 
@@ -45,7 +46,7 @@ export class DependencyGraph extends AbstractGraph {
     const customFieldEntities = this.customFields.map(r => r.TableEnumOrId); // HKA
     this.customFieldDefinitions = await this.retrieveLookupRelationships(customFieldEntities, new Array<FieldDefinition>());
     // this.customFieldDefinitions = await this.bulkRetrieveLookupRelationships(customFieldEntities, new Array<FieldDefinition>());
-    
+
     const lookupRelationships = this.customFieldDefinitions.filter(x => x.DataType.startsWith('Lookup'));
     lookupRelationships.forEach(element => {
       element.DataType = element.DataType.slice(element.DataType.indexOf('(') + 1, element.DataType.lastIndexOf(')'));
@@ -176,6 +177,15 @@ export class DependencyGraph extends AbstractGraph {
     return { nodes: jsonRepresentation, edges: Array.from(this.edges) };
   }
 
+  /**
+* Render as GEXF format
+*/
+  public toGexfFormat() {
+    const graph = new Graph();
+    return graph;
+
+  }
+
   public getParentRecords(): Map<string, string> {
     // Put all info into a Map
     const parentRecords = new Map();
@@ -188,7 +198,7 @@ export class DependencyGraph extends AbstractGraph {
   }
 
   public async retrieveRecords<T>(query: string) {
-    
+
     try {
       return (await this.connection.tooling.query<T>(query)).records;
     } catch (err) {
@@ -383,9 +393,9 @@ export class DependencyGraph extends AbstractGraph {
   private getObjectIds() {
 
     // Filter Ids that start with 0
-    const fieldObjectIdRecords = this.customFields.filter(x => {if (x != null) x.TableEnumOrId.startsWith('0')}); // HKA
+    const fieldObjectIdRecords = this.customFields.filter(x => { if (x != null) x.TableEnumOrId.startsWith('0') }); // HKA
     // Filter Ids that start with 0 from vrule
-    const vruleObjectIdRecords = this.validationRules.filter(x => {if (x != null) x.EntityDefinitionId.startsWith('0')}); // HKA
+    const vruleObjectIdRecords = this.validationRules.filter(x => { if (x != null) x.EntityDefinitionId.startsWith('0') }); // HKA
 
     return [
       ...fieldObjectIdRecords.map(r => r.TableEnumOrId),
@@ -398,7 +408,7 @@ export class DependencyGraph extends AbstractGraph {
       let val = record[fieldName];
       if (val.startsWith('0')) {
         // Grab the custom object the field points to
-        const customObject = this.customObjects.filter(x => {if (x != null) x.Id.startsWith(val)});
+        const customObject = this.customObjects.filter(x => { if (x != null) x.Id.startsWith(val) });
         val = customObject[0].DeveloperName + '__c';
       }
       map.set(record['Id'], val);

@@ -4,20 +4,26 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
-import { SfdxProject } from "@salesforce/core";
+// import { SfdxProject } from "@salesforce/core";
+import { core, flags } from '@salesforce/command';
 import { SfdxCommand } from "@salesforce/command";
 
-import {PackageGraph} from '../../../lib/packageGraph';
+import { PackageGraph } from '../../../lib/packageGraph';
 import { Package } from '../../../lib/PackageDefs';
 
 import process = require('child_process');
+import { join } from 'path';
+
+core.Messages.importMessagesDirectory(join(__dirname));
+const messages = core.Messages.loadMessages('dependencies-cli', 'version');
 
 export default class Version extends SfdxCommand {
 
-    public static description = 'Analyze version dependencies for packages within a 2nd generation development project.'
+    public static description = messages.getMessage('description');
+    public static examples = [messages.getMessage('example')];
 
     protected static flagsConfig = {
-
+        resultformat: flags.string({ char: 'r', description: messages.getMessage('resultformatFlagDescription'), default: 'dot', options: ['dot'] }),
     }
 
     protected static requiresUsername = true;
@@ -35,7 +41,7 @@ export default class Version extends SfdxCommand {
 
         /*
         * 1. DEVELOPER EXPERIENCE
-        */
+
         const project = await SfdxProject.resolve();
         const projectJson = await project.resolveProjectConfig();
 
@@ -56,39 +62,43 @@ export default class Version extends SfdxCommand {
 
             // TODO: lookup the details of a package from sfdx-project.json
         }
-
+        */
 
         /*
         * 2. ADMIN EXPERIENCE
         */
-        this.getForcePackageInstalledList().
-        then(async (installedPackages) => {
-    
-            const graph = new PackageGraph(conn, installedPackages);
-            await graph.init();
-            graph.buildGraph();
-            // console.log(graph.toJson());
+
+        var installedPackages = await this.getForcePackageInstalledList();
+        const graph = new PackageGraph(conn, installedPackages);
+        await graph.init();
+        await graph.buildGraph();
+
+        // this runs only if --json flag is used exclusively (takes precendence over -r)   
+        if (this.flags.json == true)  return graph.toJson();
+
+        // this runs for -r [dot|gexf]
+        if (this.flags.resultformat === 'gexf') {
+            console.log(graph.toGexfFormat());
+        } else {
             console.log(graph.toDotFormat());
+        }
 
-        })
-        .catch((error) => {
-            console.log(error);
-        });
-
-        // const records = await this.getDependencyRecords(conn);
-
-        // await packs.buildGraph(installedPackages);
     }
-    
+
 
     private async getForcePackageInstalledList(): Promise<Package[]> {
 
         const username = this.flags.targetusername;
         let cmd = 'NODE_OPTIONS=--inspect=0 sfdx force:package:installed:list -u ' + username + ' --json ';
 
-        await this.sh(cmd).then((stdout: string) => {
+        /*
+        // This shSpawn would be preferred but does not work when using the debugger
+        let cmd = "sfdx";
+        let options = ["force:package:installed:list", "-u", username, "--json"];
+        */
+        await this.shExec(cmd).then((stdout: string) => {
 
-           var output = JSON.parse(stdout);
+            var output = JSON.parse(stdout);
             if (output.result) {
                 for (var _subscriberPackage of output.result) {
                     const _package: Package = {
@@ -111,63 +121,38 @@ export default class Version extends SfdxCommand {
         return this.subscriberPackage;
     }
 
-    private async sh(cmd: string) {
-        return new Promise((resolve, reject) => {
-            process.exec(cmd, (err, stdout, stderr) => {
-                if (err) {
-                    console.log(err);
-                    reject({ err });
-                } else {
-                    resolve(stdout);
-                }
-            });
-        });
-    }
-
-/*
-    private async sh(cmd: string) {
-        return new Promise((resolve, reject) => {
-            const child = process.spawn(cmd);
-            
-            child.on('error', function(code, signal) {
-                reject({code, signal});
-            });
-
-            child.stdout.on('data', (data) => {
-                console.log(`child stdout:\n${data}`);
-                resolve(data);
-              });
-        });
-    }
+    /*
+    * Run a command with exec
     */
+     private async shExec(cmd: string) {
+         return new Promise((resolve, reject) => {
+             process.exec(cmd, (err, stdout, stderr) => {
+                 if (err) {
+                     console.log(err);
+                     reject({ err });
+                 } else {
+                     resolve(stdout);
+                 }
+             });
+         });
+     }
+
+    /*
+    * Run a command with spawn
+
+    private async shSpawn(cmd: string, options: any) {
+        return new Promise(function (resolve, reject) {
+            var child = process.spawn,
+                sfdx = child(cmd, options);
+
+            sfdx.stderr.on('data', function (data) {
+                console.log(cmd + `STDERR :: \n${data}`);
+                reject(data);
+            });
+
+            sfdx.stdout.on('data', function (data) {
+                resolve(data);
+            });
+        });
+    } */
 }
-
-/*
-Execute
-    sfdx force:package:version:list --json
-Filter output for
-    packageNames array
-Return
-    map<string, array<string>> of packageNames to list of available package versions
-*/
-
-/*
-private async sfdxPackageVersionList(packageName: string) {
-
-let cmd = "sfdx force:package:version:list --json"
-const results = (await this.sh(cmd));
-console.log(results);
-
-var dependency04tIds = [];
-
-for (const elem of results) {
-    if (!isNull(elem.SubscriberPackageVersion) && (!isNull(elem.SubscriberPackageVersion.ids))) {
-        for (const id of elem.SubscriberPackageVersion.ids) {
-            dependency04tIds.push(id.subscriberPackageVersionId);
-        }
-    }
-}
-
-return dependency04tIds;
-}
-*/

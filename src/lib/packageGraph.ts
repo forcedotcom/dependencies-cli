@@ -11,6 +11,7 @@ import { FindAllDependencies } from './DFSLib';
 import { Package, PackageNode, PackageDependency, SubscriberPackageVersion } from './PackageDefs';
 import { Edge, Node, ScalarNode } from './NodeDefs';
 import { isNull, isUndefined } from 'util';
+import { Graph } from 'graphology';
 
 
 export class PackageGraph extends AbstractGraph {
@@ -32,63 +33,67 @@ export class PackageGraph extends AbstractGraph {
     this.packageDependencies = await this.retrieveDependencies(this.subscriberPackages, new Array<SubscriberPackageVersion>());
   }
 
-  public buildGraph() {
+  public async buildGraph() {
     // Reset edges and nodes
     this.nodesMap = new Map<string, Node>();
     this.edges = new Set<Edge>();
 
-    if (!isNull(this.packageDependencies)) {
-      for (const record of this.packageDependencies) {
+    // Iterate all nodes found in the list of subscriber packages
+    if (!isNull(this.subscriberPackages)) {
+      for (const subscriberPackage of this.subscriberPackages) {
 
         var srcNode: Node;
 
-        if (!isUndefined(record.Source)) {
-          record.Source.Id;
-          const srcId: string = record.Source.Id;;
-          const srcPath: string = record.Source.Path;
-          const srcName = record.Source.Name;
-          const srcNamespace: string = record.Source.Namespace;
-          const srcVersionId = record.Source.VersionId;
-          const srcVersionName = record.Source.VersionName;
-          const srcVersionNumber = record.Source.VersionNumber;
+        const srcId: string = subscriberPackage.Id;
+        const srcPath: string = subscriberPackage.Path;
+        const srcName = subscriberPackage.Name;
+        const srcNamespace: string = subscriberPackage.Namespace;
+        const srcVersionId = subscriberPackage.VersionId;
+        const srcVersionName = subscriberPackage.VersionName;
+        const srcVersionNumber = subscriberPackage.VersionNumber;
 
+        const srcDetails = new Map<string, object>();
+        srcDetails.set('id', (srcId as String));
+        srcDetails.set('name', isNull(srcName) ? "" : (srcName as String));
+        srcDetails.set('path',  isNull(srcPath) ? "": (srcPath as String));
+        srcDetails.set('namespace',  isNull(srcNamespace) ? "" : (srcNamespace as String));
+        srcDetails.set('versionId',  isNull(srcVersionId) ? "" : (srcVersionId as String));
+        srcDetails.set('versionName',  isNull(srcVersionName) ? "" : (srcVersionName as String));
+        srcDetails.set('versionNumber',  isNull(srcVersionNumber) ? "" : (srcVersionNumber as String));
+        srcNode = this.getOrAddNode(srcId, srcDetails);
 
-          const srcDetails = new Map<string, object>();
-          srcDetails.set('id', (srcId as String));
-          srcDetails.set('name', (srcName as String));
-          srcDetails.set('path', (srcPath as String));
-          srcDetails.set('namespace', (srcNamespace as String));
-          srcDetails.set('versionId', (srcVersionId as String));
-          srcDetails.set('versionName', (srcVersionName as String));
-          srcDetails.set('versionNumber', (srcVersionNumber as String));
-          srcNode = this.getOrAddNode(srcId, srcDetails);
-        }
+        // check if the package has any package dependencies
+        if (!isNull(this.packageDependencies)) {
+          for (const record of this.packageDependencies) {
+            if ((record.Source.Id == subscriberPackage.Id) && (!isUndefined(record.Target))) {
 
-        var dstNode: Node;
+              var dstNode: Node;
 
-        if (!isUndefined(record.Target)) {
-          const dstId: string = record.Target.Id;
-          const dstPath: string = record.Target.Path;
-          const dstName: string = record.Target.Name;
-          const dstNamespace: string = record.Target.Namespace;
-          const dstVersionId: string = record.Target.VersionId;
-          const dstVersionName: string = record.Target.VersionName;
-          const dstVersionNumber: string = record.Target.VersionNumber;
+              const dstId: string = record.Target.Id;
+              const dstPath: string = record.Target.Path;
+              const dstName: string = record.Target.Name;
+              const dstNamespace: string = record.Target.Namespace;
+              const dstVersionId: string = record.Target.VersionId;
+              const dstVersionName: string = record.Target.VersionName;
+              const dstVersionNumber: string = record.Target.VersionNumber;
 
-          const dstDetails = new Map<string, object>();
-          dstDetails.set('id', (dstId as String));
-          dstDetails.set('name', (dstName as String));
-          dstDetails.set('path', (dstPath as String));
-          dstDetails.set('namespace', (dstNamespace as String));
-          dstDetails.set('versionId', (dstVersionId as String));
-          dstDetails.set('versionName', (dstVersionName as String));
-          dstDetails.set('versionNumber', (dstVersionNumber as String));
-          dstNode = this.getOrAddNode(dstId, dstDetails);
-        }
+              const dstDetails = new Map<string, object>();
+              dstDetails.set('id', (dstId as String));
+              dstDetails.set('name', isNull(dstName) ? "" : (dstName as String));
+              dstDetails.set('path',  isNull(dstPath) ? "": (dstPath as String));
+              dstDetails.set('namespace',  isNull(dstNamespace) ? "" : (dstNamespace as String));
+              dstDetails.set('versionId',  isNull(dstVersionId) ? "" : (dstVersionId as String));
+              dstDetails.set('versionName',  isNull(dstVersionName) ? "" : (dstVersionName as String));
+              dstDetails.set('versionNumber',  isNull(dstVersionNumber) ? "" : (dstVersionNumber as String));
+              dstNode = this.getOrAddNode(dstId, dstDetails);
 
-        if (!isUndefined(record.Source) && !isUndefined(record.Target)) {
-          this.edges.add({ from: record.Source.VersionId, to: record.Target.VersionId });
-          this.addEdge(srcNode, dstNode);
+              if (!isUndefined(record.Source) && !isUndefined(record.Target)) {
+                this.edges.add({ from: record.Source.Id, to: record.Target.Id });
+                this.addEdge(srcNode, dstNode);
+              }
+
+            }
+          }
         }
       }
       this.addPackageRelationships();
@@ -168,20 +173,53 @@ export class PackageGraph extends AbstractGraph {
     dot += '}';
     return dot;
   }
-
+  /**
+   * Render as JSON format
+   */
   public toJson() {
     const jsonRepresentation = new Array<PackageNode>();
     for (const node of this.nodes) {
+
       const jsonNode: PackageNode = {
-        id: node.name, name: (node.details.get('name') as String).valueOf(),
-        versionId: (node.details.get('versionId') as String).valueOf(),
-        version: (node.details.get('versionNumber') as String).valueOf()
-      };
+        id: (node.details.get('id') as String).toString(),
+        name: (node.details.get('name') as String).toString(),
+        path: (node.details.get('path') as String).toString(),
+        namespace: (node.details.get('namespace') as String).toString(),
+        versionId: (node.details.get('versionId') as String).toString(),
+        versionName: (node.details.get('versionName') as String).toString(),
+        versionNumber: (node.details.get('versionNumber') as String).toString(),
+
+        // this is a bit of an artificial use of "type" but looks better in the graph
+        // than just a generic _package_ type
+        type: "v" + (node.details.get('versionNumber') as String).replace(/\./g,'_').toString()
+        // type: "package"
+      }
       jsonRepresentation.push(jsonNode);
     }
 
     return { nodes: jsonRepresentation, edges: Array.from(this.edges) };
   }
+
+  /**
+ * Render as GEXF format
+ */
+  public toGexfFormat() {
+    const graph = new Graph();
+    for (const node of this.nodes) {
+      graph.addNode(node.details.get('versionId'));
+
+      for (let [k, v] of node.details) {
+        graph.setNodeAttribute(node.details.get('versionId'), k, v);
+      }
+    }
+
+    for (const edge of this.edges) {
+      graph.addEdge(edge.from, edge.to);
+    }
+
+    // return gexf.write(graph);
+  }
+
 
   public async retrieveRecords<T>(query: string) {
     return (await this.connection.tooling.query<T>(query)).records;
