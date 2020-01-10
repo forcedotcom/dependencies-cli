@@ -406,7 +406,7 @@ bin/run dependency
 sfdx dependency:<command> --dev-suspend
 ```
 
-1) Attach 
+1) Attach VS Code Debugger to `ws://127.0.0.1:9229/<PID>`
 
 #### D Debug the node.js application locally
 

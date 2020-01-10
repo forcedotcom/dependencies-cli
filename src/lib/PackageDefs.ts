@@ -32,8 +32,12 @@ export interface Dependencies extends Record {
 }
 
 export type PackageNode = {
-    id: string;
-    name: string;
-    versionId: string;
-    version: string;
+    id: String;
+    type: String;
+    name: String;
+    namespace: String;
+    path: String;
+    versionId: String;
+    versionNumber: String;
+    versionName: String;
 };

@@ -1,0 +1,5 @@
+{
+  "description": "Analyze version dependencies for packages within a 2nd generation development project.",
+  "resultformatFlagDescription": "The result format of the output. If dot is chosen, package dependenciess will be shown as dependency image in .dot file format; ignore with --json",
+  "example": "sfdx dependency:package:version -u hkache@salesforce.dev1.com -r dot"
+ }
