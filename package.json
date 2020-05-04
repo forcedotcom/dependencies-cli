@@ -27,7 +27,8 @@
     "pusher": "^2.2.0",
     "reinstall": "^2.0.0",
     "shelljs": "^0.8.3",
-    "xml2js": "^0.4.22"
+    "xml2js": "^0.4.22",
+    "snyk": "^1.316.1"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1.19.5",
@@ -86,13 +87,14 @@
     "lint": "tsc -p test --noEmit && tslint -p test -t stylish",
     "postpublish": "yarn run clean",
     "posttest": "yarn run lint",
-    "prepare": "yarn run build && oclif-dev manifest",
+    "prepare": "npm run snyk-protect && yarn run build && oclif-dev manifest",
     "prepublishOnly": "yarn run build && oclif-dev manifest",
     "preversion": "yarn run clean",
     "test": "mocha --forbid-only \"test/**/*.test.ts\"",
     "version": "oclif-dev readme && git add README.md",
     "start": "node server.js",
-    "stop": "pkill SIGINT mdapiGraph"
+    "stop": "pkill SIGINT mdapiGraph",
+    "snyk-protect": "snyk protect"
   },
   "bin": {
     "componentizer": "./bin/run"
@@ -108,5 +110,6 @@
         }
       ]
     ]
-  }
+  },
+  "snyk": true
 }
