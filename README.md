@@ -31,10 +31,10 @@ npm install sfdx-cli --global
 npm update sfdx-cli --global
 ```
 
-2) Install the plugin via npm
+2) Install the plugin via sfdx plugins
 
 ```
-npm install dependencies-cli --global 
+sfdx plugins:install dependencies-cli
 ```
 
 3) Test the plugin
